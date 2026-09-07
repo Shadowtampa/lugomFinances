@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink } from 'react-router'
+import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Painel', end: true },
@@ -16,7 +17,9 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
   }`
 }
 
-function AppShell() {
+function AppShell({ children }: { children: ReactNode }) {
+  const { user, sair } = useAuth()
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <nav className="hidden w-56 shrink-0 flex-col gap-1 border-r border-line bg-surface p-4 md:flex">
@@ -26,14 +29,23 @@ function AppShell() {
             {item.label}
           </NavLink>
         ))}
+
+        <div className="mt-auto flex flex-col gap-2 border-t border-line pt-4">
+          <span className="truncate px-3 text-xs text-ink-soft">{user?.email}</span>
+          <button
+            type="button"
+            onClick={() => sair()}
+            className="rounded px-3 py-2 text-left text-sm font-medium text-ink-soft hover:bg-base"
+          >
+            Sair
+          </button>
+        </div>
       </nav>
 
       <div className="flex flex-1 flex-col">
-        <main className="flex-1 p-4 pb-20 md:pb-4">
-          <Outlet />
-        </main>
+        <main className="flex-1 p-4 pb-20 md:pb-4">{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-line bg-surface p-2 md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 flex items-center justify-around border-t border-line bg-surface p-2 md:hidden">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -46,6 +58,13 @@ function AppShell() {
               {item.label}
             </NavLink>
           ))}
+          <button
+            type="button"
+            onClick={() => sair()}
+            className="rounded px-2 py-1 text-xs font-medium text-ink-soft"
+          >
+            Sair
+          </button>
         </nav>
       </div>
     </div>

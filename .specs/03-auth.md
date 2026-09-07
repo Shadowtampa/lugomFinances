@@ -18,12 +18,15 @@ expirada.
 
 ## Decisão de arquitetura
 
-O `supabase-js` é usado **exclusivamente** para autenticação. Ele resolve
-persistência de sessão e refresh de token, que reimplementar em axios seria trabalho
-puro sem retorno. Todo o resto do app (dados) usa axios, como definido no M4.
+O `supabase-js` resolve persistência de sessão e refresh de token — reimplementar
+isso na mão seria trabalho puro sem retorno. Este milestone usa o cliente
+**exclusivamente** para autenticação; a partir do M4, o mesmo cliente (`lib/supabase.ts`)
+também vira o único caminho de acesso a dados (`.from()`/`.rpc()` contra PostgREST),
+já que não há mais motivo para uma lib HTTP à parte.
 
-Nenhum componente importa `supabase` diretamente. O único ponto de contato é o
-`AuthContext` e o `lib/supabase.ts`.
+Nenhum componente React importa `supabase` diretamente. Os únicos pontos de contato
+são o `AuthContext` (auth) e, a partir do M4, a camada de serviços em `src/services/`
+(dados) — ambos importando o cliente único de `lib/supabase.ts`.
 
 ---
 
