@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import ProtectedLayout from './components/layout/ProtectedLayout'
 import CategoriasPage from './pages/CategoriasPage'
 import DashboardPage from './pages/DashboardPage'
+import DebugPage from './pages/DebugPage'
 import EntradasPage from './pages/EntradasPage'
 import FontesPage from './pages/FontesPage'
 import LoginPage from './pages/LoginPage'
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: 'fontes', Component: FontesPage },
       { path: 'categorias', Component: CategoriasPage },
       { path: 'recorrencias', Component: RecorrenciasPage },
+      { path: 'debug', Component: DebugPage },
     ],
   },
   { path: '*', Component: NotFoundPage },
