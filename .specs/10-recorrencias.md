@@ -1,10 +1,10 @@
-# M11 — Recorrências (Contas Fixas)
+# M10 — Recorrências (Contas Fixas)
 
 **Objetivo:** transformar os templates recorrentes em lançamentos reais do mês, com
 confirmação manual. É aqui que "Cadastrar Contas — registrar meus gastos fixos mês a
 mês" vira realidade.
 
-**Pré-requisitos:** M1–M10 concluídos.
+**Pré-requisitos:** M1–M9 concluídos.
 
 ---
 
@@ -32,7 +32,7 @@ parcelamento com número fixo de parcelas.
 
 ## Tarefas
 
-### 11.1 Página — `/recorrencias`
+### 10.1 Página — `/recorrencias`
 
 Duas seções: **Pendentes neste mês** e **Todas as recorrências**.
 
@@ -63,7 +63,7 @@ Pendentes em setembro
 **Todas as recorrências:** lista dos templates ativos e inativos, com ação de
 editar (leva ao modal do M7/M8) e de encerrar.
 
-### 11.2 Lançar uma pendência
+### 10.2 Lançar uma pendência
 
 Clicar em "Lançar" abre um modal de confirmação **pré-preenchido**, não grava direto:
 
@@ -71,7 +71,7 @@ Clicar em "Lançar" abre um modal de confirmação **pré-preenchido**, não gra
 |---|---|
 | Título | do template, editável |
 | Valor | do template, editável — **este é o ponto principal** |
-| Data | resolvida (ver 11.4), editável |
+| Data | resolvida (ver 10.4), editável |
 | Fonte / Split | do template, editável |
 | Categoria (saída) | do template, editável |
 
@@ -82,14 +82,17 @@ Ao confirmar:
 - Entrada → `POST /rest/v1/entradas` com `template_id` preenchido
 - Saída → RPC `criar_saida` com `p_template_id` preenchido
 
-Mostrar o `PainelSaldo` do M9 após o sucesso.
+Mostrar um toast simples com o novo saldo após o sucesso (mesma filosofia da RN-07
+usada nas confirmações de M7/M8) — não depender de um `PainelSaldo` dedicado, pois
+notificações (M12) ainda não existe neste ponto do roadmap. Quando M12 for feito,
+unificar essa confirmação com o `PainelSaldo` de lá.
 
 **Se a saída for bloqueada** (sem saldo), a pendência continua pendente e a mensagem
 explica: "Não há saldo em Conta Corrente para o aluguel de R$ 1.800,00. Registre uma
 entrada ou divida entre outras fontes." Com um botão que leva direto ao formulário de
 entrada.
 
-### 11.3 "Lançar todas"
+### 10.3 "Lançar todas"
 
 Processa em sequência, **parando no primeiro erro**. Ao fim, mostra um resumo:
 
@@ -100,7 +103,7 @@ importa. Sequencial, na ordem do dia de recorrência.
 
 Antes de executar, mostrar um resumo do que será lançado e pedir confirmação.
 
-### 11.4 Resolução de data
+### 10.4 Resolução de data
 
 O template tem `dia_recorrencia`. A data do lançamento no mês corrente é:
 
@@ -113,7 +116,7 @@ Assim, dia 31 vira 28 em fevereiro (ou 29 em bissexto). Implementar em
 `lib/date.ts` como `resolverDiaRecorrencia(ym: string, dia: number): string`, com
 testes cobrindo fevereiro comum, fevereiro bissexto, e meses de 30 dias.
 
-### 11.5 Ignorar neste mês
+### 10.5 Ignorar neste mês
 
 "Ignorar" faz a pendência sumir da lista **apenas do mês corrente**, sem criar
 lançamento. Ex: mês em que o freelance não veio.
@@ -136,7 +139,7 @@ Com RLS e um `not exists` adicional na view `v_recorrencias_pendentes`.
 
 Ação desfazível: após ignorar, o toast oferece "Desfazer" por 8 segundos.
 
-### 11.6 Encerrar recorrência
+### 10.6 Encerrar recorrência
 
 `PATCH` com `recorrencia_ativa = false`. O template para de gerar pendências mas
 continua no histórico como um lançamento normal.
@@ -147,7 +150,7 @@ pendências mensais. Os lançamentos já feitos permanecem."
 Recorrências encerradas ficam na seção "Todas", em estado reduzido, com ação de
 "Reativar".
 
-### 11.7 Indicador global
+### 10.7 Indicador global
 
 Badge com a contagem de pendências no item "Recorrências" da navegação. Se houver
 pendências atrasadas, o badge usa `--color-alerta`; senão, neutro.

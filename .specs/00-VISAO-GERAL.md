@@ -168,13 +168,17 @@ anterior está pronto e funcionando.
 | M6 | `06-fontes.md` | CRUD de Fontes, incluindo fontes restritas e suas categorias |
 | M7 | `07-entradas.md` | CRUD de Entradas |
 | M8 | `08-saidas.md` | Saída com split multi-fonte + validação bloqueante (o coração do sistema) |
-| M9 | `09-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) |
-| M10 | `10-dashboard.md` | Tela inicial: saldo geral, por fonte, por categoria |
-| M11 | `11-recorrencias.md` | Painel de pendências do mês e confirmação manual |
+| M9 | `09-dashboard.md` | Tela inicial: saldo geral, por fonte, por categoria |
+| M10 | `10-recorrencias.md` | Painel de pendências do mês e confirmação manual |
+| M11 | `11-layout-mobile.md` | Passada de responsividade sobre todas as telas existentes |
+| M12 | `12-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) — último milestone |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo
-para testar o bloqueio).
+para testar o bloqueio). M9 e M10 podem ser feitos em qualquer ordem entre si, mas
+ambos antes de M11 (que audita todas as telas) — e M12 é sempre o último, por
+decisão explícita: só faz sentido consolidar as notificações de saldo depois que o
+layout final (inclusive mobile) estiver fechado.
 
 ## 8. Convenções de código
 

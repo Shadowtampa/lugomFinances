@@ -1,10 +1,13 @@
-# M9 — Notificações de Saldo
+# M12 — Notificações de Saldo
 
 **Objetivo:** implementar a RN-07 — depois de registrar uma saída, o usuário vê
 imediatamente quanto sobrou em cada fonte usada e quanto ainda tem na categoria.
 Este era um requisito explícito do caso de uso original.
 
-**Pré-requisitos:** M1–M8 concluídos. O RPC já devolve os dados (M2, seção 2.4).
+**Pré-requisitos:** M1–M11 concluídos. O RPC já devolve os dados (M2, seção 2.4).
+Este é o último milestone do roadmap — a essa altura M7/M8/M10 já mostram toasts
+simples com o novo saldo; aqui eles são substituídos/unificados por um `PainelSaldo`
+dedicado, já dentro do layout responsivo entregue em M11.
 
 ---
 
@@ -30,7 +33,7 @@ categoria**. Ambos vêm prontos no retorno do RPC — não recalcular no cliente
 
 ## Tarefas
 
-### 9.1 Painel de confirmação
+### 12.1 Painel de confirmação
 
 Um toast comum é curto demais para duas ou três linhas de saldo. Usar um **painel de
 confirmação** que aparece no canto (desktop) ou como sheet inferior (mobile), com
@@ -77,7 +80,7 @@ Detalhes:
 - Se o usuário registrar duas saídas rapidamente, o segundo painel substitui o
   primeiro (não empilhar mais de um).
 
-### 9.2 Alertas durante o preenchimento
+### 12.2 Alertas durante o preenchimento
 
 Antes de salvar, à medida que o usuário digita, mostrar o estado projetado. Isso é
 mais valioso que o aviso pós-fato — permite corrigir antes de errar.
@@ -98,7 +101,7 @@ Regras:
   reforça o bloqueio já indicado pelo select desabilitado.
 - Sem animação. O número muda enquanto se digita; movimento aqui vira ruído.
 
-### 9.3 Aviso de saldo baixo
+### 12.3 Aviso de saldo baixo
 
 Quando um lançamento deixa uma fonte com menos de 10% do que ela tinha, ou menos de
 R$ 50 — o que for maior — adicionar uma linha ao painel:
@@ -110,13 +113,13 @@ Sem exclamação, sem ícone de alerta. É uma observação, não um alarme.
 Não implementar isso para categoria — categoria já tem barra de progresso no
 dashboard e o painel já mostra o restante.
 
-### 9.4 Reuso em entradas
+### 12.4 Reuso em entradas
 
 O toast de entrada do M7 já mostra o saldo novo. Refatorar para usar o mesmo
 componente de painel, com uma única linha de fonte. Consistência de vocabulário e de
 forma entre os dois fluxos.
 
-### 9.5 Componente
+### 12.5 Componente
 
 `src/components/ui/PainelSaldo.tsx`:
 
@@ -138,7 +141,7 @@ type Props = {
 }
 ```
 
-Genérico o suficiente para servir entrada, saída e (no M11) confirmação de
+Genérico o suficiente para servir entrada, saída e (no M10) confirmação de
 recorrência.
 
 ---

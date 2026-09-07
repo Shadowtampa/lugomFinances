@@ -73,12 +73,15 @@ M1 setup
              │   └─ M6 fontes          (fonte restrita referencia categorias)
              │       └─ M7 entradas    (entrada precisa de fonte)
              │           └─ M8 saídas  (saída precisa de saldo para testar bloqueio)
-             │               ├─ M9  notificações
-             │               ├─ M10 dashboard
-             │               └─ M11 recorrências
+             │               ├─ M9  dashboard
+             │               └─ M10 recorrências
+             │                   └─ M11 layout mobile     (audita todas as telas)
+             │                       └─ M12 notificações  (último — consolida saldo já no layout final)
 ```
 
-M9, M10 e M11 podem ser feitos em qualquer ordem entre si.
+M9 e M10 podem ser feitos em qualquer ordem entre si, mas ambos precisam estar
+prontos antes de M11 (não dá pra auditar responsividade de uma tela que ainda não
+existe). M12 é sempre o último milestone do roadmap.
 
 ## Pontos de atenção conhecidos
 

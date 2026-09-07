@@ -16,7 +16,7 @@ Uber de sair do VR.
 **Dentro:** lista mensal, formulário com split, validação preventiva no cliente,
 tratamento dos erros bloqueantes do RPC, edição, exclusão.
 
-**Fora:** as notificações de saldo pós-lançamento (M9 — aqui só se garante que o RPC
+**Fora:** as notificações de saldo pós-lançamento (M12 — aqui só se garante que o RPC
 devolve os dados), parcelamento, anexo de nota.
 
 ---

@@ -40,7 +40,9 @@ The spec set in `.specs/` is the source of truth and is meant to be worked one m
 ```
 M1 setup → M2 schema → M3 auth → M4 camada de dados
   → M5 categorias → M6 fontes → M7 entradas → M8 saidas
-      → M9 notificacoes, M10 dashboard, M11 recorrencias (any order among these three)
+      → M9 dashboard, M10 recorrencias (any order between these two)
+          → M11 layout mobile (audits all screens, needs them all built first)
+              → M12 notificacoes (always last — consolidates balance feedback into the final layout)
 ```
 
 Each `NN-*.md` file has its own Escopo, Tarefas, Critérios de aceite, and Definition of Done. Read the target milestone's spec file (plus `00-VISAO-GERAL.md`) fully before writing code for it. If a spec turns out to be wrong once code exists, **update the spec first, then the code** — a stale spec is worse than none, because it will be trusted on the next session.

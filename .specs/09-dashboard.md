@@ -1,9 +1,9 @@
-# M10 — Dashboard
+# M9 — Dashboard
 
 **Objetivo:** a tela inicial responde, em menos de dois segundos de leitura: quanto
 posso gastar, de onde, e em que estou perto de estourar.
 
-**Pré-requisitos:** M1–M9 concluídos.
+**Pré-requisitos:** M1–M8 concluídos.
 
 ---
 
@@ -31,7 +31,7 @@ erro que este sistema existe para evitar.
 
 ## Tarefas
 
-### 10.1 Resumo do topo
+### 9.1 Resumo do topo
 
 ```
 Disponível para gastar
@@ -45,9 +45,9 @@ R$ 855,00 em fontes restritas    ·    R$ 4.833,00 no total
   em maiúsculas.
 - Linha secundária com restrito e total, 14px, `--color-ink-soft`.
 - Fonte de dados: `obterResumoGeral()` (view `v_resumo_geral`).
-- Se não houver nenhuma fonte, substituir tudo por um onboarding (ver 10.6).
+- Se não houver nenhuma fonte, substituir tudo por um onboarding (ver 9.6).
 
-### 10.2 Fontes
+### 9.2 Fontes
 
 Reusar o cartão de fonte do M6, em versão compacta. Grade responsiva. Cada cartão
 navega para a fonte ao clicar.
@@ -56,7 +56,7 @@ Ordenação: livres primeiro (maior saldo antes), depois restritas.
 
 Limitar a 6 cartões com link "Ver todas" se houver mais.
 
-### 10.3 Consumo de categorias
+### 9.3 Consumo de categorias
 
 Só as categorias **com limite**, ordenadas por percentual de consumo decrescente — o
 que está mais perto do limite aparece primeiro. Categorias sem limite não entram aqui;
@@ -74,7 +74,7 @@ Limitar a 5, com "Ver todas". Se nenhuma categoria tiver limite, ocultar a seç�
 inteira e mostrar uma linha discreta: "Defina limites nas suas categorias para
 acompanhar o consumo aqui." com link para `/categorias`.
 
-### 10.4 Últimos lançamentos
+### 9.4 Últimos lançamentos
 
 Lista unificada de entradas e saídas, últimos 10, ordenados por data decrescente.
 Entradas com valor em `--color-livre` e prefixo `+`; saídas em `--color-ink` com
@@ -91,7 +91,7 @@ ordenadas no cliente. `Promise.all`, não sequencial.
 
 Clique leva ao item na tela correspondente.
 
-### 10.5 Ações rápidas
+### 9.5 Ações rápidas
 
 Dois botões no header da página: **"Registrar saída"** (primário) e **"Registrar
 entrada"** (secundário). Abrem os mesmos modais do M7 e M8, sem navegar.
@@ -102,7 +102,7 @@ vezes por dia, ao contrário da entrada.
 Após salvar, o dashboard recarrega os dados afetados. Recarregar tudo é aceitável no
 MVP; um usuário, poucas linhas.
 
-### 10.6 Onboarding (estado zero)
+### 9.6 Onboarding (estado zero)
 
 Se não houver fontes **nem** categorias, o dashboard não mostra números vazios nem
 zeros. Mostra três passos, e cada um só fica disponível quando o anterior está feito:
@@ -118,7 +118,7 @@ porque é de fato uma sequência.
 
 Quando o estado zero passa, o onboarding desaparece permanentemente.
 
-### 10.7 Performance e carregamento
+### 9.7 Performance e carregamento
 
 - Carregar resumo, fontes e categorias em paralelo com `Promise.all`.
 - Skeleton de carregamento com a mesma altura do conteúdo final, para evitar salto de

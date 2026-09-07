@@ -11,7 +11,7 @@ sistema — sem ele, nenhuma saída pode ser testada.
 
 **Dentro:** lista mensal, criar, editar, excluir, marcação de recorrência.
 
-**Fora:** o lançamento automático de recorrências (é o M11 — aqui só se *marca* como
+**Fora:** o lançamento automático de recorrências (é o M10 — aqui só se *marca* como
 recorrente), split de entrada entre fontes, anexos.
 
 ---
@@ -77,7 +77,7 @@ entrada." + botão "Criar fonte" que leva a `/fontes`.
 
 **Sobre dia da recorrência 29, 30, 31:** meses curtos não têm esses dias. Ao escolher
 um valor > 28, mostrar aviso inline: "Em meses mais curtos, será sugerido o último dia
-do mês." A regra de resolução fica no M11.
+do mês." A regra de resolução fica no M10.
 
 ### 7.3 Feedback ao salvar
 
