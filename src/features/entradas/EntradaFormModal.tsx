@@ -14,6 +14,7 @@ import type { Entrada, Fonte } from '../../types/domain'
 interface EntradaFormModalProps {
   aberto: boolean
   entrada?: Entrada
+  duplicarDe?: Entrada
   fontes: Fonte[]
   onFechar(): void
   onSalvo(fonteId: string): void
@@ -31,21 +32,30 @@ function diaDe(dataISO: string): number {
   return Number(dataISO.split('-')[2])
 }
 
-function EntradaFormModal({ aberto, entrada, fontes, onFechar, onSalvo }: EntradaFormModalProps) {
+function EntradaFormModal({
+  aberto,
+  entrada,
+  duplicarDe,
+  fontes,
+  onFechar,
+  onSalvo,
+}: EntradaFormModalProps) {
   const { showToast } = useToast()
   const tituloRef = useRef<HTMLInputElement>(null)
 
-  const [titulo, setTitulo] = useState(entrada?.titulo ?? '')
+  const origem = entrada ?? duplicarDe
+
+  const [titulo, setTitulo] = useState(origem?.titulo ?? '')
   const [erroTitulo, setErroTitulo] = useState<string | null>(null)
-  const [valorCentavos, setValorCentavos] = useState(entrada?.valorCentavos ?? 0)
+  const [valorCentavos, setValorCentavos] = useState(origem?.valorCentavos ?? 0)
   const [erroValor, setErroValor] = useState<string | null>(null)
-  const [fonteId, setFonteId] = useState(entrada?.fonteId ?? fontes[0]?.id ?? '')
+  const [fonteId, setFonteId] = useState(origem?.fonteId ?? fontes[0]?.id ?? '')
   const [erroFonte, setErroFonte] = useState<string | null>(null)
-  const [data, setData] = useState(entrada?.data ?? hojeISO())
+  const [data, setData] = useState(origem?.data ?? hojeISO())
   const [erroData, setErroData] = useState<string | null>(null)
-  const [recorrente, setRecorrente] = useState(entrada?.recorrente ?? false)
+  const [recorrente, setRecorrente] = useState(origem?.recorrente ?? false)
   const [diaRecorrencia, setDiaRecorrencia] = useState(
-    entrada?.diaRecorrencia ?? diaDe(entrada?.data ?? hojeISO()),
+    origem?.diaRecorrencia ?? diaDe(origem?.data ?? hojeISO()),
   )
   const [erroDia, setErroDia] = useState<string | null>(null)
   const [erroGeral, setErroGeral] = useState<string | null>(null)

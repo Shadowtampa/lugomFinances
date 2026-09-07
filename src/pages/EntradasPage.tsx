@@ -40,6 +40,7 @@ function EntradasPage() {
 
   const [formAberto, setFormAberto] = useState(false)
   const [entradaEditando, setEntradaEditando] = useState<Entrada | undefined>()
+  const [duplicandoDe, setDuplicandoDe] = useState<Entrada | undefined>()
   const [aberturaId, setAberturaId] = useState(0)
   const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null)
 
@@ -81,12 +82,22 @@ function EntradasPage() {
   function abrirCriar() {
     if ((dados.data?.fontes.length ?? 0) === 0) return
     setEntradaEditando(undefined)
+    setDuplicandoDe(undefined)
     setFormAberto(true)
     setAberturaId((id) => id + 1)
   }
 
   function abrirEditar(entrada: Entrada) {
     setEntradaEditando(entrada)
+    setDuplicandoDe(undefined)
+    setFormAberto(true)
+    setAberturaId((id) => id + 1)
+    setMenuAbertoId(null)
+  }
+
+  function abrirDuplicar(entrada: Entrada) {
+    setEntradaEditando(undefined)
+    setDuplicandoDe(entrada)
     setFormAberto(true)
     setAberturaId((id) => id + 1)
     setMenuAbertoId(null)
@@ -302,6 +313,26 @@ function EntradasPage() {
                       <div className="absolute right-0 top-full z-20 mt-1 rounded border border-line bg-surface shadow-lg">
                         <button
                           type="button"
+                          className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            abrirEditar(entrada)
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            abrirDuplicar(entrada)
+                          }}
+                        >
+                          Duplicar
+                        </button>
+                        <button
+                          type="button"
                           className="whitespace-nowrap px-4 py-2 text-left text-sm text-alerta hover:bg-base"
                           onClick={(event) => {
                             event.stopPropagation()
@@ -324,6 +355,7 @@ function EntradasPage() {
         key={aberturaId}
         aberto={formAberto}
         entrada={entradaEditando}
+        duplicarDe={duplicandoDe}
         fontes={dados.data?.fontes ?? []}
         onFechar={() => setFormAberto(false)}
         onSalvo={(fonteIdSalvo) => {
