@@ -24,6 +24,13 @@ export async function criarCategoria(
   return paraCategoria(row)
 }
 
+export async function obterCategoria(id: string): Promise<Categoria> {
+  const row = unwrap<CategoriaRow>(
+    await supabase.from('categorias').select('*').eq('id', id).single(),
+  )
+  return paraCategoria(row)
+}
+
 export async function atualizarCategoria(
   id: string,
   dados: Partial<Categoria>,

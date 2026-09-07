@@ -11,8 +11,14 @@ import { CORES_CATEGORIA } from '../features/categorias/cores'
 import { mesAtual, primeiroDiaDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
 import { useAsync } from '../hooks/useAsync'
-import { arquivarCategoria, atualizarCategoria, criarCategoria, listarSaldosCategorias } from '../services/categorias'
-import type { SaldoCategoria } from '../types/domain'
+import {
+  arquivarCategoria,
+  atualizarCategoria,
+  criarCategoria,
+  listarSaldosCategorias,
+  obterCategoria,
+} from '../services/categorias'
+import type { Categoria, SaldoCategoria } from '../types/domain'
 
 const SUGESTOES = [
   'Alimentação',
@@ -35,10 +41,11 @@ function CategoriasPage() {
 
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false)
   const [formAberto, setFormAberto] = useState(false)
-  const [categoriaEditando, setCategoriaEditando] = useState<SaldoCategoria | undefined>()
+  const [categoriaEditando, setCategoriaEditando] = useState<Categoria | undefined>()
   const [aberturaId, setAberturaId] = useState(0)
   const [categoriaArquivando, setCategoriaArquivando] = useState<SaldoCategoria | null>(null)
   const [criandoSugestoes, setCriandoSugestoes] = useState(false)
+  const [carregandoEdicao, setCarregandoEdicao] = useState<string | null>(null)
 
   const linhas = useMemo(() => {
     const base = (saldos.data ?? []).filter((c) => mostrarArquivadas || !c.arquivada)
@@ -56,10 +63,18 @@ function CategoriasPage() {
     setAberturaId((id) => id + 1)
   }
 
-  function abrirEditar(categoria: SaldoCategoria) {
-    setCategoriaEditando(categoria)
-    setFormAberto(true)
-    setAberturaId((id) => id + 1)
+  async function abrirEditar(categoria: SaldoCategoria) {
+    setCarregandoEdicao(categoria.id)
+    try {
+      const categoriaCompleta = await obterCategoria(categoria.id)
+      setCategoriaEditando(categoriaCompleta)
+      setFormAberto(true)
+      setAberturaId((id) => id + 1)
+    } catch (e) {
+      showToast(mensagemDoErro(e), 'error')
+    } finally {
+      setCarregandoEdicao(null)
+    }
   }
 
   async function confirmarArquivar() {
@@ -166,7 +181,12 @@ function CategoriasPage() {
                     </Button>
                   ) : (
                     <>
-                      <Button variant="ghost" onClick={() => abrirEditar(categoria)}>
+                      <Button
+                        variant="ghost"
+                        loading={carregandoEdicao === categoria.id}
+                        disabled={carregandoEdicao !== null}
+                        onClick={() => abrirEditar(categoria)}
+                      >
                         Editar
                       </Button>
                       <Button variant="ghost" onClick={() => setCategoriaArquivando(categoria)}>
