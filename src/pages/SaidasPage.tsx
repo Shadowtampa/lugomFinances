@@ -68,6 +68,7 @@ function SaidasPage() {
 
   const [formAberto, setFormAberto] = useState(false)
   const [saidaEditando, setSaidaEditando] = useState<Saida | undefined>()
+  const [duplicandoDe, setDuplicandoDe] = useState<Saida | undefined>()
   const [aberturaId, setAberturaId] = useState(0)
   const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null)
   const [expandidoId, setExpandidoId] = useState<string | null>(null)
@@ -122,12 +123,22 @@ function SaidasPage() {
   function abrirCriar() {
     if (semFontes || semCategorias) return
     setSaidaEditando(undefined)
+    setDuplicandoDe(undefined)
     setFormAberto(true)
     setAberturaId((id) => id + 1)
   }
 
   function abrirEditar(saida: Saida) {
     setSaidaEditando(saida)
+    setDuplicandoDe(undefined)
+    setFormAberto(true)
+    setAberturaId((id) => id + 1)
+    setMenuAbertoId(null)
+  }
+
+  function abrirDuplicar(saida: Saida) {
+    setSaidaEditando(undefined)
+    setDuplicandoDe(saida)
     setFormAberto(true)
     setAberturaId((id) => id + 1)
     setMenuAbertoId(null)
@@ -336,6 +347,16 @@ function SaidasPage() {
                           </button>
                           <button
                             type="button"
+                            className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              abrirDuplicar(saida)
+                            }}
+                          >
+                            Duplicar
+                          </button>
+                          <button
+                            type="button"
                             className="whitespace-nowrap px-4 py-2 text-left text-sm text-alerta hover:bg-base"
                             onClick={(event) => {
                               event.stopPropagation()
@@ -369,6 +390,7 @@ function SaidasPage() {
         key={aberturaId}
         aberto={formAberto}
         saida={saidaEditando}
+        duplicarDe={duplicandoDe}
         fontes={fontesNaoArquivadas}
         categorias={categoriasNaoArquivadas}
         saldosCategorias={dados.data?.saldosCategorias ?? []}

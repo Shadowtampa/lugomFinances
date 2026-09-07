@@ -15,6 +15,7 @@ import { avaliarFonte, type FonteComSaldo } from './elegibilidade'
 interface SaidaFormModalProps {
   aberto: boolean
   saida?: Saida
+  duplicarDe?: Saida
   fontes: FonteComSaldo[]
   categorias: Categoria[]
   saldosCategorias: SaldoCategoria[]
@@ -43,6 +44,7 @@ function opcaoLabel(fonte: FonteComSaldo, motivo: string | undefined): string {
 function SaidaFormModal({
   aberto,
   saida,
+  duplicarDe,
   fontes,
   categorias,
   saldosCategorias,
@@ -52,21 +54,23 @@ function SaidaFormModal({
   const { showToast } = useToast()
   const tituloRef = useRef<HTMLInputElement>(null)
 
-  const splitsIniciais: LinhaSplit[] = saida
-    ? saida.splits.map((s) => ({ fonteId: s.fonteId, valorCentavos: s.valorCentavos }))
+  const origem = saida ?? duplicarDe
+
+  const splitsIniciais: LinhaSplit[] = origem
+    ? origem.splits.map((s) => ({ fonteId: s.fonteId, valorCentavos: s.valorCentavos }))
     : []
 
-  const [titulo, setTitulo] = useState(saida?.titulo ?? '')
+  const [titulo, setTitulo] = useState(origem?.titulo ?? '')
   const [erroTitulo, setErroTitulo] = useState<string | null>(null)
-  const [valorCentavos, setValorCentavos] = useState(saida?.valorTotalCentavos ?? 0)
+  const [valorCentavos, setValorCentavos] = useState(origem?.valorTotalCentavos ?? 0)
   const [erroValor, setErroValor] = useState<string | null>(null)
-  const [categoriaId, setCategoriaId] = useState(saida?.categoriaId ?? '')
+  const [categoriaId, setCategoriaId] = useState(origem?.categoriaId ?? '')
   const [erroCategoria, setErroCategoria] = useState<string | null>(null)
-  const [data, setData] = useState(saida?.data ?? hojeISO())
+  const [data, setData] = useState(origem?.data ?? hojeISO())
   const [erroData, setErroData] = useState<string | null>(null)
-  const [recorrente, setRecorrente] = useState(saida?.recorrente ?? false)
+  const [recorrente, setRecorrente] = useState(origem?.recorrente ?? false)
   const [diaRecorrencia, setDiaRecorrencia] = useState(
-    saida?.diaRecorrencia ?? diaDe(saida?.data ?? hojeISO()),
+    origem?.diaRecorrencia ?? diaDe(origem?.data ?? hojeISO()),
   )
   const [erroDia, setErroDia] = useState<string | null>(null)
 

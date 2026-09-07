@@ -49,6 +49,12 @@ Commit convention: one commit per completed milestone, message `M<n>: <título d
 
 Branch convention: each milestone starts on its own branch off the base branch, named `m<n>-<slug>` (e.g. `m3-auth`). Don't stack multiple milestones on one branch.
 
+## Git actions
+
+Never `git commit`, `push`, or merge a branch unless the user explicitly asks for
+it in that turn. Finishing or verifying a milestone/feature is not itself
+permission — wait to be told.
+
 ## Commands
 
 None yet — no `package.json` exists. Once M1 is scaffolded (Vite + React + TS template), the standard `npm run dev` / `npm run build` / `npm run lint` / `vitest` commands apply per `.specs/01-setup-fundacao.md`. Update this section once the project is scaffolded.
