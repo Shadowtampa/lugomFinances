@@ -5,9 +5,15 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: ReactNode
+  size?: 'md' | 'xl'
 }
 
-function Modal({ open, onClose, title, children }: ModalProps) {
+const sizeClasses: Record<'md' | 'xl', string> = {
+  md: 'max-w-md',
+  xl: 'max-w-2xl',
+}
+
+function Modal({ open, onClose, title, children, size = 'md' }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<Element | null>(null)
 
@@ -64,7 +70,7 @@ function Modal({ open, onClose, title, children }: ModalProps) {
         aria-modal="true"
         aria-labelledby="modal-title"
         tabIndex={-1}
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded bg-surface p-6 shadow-lg outline-none"
+        className={`max-h-[90vh] w-full ${sizeClasses[size]} overflow-y-auto rounded bg-surface p-6 shadow-lg outline-none`}
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="modal-title" className="mb-4 text-lg font-medium text-ink">
