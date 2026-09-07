@@ -64,7 +64,7 @@ function Modal({ open, onClose, title, children }: ModalProps) {
         aria-modal="true"
         aria-labelledby="modal-title"
         tabIndex={-1}
-        className="w-full max-w-md rounded bg-surface p-6 shadow-lg outline-none"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded bg-surface p-6 shadow-lg outline-none"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="modal-title" className="mb-4 text-lg font-medium text-ink">
