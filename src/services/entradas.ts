@@ -8,6 +8,7 @@ import { deEntrada, paraEntrada } from './mappers'
 export async function listarEntradas(filtro?: {
   mes?: string
   fonteId?: string
+  limite?: number
 }): Promise<Entrada[]> {
   let query = supabase.from('entradas').select('*').order('data', { ascending: false })
 
@@ -16,6 +17,9 @@ export async function listarEntradas(filtro?: {
   }
   if (filtro?.fonteId) {
     query = query.eq('fonte_id', filtro.fonteId)
+  }
+  if (filtro?.limite) {
+    query = query.limit(filtro.limite)
   }
 
   const rows = unwrap<EntradaRow[]>(await query)

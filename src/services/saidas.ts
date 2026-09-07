@@ -9,6 +9,7 @@ export async function listarSaidas(filtro?: {
   mes?: string
   categoriaId?: string
   fonteId?: string
+  limite?: number
 }): Promise<Saida[]> {
   let query = supabase
     .from('saidas')
@@ -20,6 +21,9 @@ export async function listarSaidas(filtro?: {
   }
   if (filtro?.categoriaId) {
     query = query.eq('categoria_id', filtro.categoriaId)
+  }
+  if (filtro?.limite) {
+    query = query.limit(filtro.limite)
   }
 
   const rows = unwrap<SaidaRow[]>(await query)
