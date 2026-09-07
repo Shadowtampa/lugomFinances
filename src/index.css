@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base: #F1F3F1;
+  --color-surface: #FFFFFF;
+  --color-ink: #131C18;
+  --color-ink-soft: #5C6B64;
+  --color-line: #DDE2DE;
+  --color-livre: #0F6E4F;
+  --color-restrita: #3D52A8;
+  --color-alerta: #A32E2E;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+}
+
+body {
+  background-color: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.font-money {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
