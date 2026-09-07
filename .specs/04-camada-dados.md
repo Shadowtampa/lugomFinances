@@ -1,8 +1,8 @@
-# M4 — Camada de Dados (axios + PostgREST)
+# M4 — Camada de Dados (supabase-js)
 
 **Objetivo:** uma camada de serviços tipada que isola completamente o resto do app do
-formato do Supabase. Nenhum componente React vai conhecer `snake_case`, PostgREST ou
-formato de erro do Postgres.
+formato do Supabase. Nenhum componente React vai conhecer `snake_case`, o client do
+`supabase-js` ou o formato de erro do Postgres.
 
 **Pré-requisitos:** M1, M2 e M3 concluídos.
 
@@ -10,73 +10,43 @@ formato de erro do Postgres.
 
 ## Escopo
 
-**Dentro:** instância axios, interceptors, tipos do domínio, mappers, funções de
-serviço para todas as entidades, tratamento de erro, hook genérico de fetch.
+**Dentro:** normalização de erro sobre o cliente `supabase-js` já existente (M3),
+tipos do domínio, mappers, funções de serviço para todas as entidades, hook genérico
+de fetch.
 
 **Fora:** UI, telas, formulários.
 
 ---
 
-## Como o PostgREST funciona (referência rápida)
+## Como o cliente acessa o Postgres (referência rápida)
 
-O Supabase expõe cada tabela e view como endpoint REST:
+Não existe camada HTTP própria — `supabase-js` já fala PostgREST/RPC por baixo,
+injeta `apikey` e o `access_token` da sessão atual (com refresh automático) em toda
+chamada. A API é sempre `{ data, error, status }`, nunca lança exceção sozinha:
 
 | Operação | Chamada |
 |---|---|
-| Listar | `GET /rest/v1/fontes?select=*&order=nome.asc` |
-| Filtrar | `GET /rest/v1/saidas?data=gte.2026-09-01&data=lte.2026-09-30` |
-| Inserir | `POST /rest/v1/entradas` + header `Prefer: return=representation` |
-| Atualizar | `PATCH /rest/v1/entradas?id=eq.<uuid>` |
-| Excluir | `DELETE /rest/v1/entradas?id=eq.<uuid>` |
-| RPC | `POST /rest/v1/rpc/criar_saida` com os args no body |
-| Embed | `GET /rest/v1/saidas?select=*,saida_splits(*),categorias(nome)` |
+| Listar | `supabase.from('fontes').select('*').order('nome')` |
+| Filtrar | `supabase.from('saidas').select('*').gte('data', ini).lte('data', fim)` |
+| Inserir | `supabase.from('entradas').insert(dados).select().single()` |
+| Atualizar | `supabase.from('entradas').update(dados).eq('id', id).select().single()` |
+| Excluir | `supabase.from('entradas').delete().eq('id', id)` |
+| RPC | `supabase.rpc('criar_saida', { p_titulo: ..., p_splits: ... })` |
+| Embed | `supabase.from('saidas').select('*, saida_splits(*), categorias(nome)')` |
 
-Headers obrigatórios em toda chamada:
-```
-apikey: <ANON_KEY>
-Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-Sem `Prefer: return=representation`, um `POST` retorna 201 com corpo vazio.
+`.select()` depois de `insert`/`update` é o equivalente ao antigo
+`Prefer: return=representation` — sem ele o retorno vem vazio.
 
 ---
 
 ## Tarefas
 
-### 4.1 Instância axios
+### 4.1 Normalização de erro
 
-`src/lib/api.ts`:
+Todo `{ data, error }` do `supabase-js` passa por um helper único antes de chegar nos
+serviços — sem isso cada `services/*.ts` reimplementaria o parsing de erro na mão.
 
-```ts
-import axios from 'axios'
-import { env } from './env'
-import { supabase } from './supabase'
-
-export const api = axios.create({
-  baseURL: `${env.supabaseUrl}/rest/v1`,
-  headers: {
-    apikey: env.supabaseAnonKey,
-    'Content-Type': 'application/json',
-  },
-})
-```
-
-**Interceptor de request** — injeta o token da sessão atual antes de cada chamada:
-
-```ts
-api.interceptors.request.use(async (config) => {
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-```
-
-> `getSession()` já devolve um token válido e dispara refresh se necessário — por isso
-> ele fica dentro do interceptor, e não numa variável capturada uma vez.
-
-**Interceptor de response** — normaliza todo erro num formato único:
+`src/lib/erros.ts`:
 
 ```ts
 export type ApiError = {
@@ -85,24 +55,30 @@ export type ApiError = {
   detalhe?: string      // texto cru, só para log
   status?: number
 }
+
+export function unwrap<T>(resultado: { data: T | null; error: PostgrestError | null; status?: number }): T
+export function mensagemDoErro(e: unknown): string
 ```
 
-Regras de normalização:
+`unwrap` lança um `ApiError` (via `throw`) quando `error` não é nulo; senão devolve
+`data`. Todo serviço em 4.4 chama `unwrap(await supabase.from(...)...)`.
 
-- **401 / 403** → `codigo: 'UNAUTHORIZED'`, dispara `supabase.auth.signOut()` e
-  mensagem "Sua sessão expirou. Entre novamente."
-- **Sem `error.response`** (rede) → `codigo: 'NETWORK'`, "Não foi possível conectar.
-  Verifique sua internet."
-- **Erro do Postgres** vindo de RPC: o corpo tem `{ message, details, hint, code }`.
-  Extrair o prefixo antes do `:` de `message` — se bater com um dos códigos
-  conhecidos do M2, usar como `codigo`. Senão `UNKNOWN`.
-- **409** (violação de unique) → `codigo: 'DUPLICADO'`, "Já existe um registro com
-  esse nome."
+Regras de normalização (aplicadas dentro de `unwrap`):
+
+- **401 / 403**, ou código Postgres `PGRST301`/JWT expirado → `codigo: 'UNAUTHORIZED'`,
+  dispara `supabase.auth.signOut()` e mensagem "Sua sessão expirou. Entre novamente."
+- **Erro de rede** (`error.message` contém `Failed to fetch` ou é uma
+  `TypeError`/`AuthRetryableFetchError`) → `codigo: 'NETWORK'`, "Não foi possível
+  conectar. Verifique sua internet."
+- **Erro do RPC** (`criar_saida` e afins): a mensagem vem como
+  `"CODIGO: detalhe"` (ver M2). Extrair o prefixo antes do `:` — se bater com um dos
+  códigos conhecidos do M2, usar como `codigo`. Senão `UNKNOWN`.
+- **Código Postgres `23505`** (violação de unique) → `codigo: 'DUPLICADO'`, "Já existe
+  um registro com esse nome."
 - Qualquer outro → `UNKNOWN`, "Algo deu errado. Tente novamente."
 
-Criar `src/lib/erros.ts` com um mapa `codigo → mensagem` e uma função
-`mensagemDoErro(e: unknown): string`. Assim as mensagens ficam num lugar só e não
-espalhadas por componentes.
+Criar também um mapa `codigo → mensagem` e a função `mensagemDoErro(e: unknown): string`
+usada pela UI, assim as mensagens ficam num lugar só e não espalhadas por componentes.
 
 **Nunca** exponha `detalhe` na UI. Ele vai só para `console.error` em dev.
 

@@ -109,18 +109,18 @@ Nunca `float`. A conversão para reais acontece só na borda da UI.
 | UI | React 19 | |
 | Estilo | Tailwind CSS v4 | |
 | Rotas | **React Router v7** | ~12M downloads/semana, contra 1.2M do TanStack Router. Modo `declarative` (SPA), sem framework mode |
-| HTTP | axios | consome a REST API do Supabase (PostgREST) |
-| Auth | `@supabase/supabase-js` | **só** para autenticação/sessão/refresh token |
+| Dados + Auth | `@supabase/supabase-js` | cliente único — sessão/refresh token **e** todo acesso a dados (PostgREST + RPC via `.from()`/`.rpc()`) |
 | Backend | Supabase (Postgres + PostgREST + Auth + RLS) | |
 | Deploy | Vercel | |
 
-### Sobre axios + Supabase
+### Sobre o cliente único supabase-js
 
-O requisito é usar axios, então **todos os dados** passam por axios direto no
-PostgREST (`/rest/v1/...`), com o JWT da sessão no header. O `supabase-js` entra
-apenas para gerenciar login, sessão e refresh de token — reimplementar refresh token
-à mão é fonte garantida de bug e não agrega nada ao projeto. Essa é a única
-responsabilidade dele.
+Só nos importamos com Supabase, então não faz sentido carregar uma lib HTTP à parte
+para reimplementar o que o `supabase-js` já resolve — ele já injeta o JWT da sessão e
+a `apikey` em toda chamada, e dispara refresh de token sozinho. Um único cliente
+(`src/lib/supabase.ts`) serve autenticação **e** dados: componentes React nunca o
+importam diretamente — só a camada de serviços (`src/services/*.ts`) e o
+`AuthContext`.
 
 ## 6. Modelo de dados (resumo)
 
@@ -160,10 +160,10 @@ anterior está pronto e funcionando.
 
 | # | Spec | Entrega |
 |---|---|---|
-| M1 | `01-setup-fundacao.md` | Projeto Vite+React+Tailwind+Router+axios rodando, design tokens, deploy na Vercel |
+| M1 | `01-setup-fundacao.md` | Projeto Vite+React+Tailwind+Router rodando, design tokens, deploy na Vercel |
 | M2 | `02-supabase-schema.md` | Banco completo: tabelas, views, RPC, RLS, seed |
 | M3 | `03-auth.md` | Login, sessão persistida, rotas protegidas |
-| M4 | `04-camada-dados.md` | Cliente axios, interceptors, camada de serviços tipada |
+| M4 | `04-camada-dados.md` | Camada de serviços tipada sobre o cliente supabase-js |
 | M5 | `05-categorias.md` | CRUD de Categorias com limite mensal |
 | M6 | `06-fontes.md` | CRUD de Fontes, incluindo fontes restritas e suas categorias |
 | M7 | `07-entradas.md` | CRUD de Entradas |
@@ -199,8 +199,8 @@ src/
   App.tsx
   routes.tsx
   lib/
-    supabase.ts        # cliente supabase-js (só auth)
-    api.ts             # instância axios + interceptors
+    supabase.ts        # cliente supabase-js único (auth + dados)
+    erros.ts           # normalização de erro (ApiError, mensagemDoErro)
     money.ts           # formatBRL / parseBRL
     date.ts            # helpers de mês/competência
   contexts/

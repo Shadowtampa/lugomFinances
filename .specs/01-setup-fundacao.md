@@ -11,7 +11,7 @@ M2), Node 20+.
 
 ## Escopo
 
-**Dentro:** scaffold Vite, Tailwind v4, React Router v7, axios instalado, variáveis
+**Dentro:** scaffold Vite, Tailwind v4, React Router v7, variáveis
 de ambiente, design tokens, componentes base de UI, layout shell, deploy.
 
 **Fora:** qualquer chamada real de API, autenticação, tabelas do banco.
@@ -26,7 +26,7 @@ de ambiente, design tokens, componentes base de UI, layout shell, deploy.
 npm create vite@latest lugom -- --template react-ts
 cd lugom
 npm install
-npm install react-router axios @supabase/supabase-js
+npm install react-router @supabase/supabase-js
 npm install -D tailwindcss @tailwindcss/vite
 ```
 
