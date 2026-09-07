@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router'
-import AppShell from './components/layout/AppShell'
+import ProtectedLayout from './components/layout/ProtectedLayout'
 import CategoriasPage from './pages/CategoriasPage'
 import DashboardPage from './pages/DashboardPage'
 import EntradasPage from './pages/EntradasPage'
@@ -13,7 +13,7 @@ export const router = createBrowserRouter([
   { path: '/login', Component: LoginPage },
   {
     path: '/',
-    Component: AppShell,
+    Component: ProtectedLayout,
     children: [
       { index: true, Component: DashboardPage },
       { path: 'entradas', Component: EntradasPage },
