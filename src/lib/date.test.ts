@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatarData, nomeDoMes, primeiroDiaDoMes, ultimoDiaDoMes } from './date'
+import { deslocarMes, formatarData, nomeDoMes, primeiroDiaDoMes, ultimoDiaDoMes } from './date'
 
 describe('primeiroDiaDoMes', () => {
   it('retorna o primeiro dia do mês', () => {
@@ -30,5 +30,23 @@ describe('formatarData', () => {
 describe('nomeDoMes', () => {
   it('formata o nome do mês por extenso', () => {
     expect(nomeDoMes('2026-09')).toBe('setembro de 2026')
+  })
+})
+
+describe('deslocarMes', () => {
+  it('avança um mês', () => {
+    expect(deslocarMes('2026-09', 1)).toBe('2026-10')
+  })
+
+  it('retrocede um mês', () => {
+    expect(deslocarMes('2026-09', -1)).toBe('2026-08')
+  })
+
+  it('cruza a virada de ano ao avançar', () => {
+    expect(deslocarMes('2026-12', 1)).toBe('2027-01')
+  })
+
+  it('cruza a virada de ano ao retroceder', () => {
+    expect(deslocarMes('2026-01', -1)).toBe('2025-12')
   })
 })

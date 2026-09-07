@@ -29,3 +29,9 @@ export function nomeDoMes(ym: string): string {
   const [ano, mes] = ym.split('-').map(Number)
   return `${NOMES_MESES[mes - 1]} de ${ano}`
 }
+
+export function deslocarMes(ym: string, delta: number): string {
+  const [ano, mes] = ym.split('-').map(Number)
+  const data = new Date(ano, mes - 1 + delta, 1)
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
+}

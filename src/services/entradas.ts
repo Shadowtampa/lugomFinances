@@ -39,3 +39,13 @@ export async function atualizarEntrada(id: string, dados: Partial<Entrada>): Pro
 export async function excluirEntrada(id: string): Promise<void> {
   unwrap(await supabase.from('entradas').delete().eq('id', id))
 }
+
+export async function excluirTemplateRecorrente(
+  id: string,
+  excluirLancados: boolean,
+): Promise<void> {
+  if (excluirLancados) {
+    unwrap(await supabase.from('entradas').delete().eq('template_id', id))
+  }
+  unwrap(await supabase.from('entradas').delete().eq('id', id))
+}

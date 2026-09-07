@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes } from 'react'
+import { forwardRef, useId, type InputHTMLAttributes } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
@@ -6,7 +6,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-function Input({ label, hint, error, id, className = '', ...props }: InputProps) {
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { label, hint, error, id, className = '', ...props },
+  ref,
+) {
   const generatedId = useId()
   const inputId = id ?? generatedId
   const hintId = hint ? `${inputId}-hint` : undefined
@@ -18,6 +21,7 @@ function Input({ label, hint, error, id, className = '', ...props }: InputProps)
         {label}
       </label>
       <input
+        ref={ref}
         id={inputId}
         className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
           error ? 'border-alerta' : 'border-line'
@@ -38,6 +42,6 @@ function Input({ label, hint, error, id, className = '', ...props }: InputProps)
       )}
     </div>
   )
-}
+})
 
 export default Input
