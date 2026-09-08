@@ -47,6 +47,10 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
 - **Conta** — não é uma entidade separada. "Conta" (gasto fixo mensal, ex: aluguel,
   internet) é apenas uma **Saída com `recorrente = true`**. A UI pode chamar de
   "Conta fixa", mas o banco tem uma única tabela `saidas`.
+- **Cartão de crédito** (M13) — uma Fonte com `eh_cartao = true`, sem saldo
+  disponível: tem `limite_centavos` e `dia_fatura`. Seu saldo é sempre `≤ 0` e
+  representa a dívida atual. No dia da fatura, uma pendência assistida (como as de
+  M10) permite pagar a dívida a partir de uma fonte real.
 
 ### Por que "Fonte" e não "Entrada" como origem da Saída
 
@@ -68,7 +72,8 @@ Tolerância de arredondamento: R$ 0,00 (usar inteiros de centavos, ver RN-10).
 
 **RN-02** — Uma Saída **nunca** pode deixar o saldo de uma Fonte negativo. Se algum
 split exceder o saldo disponível da sua Fonte, a operação inteira é **bloqueada** e
-nada é gravado.
+nada é gravado. *(Exceção: Fontes do tipo cartão de crédito — ver RN-12, M13 — onde
+saldo negativo é o estado normal e o bloqueio é por limite, não por saldo.)*
 
 **RN-03** — Se a Fonte é `restrita`, a Categoria da Saída precisa estar na lista de
 categorias permitidas daquela Fonte. Senão, bloqueia. *(É esta regra que impede o
@@ -101,6 +106,15 @@ Nunca `float`. A conversão para reais acontece só na borda da UI.
 
 **RN-11** — Todo dado é escopo do usuário logado. RLS obrigatório em todas as tabelas.
 
+**RN-12** (M13) — Uma Fonte pode ser um cartão de crédito (`eh_cartao = true`), com
+`limite_centavos` e `dia_fatura` obrigatórios. Saldo de cartão é sempre `≤ 0`
+(dívida). Bloqueia se `dívida_atual + valor_do_split > limite_centavos`.
+
+**RN-13** (M13) — Com dívida em aberto e `dia_fatura` do mês já passado, uma
+pendência assistida (RN-08) aparece em Recorrências. Confirmar gera, atomicamente,
+uma Entrada no cartão (reduz a dívida) e uma Saída normal (categoria "Fatura de
+cartão") saindo da fonte pagadora escolhida — sujeita à RN-02/RN-03 dessa fonte.
+
 ## 5. Stack
 
 | Camada | Escolha | Observação |
@@ -128,7 +142,8 @@ importam diretamente — só a camada de serviços (`src/services/*.ts`) e o
 auth.users (Supabase)
    │
    ├── fontes ──────────────┐
-   │     id, user_id, nome, tipo, cor, arquivada
+   │     id, user_id, nome, tipo, cor, arquivada,
+   │     eh_cartao, limite_centavos, dia_fatura (M13)
    │                        │
    │                  fonte_categorias  (N:N, só p/ fontes restritas)
    │                        │
@@ -171,14 +186,17 @@ anterior está pronto e funcionando.
 | M9 | `09-dashboard.md` | Tela inicial: saldo geral, por fonte, por categoria |
 | M10 | `10-recorrencias.md` | Painel de pendências do mês e confirmação manual |
 | M11 | `11-layout-mobile.md` | Passada de responsividade sobre todas as telas existentes |
-| M12 | `12-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) — último milestone |
+| M12 | `12-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) |
+| M13 | `13-cartao-credito.md` | Cartão de crédito: Fonte com limite, bloqueio por limite, fatura assistida |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo
 para testar o bloqueio). M9 e M10 podem ser feitos em qualquer ordem entre si, mas
-ambos antes de M11 (que audita todas as telas) — e M12 é sempre o último, por
-decisão explícita: só faz sentido consolidar as notificações de saldo depois que o
-layout final (inclusive mobile) estiver fechado.
+ambos antes de M11 (que audita todas as telas), que por sua vez vem antes de M12: só
+faz sentido consolidar as notificações de saldo depois que o layout final (inclusive
+mobile) estiver fechado. M13 (cartão de crédito) vem depois de M12 porque reaproveita
+o `PainelSaldo` na confirmação de fatura — o MVP original terminava em M12, então M13
+é uma extensão pós-MVP.
 
 ## 8. Convenções de código
 

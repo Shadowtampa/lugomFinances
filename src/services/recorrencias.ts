@@ -102,6 +102,23 @@ export async function confirmarSaidaRecorrente(
   return paraResultadoCriarSaida(row)
 }
 
+export async function confirmarFaturaCartao(
+  cartaoFonteId: string,
+  fontePagadoraId: string,
+  valorCentavos: number,
+  data: string,
+): Promise<ResultadoCriarSaida> {
+  const row = unwrap<ResultadoCriarSaidaRow>(
+    await supabase.rpc('confirmar_fatura_cartao', {
+      p_cartao_fonte_id: cartaoFonteId,
+      p_fonte_pagadora_id: fontePagadoraId,
+      p_valor_centavos: valorCentavos,
+      p_data: data,
+    }),
+  )
+  return paraResultadoCriarSaida(row)
+}
+
 export async function ignorarPendencia(
   templateId: string,
   tipo: 'entrada' | 'saida',

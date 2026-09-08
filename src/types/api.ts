@@ -21,6 +21,9 @@ export interface FonteRow {
   tipo: FonteTipoRow
   cor: string
   arquivada: boolean
+  eh_cartao: boolean
+  limite_centavos: number | null
+  dia_fatura: number | null
   created_at: string
 }
 
@@ -41,6 +44,7 @@ export interface EntradaRow {
   recorrencia_ativa: boolean
   template_id: string | null
   total_parcelas: number | null
+  eh_pagamento_fatura: boolean
   created_at: string
 }
 
@@ -63,6 +67,7 @@ export interface SaidaRow {
   recorrencia_ativa: boolean
   template_id: string | null
   total_parcelas: number | null
+  eh_pagamento_fatura: boolean
   created_at: string
   saida_splits?: Pick<SaidaSplitRow, 'fonte_id' | 'valor_centavos'>[]
 }
@@ -77,6 +82,9 @@ export interface SaldoFonteRow {
   total_entradas_centavos: number
   total_saidas_centavos: number
   saldo_centavos: number
+  eh_cartao: boolean
+  limite_centavos: number | null
+  dia_fatura: number | null
 }
 
 export interface SaldoCategoriaRow {
@@ -101,7 +109,7 @@ export interface ResumoGeralRow {
 }
 
 export interface RecorrenciaPendenteRow {
-  tipo_lancamento: 'entrada' | 'saida'
+  tipo_lancamento: 'entrada' | 'saida' | 'fatura_cartao'
   template_id: string
   user_id: string
   titulo: string

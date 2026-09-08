@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
+import MoneyInput from '../../components/ui/MoneyInput'
 import Spinner from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { useAsync } from '../../hooks/useAsync'
@@ -32,6 +33,11 @@ function FonteFormModal({ aberto, fonte, onFechar, onSalvo }: FonteFormModalProp
   )
   const [erroCategorias, setErroCategorias] = useState<string | null>(null)
   const [cor, setCor] = useState(fonte?.cor ?? corAleatoria())
+  const [ehCartao, setEhCartao] = useState(fonte?.ehCartao ?? false)
+  const [limiteCentavos, setLimiteCentavos] = useState(fonte?.limiteCentavos ?? 0)
+  const [diaFatura, setDiaFatura] = useState(fonte?.diaFatura ?? 1)
+  const [erroLimite, setErroLimite] = useState<string | null>(null)
+  const [erroDiaFatura, setErroDiaFatura] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   const tipoOriginal = fonte?.tipo
@@ -61,11 +67,32 @@ function FonteFormModal({ aberto, fonte, onFechar, onSalvo }: FonteFormModalProp
       setErroCategorias(null)
     }
 
+    if (ehCartao && limiteCentavos <= 0) {
+      setErroLimite('Limite deve ser maior que zero.')
+      temErro = true
+    } else {
+      setErroLimite(null)
+    }
+
+    if (ehCartao && (diaFatura < 1 || diaFatura > 31)) {
+      setErroDiaFatura('Dia deve estar entre 1 e 31.')
+      temErro = true
+    } else {
+      setErroDiaFatura(null)
+    }
+
     if (temErro) return
 
     setEnviando(true)
 
-    const dados = { nome: nomeAparado, tipo, cor }
+    const dados = {
+      nome: nomeAparado,
+      tipo,
+      cor,
+      ehCartao,
+      limiteCentavos: ehCartao ? limiteCentavos : null,
+      diaFatura: ehCartao ? diaFatura : null,
+    }
     const categoriasParaEnviar = tipo === 'restrita' ? categoriasPermitidas : []
 
     try {
@@ -151,6 +178,47 @@ function FonteFormModal({ aberto, fonte, onFechar, onSalvo }: FonteFormModalProp
 
         {fonte?.tipo === 'restrita' && tipo === 'restrita' && (
           <p className="text-xs text-ink-soft">Lançamentos já registrados não são alterados.</p>
+        )}
+
+        <label className="flex items-start gap-2 rounded border border-line p-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={ehCartao}
+            onChange={(event) => setEhCartao(event.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="font-medium">É um cartão de crédito</span> — sem saldo próprio, tem
+            limite e um dia de fatura.
+          </span>
+        </label>
+
+        {ehCartao && (
+          <div className="animate-expandir flex flex-col gap-4">
+            <MoneyInput
+              label="Limite"
+              value={limiteCentavos}
+              onChange={setLimiteCentavos}
+              error={erroLimite ?? undefined}
+            />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-ink" htmlFor="dia-fatura">
+                Dia da fatura
+              </label>
+              <input
+                id="dia-fatura"
+                type="number"
+                min={1}
+                max={31}
+                value={diaFatura}
+                onChange={(event) => setDiaFatura(Number(event.target.value))}
+                className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
+                  erroDiaFatura ? 'border-alerta' : 'border-line'
+                }`}
+              />
+              {erroDiaFatura && <span className="text-xs text-alerta">{erroDiaFatura}</span>}
+            </div>
+          </div>
         )}
 
         <div className="flex flex-col gap-1">

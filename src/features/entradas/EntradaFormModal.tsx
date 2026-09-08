@@ -208,7 +208,12 @@ function EntradaFormModal({
       if (entrada) {
         await atualizarEntrada(entrada.id, dados)
       } else {
-        await criarEntrada({ ...dados, recorrenciaAtiva: recorrente, templateId: null })
+        await criarEntrada({
+          ...dados,
+          recorrenciaAtiva: recorrente,
+          templateId: null,
+          ehPagamentoFatura: false,
+        })
       }
       await mostrarPainelFonte(fonteId)
       onSalvo(fonteId)

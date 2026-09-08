@@ -30,6 +30,9 @@ export function paraFonte(row: FonteRow, categoriasPermitidas?: string[]): Fonte
     tipo: row.tipo,
     cor: row.cor,
     arquivada: row.arquivada,
+    ehCartao: row.eh_cartao,
+    limiteCentavos: row.limite_centavos,
+    diaFatura: row.dia_fatura,
     ...(categoriasPermitidas ? { categoriasPermitidas } : {}),
   }
 }
@@ -41,6 +44,9 @@ export function paraSaldoFonte(row: SaldoFonteRow): SaldoFonte {
     tipo: row.tipo,
     cor: row.cor,
     arquivada: row.arquivada,
+    ehCartao: row.eh_cartao,
+    limiteCentavos: row.limite_centavos,
+    diaFatura: row.dia_fatura,
     totalEntradasCentavos: row.total_entradas_centavos,
     totalSaidasCentavos: row.total_saidas_centavos,
     saldoCentavos: row.saldo_centavos,
@@ -86,6 +92,7 @@ export function paraEntrada(row: EntradaRow): Entrada {
     recorrenciaAtiva: row.recorrencia_ativa,
     templateId: row.template_id,
     totalParcelas: row.total_parcelas,
+    ehPagamentoFatura: row.eh_pagamento_fatura,
   }
 }
 
@@ -101,6 +108,7 @@ export function paraSaida(row: SaidaRow): Saida {
     recorrenciaAtiva: row.recorrencia_ativa,
     templateId: row.template_id,
     totalParcelas: row.total_parcelas,
+    ehPagamentoFatura: row.eh_pagamento_fatura,
     splits: (row.saida_splits ?? []).map((split) => ({
       fonteId: split.fonte_id,
       valorCentavos: split.valor_centavos,
@@ -184,6 +192,9 @@ export function deFonte(dados: Partial<Omit<Fonte, 'id' | 'categoriasPermitidas'
     ...(dados.tipo !== undefined && { tipo: dados.tipo }),
     ...(dados.cor !== undefined && { cor: dados.cor }),
     ...(dados.arquivada !== undefined && { arquivada: dados.arquivada }),
+    ...(dados.ehCartao !== undefined && { eh_cartao: dados.ehCartao }),
+    ...(dados.limiteCentavos !== undefined && { limite_centavos: dados.limiteCentavos }),
+    ...(dados.diaFatura !== undefined && { dia_fatura: dados.diaFatura }),
   }
 }
 

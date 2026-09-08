@@ -5,6 +5,7 @@ import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 import BarraLimite, { calcularPercentual } from '../features/categorias/BarraLimite'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
+import BarraCartao from '../features/fontes/BarraCartao'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import { useAsync } from '../hooks/useAsync'
@@ -90,12 +91,14 @@ function DashboardPage() {
   }
 
   const fontesOrdenadas = useMemo(() => {
-    const base = fontes.data ?? []
+    const base = (fontes.data ?? []).filter((f) => !f.ehCartao)
     return [...base].sort((a, b) => {
       if (a.tipo !== b.tipo) return a.tipo === 'livre' ? -1 : 1
       return b.saldoCentavos - a.saldoCentavos
     })
   }, [fontes.data])
+
+  const cartoes = useMemo(() => (fontes.data ?? []).filter((f) => f.ehCartao), [fontes.data])
 
   const categoriasComLimite = useMemo(() => {
     const base = (categorias.data ?? []).filter((c) => c.limiteMensalCentavos !== null)
@@ -193,6 +196,29 @@ function DashboardPage() {
               </>
             )}
           </section>
+
+          {cartoes.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-sm font-medium text-ink-soft">Cartões de crédito</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {cartoes.map((cartao) => (
+                  <button
+                    key={cartao.id}
+                    type="button"
+                    onClick={() => navigate('/fontes')}
+                    className="flex flex-col gap-1 rounded bg-surface p-3 text-left shadow-sm"
+                    style={{ borderLeft: '3px solid var(--color-livre)' }}
+                  >
+                    <span className="text-sm text-ink">{cartao.nome}</span>
+                    <BarraCartao
+                      usadoCentavos={-cartao.saldoCentavos}
+                      limiteCentavos={cartao.limiteCentavos ?? 0}
+                    />
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section>
             <h2 className="mb-3 text-sm font-medium text-ink-soft">Consumo de categorias</h2>

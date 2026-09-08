@@ -16,6 +16,7 @@ describe('paraSaida', () => {
       recorrencia_ativa: true,
       template_id: null,
       total_parcelas: null,
+      eh_pagamento_fatura: false,
       created_at: '2026-09-05T12:00:00Z',
       saida_splits: [
         { fonte_id: 'f1', valor_centavos: 5000 },
@@ -34,6 +35,7 @@ describe('paraSaida', () => {
       recorrenciaAtiva: true,
       templateId: null,
       totalParcelas: null,
+      ehPagamentoFatura: false,
       splits: [
         { fonteId: 'f1', valorCentavos: 5000 },
         { fonteId: 'f2', valorCentavos: 3000 },
@@ -54,6 +56,7 @@ describe('paraSaida', () => {
       recorrencia_ativa: true,
       template_id: null,
       total_parcelas: null,
+      eh_pagamento_fatura: false,
       created_at: '2026-09-06T12:00:00Z',
     }
 

@@ -199,8 +199,14 @@ function SaidaFormModal({
   function montarLinhasFontesEnota(resultado: { fontes: { fonteId: string; nome: string; saldoCentavos: number }[] }) {
     const notas: string[] = []
     const linhas: LinhaSaldo[] = resultado.fontes.map((f) => {
-      const antes = mapaFontes.get(f.fonteId)?.saldoCentavos ?? f.saldoCentavos
-      const cor = mapaFontes.get(f.fonteId)?.cor ?? '#999999'
+      const fonteInfo = mapaFontes.get(f.fonteId)
+      const cor = fonteInfo?.cor ?? '#999999'
+
+      if (fonteInfo?.ehCartao) {
+        return { rotulo: f.nome, cor, valorCentavos: f.saldoCentavos }
+      }
+
+      const antes = fonteInfo?.saldoCentavos ?? f.saldoCentavos
       const limiar = Math.max(antes * 0.1, 5000)
       if (f.saldoCentavos < limiar) notas.push(`${f.nome} está quase no fim.`)
       if (f.saldoCentavos === 0) {
@@ -252,6 +258,23 @@ function SaidaFormModal({
       if (match) {
         const [, nomeFonte, saldo] = match
         const mensagem = `${nomeFonte} tem apenas ${formatBRL(Number(saldo))}. Reduza o valor ou divida entre outras fontes.`
+        setErroGeral(mensagem)
+        const indiceLinha = splits.findIndex((l) => mapaFontes.get(l.fonteId)?.nome === nomeFonte)
+        if (indiceLinha >= 0) {
+          setErroFonteLinha({ [indiceLinha]: mensagem })
+        } else if (mapaFontes.get(fonteSimples)?.nome === nomeFonte) {
+          setErroFonte(mensagem)
+        }
+        return
+      }
+    }
+
+    if (erro.codigo === 'LIMITE_CARTAO_EXCEDIDO') {
+      const match = detalhe.match(/fonte=(.+?) limite=(\d+) divida=(\d+) solicitado=(\d+)/)
+      if (match) {
+        const [, nomeFonte, limite, divida, solicitado] = match
+        const novaDivida = Number(divida) + Number(solicitado)
+        const mensagem = `${nomeFonte} passaria do limite de ${formatBRL(Number(limite))} (ficaria devendo ${formatBRL(novaDivida)}). Reduza o valor.`
         setErroGeral(mensagem)
         const indiceLinha = splits.findIndex((l) => mapaFontes.get(l.fonteId)?.nome === nomeFonte)
         if (indiceLinha >= 0) {
@@ -426,9 +449,15 @@ function SaidaFormModal({
           ...dados,
           recorrenciaAtiva: saida.recorrenciaAtiva,
           templateId: saida.templateId,
+          ehPagamentoFatura: false,
         })
       } else {
-        resultado = await criarSaida({ ...dados, recorrenciaAtiva: recorrente, templateId: null })
+        resultado = await criarSaida({
+          ...dados,
+          recorrenciaAtiva: recorrente,
+          templateId: null,
+          ehPagamentoFatura: false,
+        })
       }
       const { linhas, nota } = montarLinhasFontesEnota(resultado)
       mostrarPainelSaldo({

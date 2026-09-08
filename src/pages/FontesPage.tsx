@@ -6,6 +6,7 @@ import Modal from '../components/ui/Modal'
 import Money from '../components/ui/Money'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
+import BarraCartao from '../features/fontes/BarraCartao'
 import FonteFormModal from '../features/fontes/FonteFormModal'
 import { mensagemDoErro } from '../lib/erros'
 import { useAsync } from '../hooks/useAsync'
@@ -166,7 +167,12 @@ function FontesPage() {
                 >
                   <p className="font-medium text-ink">{fonte.nome}</p>
 
-                  {inconsistente ? (
+                  {fonte.ehCartao ? (
+                    <BarraCartao
+                      usadoCentavos={-fonte.saldoCentavos}
+                      limiteCentavos={fonte.limiteCentavos ?? 0}
+                    />
+                  ) : inconsistente ? (
                     <div>
                       <span className="font-money text-[28px] font-semibold text-alerta">
                         <Money centavos={fonte.saldoCentavos} />
@@ -187,7 +193,11 @@ function FontesPage() {
                   )}
 
                   <p className="text-xs text-ink-soft">
-                    {fonte.tipo === 'livre' ? 'livre' : `só ${categorias}`}
+                    {fonte.ehCartao
+                      ? `cartão de crédito · fatura dia ${fonte.diaFatura}`
+                      : fonte.tipo === 'livre'
+                        ? 'livre'
+                        : `só ${categorias}`}
                   </p>
 
                   <div className="mt-2 flex gap-2">

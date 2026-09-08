@@ -6,6 +6,7 @@ import Modal from '../components/ui/Modal'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
+import ConfirmarFaturaModal from '../features/recorrencias/ConfirmarFaturaModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import { useAsync } from '../hooks/useAsync'
@@ -66,6 +67,10 @@ interface SaidaModalContexto {
   templatePendencia?: Saida
 }
 
+interface FaturaModalContexto {
+  pendencia: RecorrenciaPendente
+}
+
 function RecorrenciasPage() {
   const dados = useAsync(carregarDados, [])
   const { showToast } = useToast()
@@ -73,6 +78,7 @@ function RecorrenciasPage() {
   const [aberturaId, setAberturaId] = useState(0)
   const [entradaModal, setEntradaModal] = useState<EntradaModalContexto | null>(null)
   const [saidaModal, setSaidaModal] = useState<SaidaModalContexto | null>(null)
+  const [faturaModal, setFaturaModal] = useState<FaturaModalContexto | null>(null)
   const [carregandoAcao, setCarregandoAcao] = useState<string | null>(null)
 
   const [ignorado, setIgnorado] = useState<{
@@ -113,11 +119,17 @@ function RecorrenciasPage() {
   function fecharModais() {
     setEntradaModal(null)
     setSaidaModal(null)
+    setFaturaModal(null)
   }
 
   async function abrirLancar(pendencia: RecorrenciaPendente) {
     if (pendencia.tipo === 'entrada') {
       setEntradaModal({ confirmarPendencia: pendencia })
+      setAberturaId((id) => id + 1)
+      return
+    }
+    if (pendencia.tipo === 'fatura_cartao') {
+      setFaturaModal({ pendencia })
       setAberturaId((id) => id + 1)
       return
     }
@@ -152,6 +164,7 @@ function RecorrenciasPage() {
   }
 
   async function handleIgnorar(pendencia: RecorrenciaPendente) {
+    if (pendencia.tipo === 'fatura_cartao') return
     const competencia = `${mesAtual()}-01`
     try {
       await ignorarPendencia(pendencia.templateId, pendencia.tipo, competencia)
@@ -165,7 +178,7 @@ function RecorrenciasPage() {
   }
 
   async function handleDesfazerIgnorar() {
-    if (!ignorado) return
+    if (!ignorado || ignorado.pendencia.tipo === 'fatura_cartao') return
     if (ignoradoTimer.current) clearTimeout(ignoradoTimer.current)
     try {
       await desfazerIgnorar(ignorado.pendencia.templateId, ignorado.pendencia.tipo, ignorado.competencia)
@@ -227,12 +240,18 @@ function RecorrenciasPage() {
     }
   }
 
-  function rotuloFonteOuCategoria(item: { tipo: 'entrada' | 'saida'; fonteId: string | null; categoriaId: string | null }) {
-    if (item.tipo === 'entrada') return mapaFontes.get(item.fonteId ?? '')?.nome ?? '—'
-    return mapaCategorias.get(item.categoriaId ?? '')?.nome ?? '—'
+  function rotuloFonteOuCategoria(item: {
+    tipo: 'entrada' | 'saida' | 'fatura_cartao'
+    fonteId: string | null
+    categoriaId: string | null
+  }) {
+    if (item.tipo === 'saida') return mapaCategorias.get(item.categoriaId ?? '')?.nome ?? '—'
+    return mapaFontes.get(item.fonteId ?? '')?.nome ?? '—'
   }
 
   const semFontes = (dados.data?.fontesComSaldo.length ?? 0) === 0
+  const fontesPagadoras = (dados.data?.fontesComSaldo ?? []).filter((f) => !f.ehCartao)
+  const pendentesEmLote = pendentesOrdenadas.filter((p) => p.tipo !== 'fatura_cartao')
 
   return (
     <>
@@ -277,22 +296,33 @@ function RecorrenciasPage() {
                               <span className="text-ink-soft">dia {pendencia.diaRecorrencia}</span>{' '}
                               {pendencia.titulo}{' '}
                               <span className="text-xs text-ink-soft">
-                                {pendencia.tipo === 'entrada' ? 'entrada' : 'saída'}
+                                {pendencia.tipo === 'entrada'
+                                  ? 'entrada'
+                                  : pendencia.tipo === 'saida'
+                                    ? 'saída'
+                                    : 'fatura de cartão'}
                               </span>
                               {atrasado && <span className="ml-2 text-xs text-alerta">atrasado</span>}
                             </p>
                             <p className="text-xs text-ink-soft">
-                              {rotuloFonteOuCategoria(pendencia)} ·{' '}
-                              {progressoLabel(pendencia.totalParcelas, pendencia.parcelasLancadas + 1)}
+                              {rotuloFonteOuCategoria(pendencia)}
+                              {pendencia.tipo !== 'fatura_cartao' && (
+                                <>
+                                  {' '}
+                                  · {progressoLabel(pendencia.totalParcelas, pendencia.parcelasLancadas + 1)}
+                                </>
+                              )}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-money text-sm text-ink">
                               {formatBRL(pendencia.valorSugeridoCentavos)}
                             </span>
-                            <Button variant="ghost" onClick={() => handleIgnorar(pendencia)}>
-                              Ignorar
-                            </Button>
+                            {pendencia.tipo !== 'fatura_cartao' && (
+                              <Button variant="ghost" onClick={() => handleIgnorar(pendencia)}>
+                                Ignorar
+                              </Button>
+                            )}
                             <Button
                               variant="secondary"
                               loading={carregandoAcao === pendencia.templateId}
@@ -307,9 +337,11 @@ function RecorrenciasPage() {
                   })}
                 </ul>
 
-                <div className="mt-4 flex justify-center">
-                  <Button onClick={() => setResumoLancarTodas(pendentesOrdenadas)}>Lançar todas</Button>
-                </div>
+                {pendentesEmLote.length > 0 && (
+                  <div className="mt-4 flex justify-center">
+                    <Button onClick={() => setResumoLancarTodas(pendentesEmLote)}>Lançar todas</Button>
+                  </div>
+                )}
               </>
             )}
           </section>
@@ -425,6 +457,19 @@ function RecorrenciasPage() {
         fontes={dados.data?.fontesComSaldo ?? []}
         categorias={dados.data?.categoriasNaoArquivadas ?? []}
         saldosCategorias={dados.data?.categoriasNaoArquivadas ?? []}
+        onFechar={fecharModais}
+        onSalvo={() => {
+          fecharModais()
+          dados.recarregar()
+        }}
+      />
+
+      <ConfirmarFaturaModal
+        key={`fatura-${aberturaId}`}
+        aberto={faturaModal !== null}
+        pendencia={faturaModal?.pendencia}
+        cartao={mapaFontes.get(faturaModal?.pendencia?.fonteId ?? '')}
+        fontesPagadoras={fontesPagadoras}
         onFechar={fecharModais}
         onSalvo={() => {
           fecharModais()

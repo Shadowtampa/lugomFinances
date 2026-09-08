@@ -8,6 +8,9 @@ export type Fonte = {
   tipo: FonteTipo
   cor: string
   arquivada: boolean
+  ehCartao: boolean
+  limiteCentavos: number | null
+  diaFatura: number | null
   categoriasPermitidas?: string[] // ids, só quando tipo === 'restrita'
 }
 
@@ -45,6 +48,7 @@ export type Entrada = {
   recorrenciaAtiva: boolean
   templateId: string | null
   totalParcelas: number | null
+  ehPagamentoFatura: boolean
 }
 
 export type SaidaSplit = {
@@ -63,6 +67,7 @@ export type Saida = {
   recorrenciaAtiva: boolean
   templateId: string | null
   totalParcelas: number | null
+  ehPagamentoFatura: boolean
   splits: SaidaSplit[]
 }
 
@@ -85,7 +90,7 @@ export type ResultadoCriarSaida = {
 }
 
 export type RecorrenciaPendente = {
-  tipo: 'entrada' | 'saida'
+  tipo: 'entrada' | 'saida' | 'fatura_cartao'
   templateId: string
   titulo: string
   valorSugeridoCentavos: number

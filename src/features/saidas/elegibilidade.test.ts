@@ -13,6 +13,9 @@ const fonteLivre: FonteComSaldo = {
   tipo: 'livre',
   cor: '#000',
   arquivada: false,
+  ehCartao: false,
+  limiteCentavos: null,
+  diaFatura: null,
   saldoCentavos: 100000,
 }
 
@@ -22,8 +25,23 @@ const fonteRestrita: FonteComSaldo = {
   tipo: 'restrita',
   cor: '#000',
   arquivada: false,
+  ehCartao: false,
+  limiteCentavos: null,
+  diaFatura: null,
   categoriasPermitidas: ['cat-alimentacao'],
   saldoCentavos: 85500,
+}
+
+const fonteCartao: FonteComSaldo = {
+  id: 'f-cartao',
+  nome: 'Nubank',
+  tipo: 'livre',
+  cor: '#000',
+  arquivada: false,
+  ehCartao: true,
+  limiteCentavos: 100000,
+  diaFatura: 10,
+  saldoCentavos: -60000,
 }
 
 describe('avaliarFonte', () => {
@@ -54,5 +72,15 @@ describe('avaliarFonte', () => {
 
   it('valor zero não aciona checagem de saldo', () => {
     expect(avaliarFonte(fonteLivre, 'cat-transporte', categorias, 0).elegivel).toBe(true)
+  })
+
+  it('cartão aceita compra dentro do limite mesmo com saldo negativo', () => {
+    expect(avaliarFonte(fonteCartao, 'cat-transporte', categorias, 30000).elegivel).toBe(true)
+  })
+
+  it('cartão rejeita compra que estouraria o limite', () => {
+    const resultado = avaliarFonte(fonteCartao, 'cat-transporte', categorias, 50000)
+    expect(resultado.elegivel).toBe(false)
+    expect(resultado.motivo).toBe('limite de R$ 1.000,00 insuficiente')
   })
 })

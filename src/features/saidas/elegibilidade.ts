@@ -19,6 +19,15 @@ export function avaliarFonte(
     return { elegivel: false, motivo: `não aceita ${nomeCategoria}` }
   }
 
+  if (fonte.ehCartao) {
+    const divida = -fonte.saldoCentavos
+    const limite = fonte.limiteCentavos ?? 0
+    if (valorNecessarioCentavos > 0 && divida + valorNecessarioCentavos > limite) {
+      return { elegivel: false, motivo: `limite de ${formatBRL(limite)} insuficiente` }
+    }
+    return { elegivel: true }
+  }
+
   if (valorNecessarioCentavos > 0 && fonte.saldoCentavos < valorNecessarioCentavos) {
     return { elegivel: false, motivo: `${formatBRL(fonte.saldoCentavos)} disponíveis` }
   }
