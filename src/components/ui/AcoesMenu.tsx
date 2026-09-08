@@ -1,7 +1,10 @@
+import type { ReactNode } from 'react'
+
 interface ItemAcaoMenu {
   label: string
   onClick: () => void
   perigo?: boolean
+  icon?: ReactNode
 }
 
 interface AcoesMenuProps {
@@ -39,7 +42,7 @@ function AcoesMenu({ aberto, onToggle, onFechar, itens }: AcoesMenuProps) {
               <button
                 key={item.label}
                 type="button"
-                className={`block w-full whitespace-nowrap px-4 py-3 text-left text-sm hover:bg-base ${
+                className={`flex w-full items-center gap-2 whitespace-nowrap px-4 py-3 text-left text-sm hover:bg-base ${
                   item.perigo ? 'text-alerta' : 'text-ink'
                 }`}
                 onClick={(event) => {
@@ -47,6 +50,11 @@ function AcoesMenu({ aberto, onToggle, onFechar, itens }: AcoesMenuProps) {
                   item.onClick()
                 }}
               >
+                {item.icon && (
+                  <span className="h-4 w-4 shrink-0" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                )}
                 {item.label}
               </button>
             ))}

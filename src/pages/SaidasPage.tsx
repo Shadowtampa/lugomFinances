@@ -4,6 +4,9 @@ import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
+import DuplicateIcon from '../components/ui/icons/DuplicateIcon'
+import PencilIcon from '../components/ui/icons/PencilIcon'
+import TrashIcon from '../components/ui/icons/TrashIcon'
 import Modal from '../components/ui/Modal'
 import Pagination from '../components/ui/Pagination'
 import Select from '../components/ui/Select'
@@ -334,8 +337,8 @@ function SaidasPage() {
                     )}
                   </div>
 
-                  <div className="flex w-full items-center gap-3 pl-20 sm:contents sm:pl-0">
-                    <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-ink-soft sm:flex-none">
+                  <div className="flex w-full items-center gap-3 pl-0 sm:contents sm:pl-0">
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-ink-soft sm:w-40 sm:flex-none">
                       {categoria && (
                         <span
                           className="h-2 w-2 shrink-0 rounded-full"
@@ -370,9 +373,22 @@ function SaidasPage() {
                       onToggle={() => setMenuAbertoId(menuAbertoId === saida.id ? null : saida.id)}
                       onFechar={() => setMenuAbertoId(null)}
                       itens={[
-                        { label: 'Editar', onClick: () => abrirEditar(saida) },
-                        { label: 'Duplicar', onClick: () => abrirDuplicar(saida) },
-                        { label: 'Excluir', onClick: () => iniciarExcluir(saida), perigo: true },
+                        {
+                          label: 'Editar',
+                          icon: <PencilIcon className="h-4 w-4" />,
+                          onClick: () => abrirEditar(saida),
+                        },
+                        {
+                          label: 'Duplicar',
+                          icon: <DuplicateIcon className="h-4 w-4" />,
+                          onClick: () => abrirDuplicar(saida),
+                        },
+                        {
+                          label: 'Excluir',
+                          icon: <TrashIcon className="h-4 w-4" />,
+                          onClick: () => iniciarExcluir(saida),
+                          perigo: true,
+                        },
                       ]}
                     />
                   </div>
