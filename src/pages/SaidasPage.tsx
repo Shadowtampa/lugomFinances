@@ -5,6 +5,7 @@ import AcoesMenu from '../components/ui/AcoesMenu'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Modal from '../components/ui/Modal'
+import Pagination from '../components/ui/Pagination'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
@@ -16,17 +17,23 @@ import { mensagemDoErro } from '../lib/erros'
 import { formatBRL } from '../lib/money'
 import { listarCategorias, listarSaldosCategorias } from '../services/categorias'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
-import { excluirSaida, listarSaidas } from '../services/saidas'
+import { contarSaidas, excluirSaida, listarSaidas, somarSaidasMes } from '../services/saidas'
 import type { Categoria, Saida } from '../types/domain'
 
-async function carregarDados(mes: string, categoriaId: string, fonteId: string) {
-  const [saidas, fontes, saldosFontes, categorias, saldosCategorias] = await Promise.all([
-    listarSaidas({ mes, categoriaId: categoriaId || undefined, fonteId: fonteId || undefined }),
-    listarFontes({ incluirArquivadas: true }),
-    listarSaldosFontes(),
-    listarCategorias({ incluirArquivadas: true }),
-    listarSaldosCategorias(),
-  ])
+const POR_PAGINA = 10
+
+async function carregarDados(mes: string, categoriaId: string, fonteId: string, pagina: number) {
+  const filtro = { categoriaId: categoriaId || undefined, fonteId: fonteId || undefined }
+  const [saidas, total, totalMes, fontes, saldosFontes, categorias, saldosCategorias] =
+    await Promise.all([
+      listarSaidas({ mes, ...filtro, pagina, porPagina: POR_PAGINA }),
+      contarSaidas({ mes, ...filtro }),
+      somarSaidasMes(mes, filtro),
+      listarFontes({ incluirArquivadas: true }),
+      listarSaldosFontes(),
+      listarCategorias({ incluirArquivadas: true }),
+      listarSaldosCategorias(),
+    ])
 
   const mapaSaldos = new Map(saldosFontes.map((s) => [s.id, s.saldoCentavos]))
   const fontesComSaldo: FonteComSaldo[] = fontes.map((f) => ({
@@ -34,7 +41,7 @@ async function carregarDados(mes: string, categoriaId: string, fonteId: string) 
     saldoCentavos: mapaSaldos.get(f.id) ?? 0,
   }))
 
-  return { saidas, fontesComSaldo, categorias, saldosCategorias }
+  return { saidas, total, totalMes, fontesComSaldo, categorias, saldosCategorias }
 }
 
 function fonteLabel(saida: Saida, mapaFontes: Map<string, FonteComSaldo>): string {
@@ -64,8 +71,12 @@ function SaidasPage() {
   const mes = params.get('mes') ?? mesAtual()
   const categoriaId = params.get('categoria') ?? ''
   const fonteId = params.get('fonte') ?? ''
+  const pagina = Number(params.get('pagina') ?? '1')
 
-  const dados = useAsync(() => carregarDados(mes, categoriaId, fonteId), [mes, categoriaId, fonteId])
+  const dados = useAsync(
+    () => carregarDados(mes, categoriaId, fonteId, pagina),
+    [mes, categoriaId, fonteId, pagina],
+  )
 
   const [formAberto, setFormAberto] = useState(false)
   const [saidaEditando, setSaidaEditando] = useState<Saida | undefined>()
@@ -79,6 +90,7 @@ function SaidasPage() {
   function irParaMes(novoMes: string) {
     const proximo = new URLSearchParams(params)
     proximo.set('mes', novoMes)
+    proximo.delete('pagina')
     setParams(proximo)
   }
 
@@ -86,6 +98,13 @@ function SaidasPage() {
     const proximo = new URLSearchParams(params)
     if (valor) proximo.set(chave, valor)
     else proximo.delete(chave)
+    proximo.delete('pagina')
+    setParams(proximo)
+  }
+
+  function irParaPagina(novaPagina: number) {
+    const proximo = new URLSearchParams(params)
+    proximo.set('pagina', String(novaPagina))
     setParams(proximo)
   }
 
@@ -110,16 +129,16 @@ function SaidasPage() {
     [dados.data],
   )
 
-  const totalMes = useMemo(
-    () => (dados.data?.saidas ?? []).reduce((soma, s) => soma + s.valorTotalCentavos, 0),
-    [dados.data],
-  )
+  const totalMes = dados.data?.totalMes ?? 0
+  const totalPaginas = Math.max(1, Math.ceil((dados.data?.total ?? 0) / POR_PAGINA))
 
   const semFontes = fontesNaoArquivadas.length === 0
   const semCategorias = categoriasNaoArquivadas.length === 0
   const listaVazia = (dados.data?.saidas.length ?? 0) === 0
   const estaNoMesCorrente = mes === mesAtual()
   const semFiltros = categoriaId === '' && fonteId === ''
+  const carregandoInicial = dados.isLoading && !dados.data
+  const atualizando = dados.isLoading && !!dados.data
 
   function abrirCriar() {
     if (semFontes || semCategorias) return
@@ -230,16 +249,17 @@ function SaidasPage() {
         )}
       </div>
 
-      {!dados.isLoading && !listaVazia && (
-        <p className="mb-4 text-sm text-ink-soft">
+      {!carregandoInicial && !listaVazia && (
+        <p className="mb-4 flex items-center gap-2 text-sm text-ink-soft">
           {formatBRL(totalMes)} saíram em {nomeDoMes(mes)}
+          {atualizando && <Spinner size={14} />}
         </p>
       )}
 
-      {dados.isLoading && <Spinner />}
+      {carregandoInicial && <Spinner />}
       {dados.erro && <p className="text-alerta">{dados.erro.mensagem}</p>}
 
-      {!dados.isLoading && (semFontes || semCategorias) && (
+      {!carregandoInicial && (semFontes || semCategorias) && (
         <EmptyState
           titulo="Faltam alguns cadastros"
           texto={
@@ -257,7 +277,7 @@ function SaidasPage() {
         />
       )}
 
-      {!dados.isLoading && !semFontes && !semCategorias && listaVazia && estaNoMesCorrente && semFiltros && (
+      {!carregandoInicial && !semFontes && !semCategorias && listaVazia && estaNoMesCorrente && semFiltros && (
         <EmptyState
           titulo="Nenhuma saída ainda"
           texto="Registre um gasto e escolha de qual fonte ele saiu."
@@ -265,7 +285,7 @@ function SaidasPage() {
         />
       )}
 
-      {!dados.isLoading &&
+      {!carregandoInicial &&
         !semFontes &&
         !semCategorias &&
         listaVazia &&
@@ -278,7 +298,9 @@ function SaidasPage() {
         )}
 
       {!listaVazia && (
-        <ul className="flex flex-col">
+        <ul
+          className={`flex flex-col transition-opacity ${atualizando ? 'pointer-events-none opacity-50' : ''}`}
+        >
           {(dados.data?.saidas ?? []).map((saida) => {
             const categoria = mapaCategorias.get(saida.categoriaId)
             const expandido = expandidoId === saida.id
@@ -370,6 +392,8 @@ function SaidasPage() {
           })}
         </ul>
       )}
+
+      <Pagination pagina={pagina} totalPaginas={totalPaginas} onMudarPagina={irParaPagina} />
 
       <SaidaFormModal
         key={aberturaId}

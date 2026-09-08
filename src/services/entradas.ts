@@ -9,6 +9,8 @@ export async function listarEntradas(filtro?: {
   mes?: string
   fonteId?: string
   limite?: number
+  pagina?: number
+  porPagina?: number
 }): Promise<Entrada[]> {
   let query = supabase.from('entradas').select('*').order('data', { ascending: false })
 
@@ -21,9 +23,42 @@ export async function listarEntradas(filtro?: {
   if (filtro?.limite) {
     query = query.limit(filtro.limite)
   }
+  if (filtro?.pagina && filtro?.porPagina) {
+    const inicio = (filtro.pagina - 1) * filtro.porPagina
+    query = query.range(inicio, inicio + filtro.porPagina - 1)
+  }
 
   const rows = unwrap<EntradaRow[]>(await query)
   return rows.map(paraEntrada)
+}
+
+export async function contarEntradas(filtro?: { mes?: string; fonteId?: string }): Promise<number> {
+  let query = supabase.from('entradas').select('*', { count: 'exact', head: true })
+
+  if (filtro?.mes) {
+    query = query.gte('data', primeiroDiaDoMes(filtro.mes)).lte('data', ultimoDiaDoMes(filtro.mes))
+  }
+  if (filtro?.fonteId) {
+    query = query.eq('fonte_id', filtro.fonteId)
+  }
+
+  const { count, error, status } = await query
+  return unwrap<number>({ data: count, error, status }) ?? 0
+}
+
+export async function somarEntradasMes(mes: string, fonteId?: string): Promise<number> {
+  let query = supabase
+    .from('entradas')
+    .select('valor_centavos')
+    .gte('data', primeiroDiaDoMes(mes))
+    .lte('data', ultimoDiaDoMes(mes))
+
+  if (fonteId) {
+    query = query.eq('fonte_id', fonteId)
+  }
+
+  const rows = unwrap<{ valor_centavos: number }[]>(await query)
+  return rows.reduce((soma, row) => soma + row.valor_centavos, 0)
 }
 
 export async function obterEntrada(id: string): Promise<Entrada> {

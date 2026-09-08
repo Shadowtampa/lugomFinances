@@ -5,6 +5,7 @@ import AcoesMenu from '../components/ui/AcoesMenu'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Modal from '../components/ui/Modal'
+import Pagination from '../components/ui/Pagination'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
@@ -15,16 +16,22 @@ import { deslocarMes, ehFuturo, formatarData, mesAtual, nomeDoMes } from '../lib
 import { mensagemDoErro } from '../lib/erros'
 import { formatBRL } from '../lib/money'
 import {
+  contarEntradas,
   excluirEntrada,
   excluirTemplateRecorrente,
   listarEntradas,
+  somarEntradasMes,
 } from '../services/entradas'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
 import type { Entrada } from '../types/domain'
 
-async function carregarDados(mes: string, fonteId: string) {
-  const [entradas, saldos, fontesBase] = await Promise.all([
-    listarEntradas({ mes, fonteId: fonteId || undefined }),
+const POR_PAGINA = 10
+
+async function carregarDados(mes: string, fonteId: string, pagina: number) {
+  const [entradas, total, totalMes, saldos, fontesBase] = await Promise.all([
+    listarEntradas({ mes, fonteId: fonteId || undefined, pagina, porPagina: POR_PAGINA }),
+    contarEntradas({ mes, fonteId: fonteId || undefined }),
+    somarEntradasMes(mes, fonteId || undefined),
     listarSaldosFontes(),
     listarFontes(),
   ])
@@ -33,7 +40,7 @@ async function carregarDados(mes: string, fonteId: string) {
     ...f,
     saldoCentavos: mapaSaldos.get(f.id) ?? 0,
   }))
-  return { entradas, saldos, fontes }
+  return { entradas, total, totalMes, saldos, fontes }
 }
 
 function EntradasPage() {
@@ -42,8 +49,9 @@ function EntradasPage() {
 
   const mes = params.get('mes') ?? mesAtual()
   const fonteId = params.get('fonte') ?? ''
+  const pagina = Number(params.get('pagina') ?? '1')
 
-  const dados = useAsync(() => carregarDados(mes, fonteId), [mes, fonteId])
+  const dados = useAsync(() => carregarDados(mes, fonteId, pagina), [mes, fonteId, pagina])
 
   const [formAberto, setFormAberto] = useState(false)
   const [entradaEditando, setEntradaEditando] = useState<Entrada | undefined>()
@@ -62,6 +70,7 @@ function EntradasPage() {
   function irParaMes(novoMes: string) {
     const proximo = new URLSearchParams(params)
     proximo.set('mes', novoMes)
+    proximo.delete('pagina')
     setParams(proximo)
   }
 
@@ -72,6 +81,13 @@ function EntradasPage() {
     } else {
       proximo.delete('fonte')
     }
+    proximo.delete('pagina')
+    setParams(proximo)
+  }
+
+  function irParaPagina(novaPagina: number) {
+    const proximo = new URLSearchParams(params)
+    proximo.set('pagina', String(novaPagina))
     setParams(proximo)
   }
 
@@ -81,10 +97,8 @@ function EntradasPage() {
     return mapa
   }, [dados.data])
 
-  const totalMes = useMemo(
-    () => (dados.data?.entradas ?? []).reduce((soma, e) => soma + e.valorCentavos, 0),
-    [dados.data],
-  )
+  const totalMes = dados.data?.totalMes ?? 0
+  const totalPaginas = Math.max(1, Math.ceil((dados.data?.total ?? 0) / POR_PAGINA))
 
   function abrirCriar() {
     if ((dados.data?.fontes.length ?? 0) === 0) return
@@ -166,6 +180,8 @@ function EntradasPage() {
   const listaVazia = (dados.data?.entradas.length ?? 0) === 0
   const estaNoMesCorrente = mes === mesAtual()
   const semFiltroFonte = fonteId === ''
+  const carregandoInicial = dados.isLoading && !dados.data
+  const atualizando = dados.isLoading && !!dados.data
 
   return (
     <>
@@ -219,16 +235,17 @@ function EntradasPage() {
         )}
       </div>
 
-      {!dados.isLoading && !listaVazia && (
-        <p className="mb-4 text-sm text-ink-soft">
+      {!carregandoInicial && !listaVazia && (
+        <p className="mb-4 flex items-center gap-2 text-sm text-ink-soft">
           {formatBRL(totalMes)} entraram em {nomeDoMes(mes)}
+          {atualizando && <Spinner size={14} />}
         </p>
       )}
 
-      {dados.isLoading && <Spinner />}
+      {carregandoInicial && <Spinner />}
       {dados.erro && <p className="text-alerta">{dados.erro.mensagem}</p>}
 
-      {!dados.isLoading && semFontes && (
+      {!carregandoInicial && semFontes && (
         <EmptyState
           titulo="Você precisa de uma fonte primeiro"
           texto="Você precisa de uma fonte antes de registrar uma entrada."
@@ -240,7 +257,7 @@ function EntradasPage() {
         />
       )}
 
-      {!dados.isLoading && !semFontes && listaVazia && estaNoMesCorrente && semFiltroFonte && (
+      {!carregandoInicial && !semFontes && listaVazia && estaNoMesCorrente && semFiltroFonte && (
         <EmptyState
           titulo="Nenhuma entrada ainda"
           texto="Toda saída precisa sair de algum lugar. Comece registrando seu salário ou outro dinheiro que você recebeu."
@@ -248,7 +265,7 @@ function EntradasPage() {
         />
       )}
 
-      {!dados.isLoading && !semFontes && listaVazia && !(estaNoMesCorrente && semFiltroFonte) && (
+      {!carregandoInicial && !semFontes && listaVazia && !(estaNoMesCorrente && semFiltroFonte) && (
         <EmptyState
           titulo="Nenhuma entrada"
           texto={`Nenhuma entrada em ${nomeDoMes(mes)}.`}
@@ -257,7 +274,9 @@ function EntradasPage() {
       )}
 
       {!listaVazia && (
-        <ul className="flex flex-col">
+        <ul
+          className={`flex flex-col transition-opacity ${atualizando ? 'pointer-events-none opacity-50' : ''}`}
+        >
           {(dados.data?.entradas ?? []).map((entrada) => {
             const fonte = mapaFontes.get(entrada.fonteId)
             return (
@@ -329,6 +348,8 @@ function EntradasPage() {
           })}
         </ul>
       )}
+
+      <Pagination pagina={pagina} totalPaginas={totalPaginas} onMudarPagina={irParaPagina} />
 
       <EntradaFormModal
         key={aberturaId}
