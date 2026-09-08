@@ -3,6 +3,7 @@ import type {
   EntradaRow,
   FonteRow,
   RecorrenciaPendenteRow,
+  RecorrenciaTemplateRow,
   ResultadoCriarSaidaRow,
   ResumoGeralRow,
   SaidaRow,
@@ -14,6 +15,7 @@ import type {
   Entrada,
   Fonte,
   RecorrenciaPendente,
+  RecorrenciaTemplate,
   ResultadoCriarSaida,
   ResumoGeral,
   Saida,
@@ -83,6 +85,7 @@ export function paraEntrada(row: EntradaRow): Entrada {
     diaRecorrencia: row.dia_recorrencia,
     recorrenciaAtiva: row.recorrencia_ativa,
     templateId: row.template_id,
+    totalParcelas: row.total_parcelas,
   }
 }
 
@@ -97,6 +100,7 @@ export function paraSaida(row: SaidaRow): Saida {
     diaRecorrencia: row.dia_recorrencia,
     recorrenciaAtiva: row.recorrencia_ativa,
     templateId: row.template_id,
+    totalParcelas: row.total_parcelas,
     splits: (row.saida_splits ?? []).map((split) => ({
       fonteId: split.fonte_id,
       valorCentavos: split.valor_centavos,
@@ -119,6 +123,23 @@ export function paraRecorrenciaPendente(row: RecorrenciaPendenteRow): Recorrenci
     titulo: row.titulo,
     valorSugeridoCentavos: row.valor_sugerido_centavos,
     diaRecorrencia: row.dia_recorrencia,
+    fonteId: row.fonte_id,
+    categoriaId: row.categoria_id,
+    totalParcelas: row.total_parcelas,
+    parcelasLancadas: row.parcelas_lancadas,
+  }
+}
+
+export function paraRecorrenciaTemplate(row: RecorrenciaTemplateRow): RecorrenciaTemplate {
+  return {
+    tipo: row.tipo_lancamento,
+    templateId: row.template_id,
+    titulo: row.titulo,
+    valorCentavos: row.valor_centavos,
+    diaRecorrencia: row.dia_recorrencia,
+    recorrenciaAtiva: row.recorrencia_ativa,
+    totalParcelas: row.total_parcelas,
+    parcelasLancadas: row.parcelas_lancadas,
     fonteId: row.fonte_id,
     categoriaId: row.categoria_id,
   }
@@ -176,5 +197,6 @@ export function deEntrada(dados: Partial<Omit<Entrada, 'id'>>) {
     ...(dados.diaRecorrencia !== undefined && { dia_recorrencia: dados.diaRecorrencia }),
     ...(dados.recorrenciaAtiva !== undefined && { recorrencia_ativa: dados.recorrenciaAtiva }),
     ...(dados.templateId !== undefined && { template_id: dados.templateId }),
+    ...(dados.totalParcelas !== undefined && { total_parcelas: dados.totalParcelas }),
   }
 }

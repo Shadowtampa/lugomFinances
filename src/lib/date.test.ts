@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { deslocarMes, formatarData, nomeDoMes, primeiroDiaDoMes, ultimoDiaDoMes } from './date'
+import {
+  deslocarMes,
+  formatarData,
+  nomeDoMes,
+  primeiroDiaDoMes,
+  resolverDiaRecorrencia,
+  ultimoDiaDoMes,
+} from './date'
 
 describe('primeiroDiaDoMes', () => {
   it('retorna o primeiro dia do mês', () => {
@@ -30,6 +37,24 @@ describe('formatarData', () => {
 describe('nomeDoMes', () => {
   it('formata o nome do mês por extenso', () => {
     expect(nomeDoMes('2026-09')).toBe('setembro de 2026')
+  })
+})
+
+describe('resolverDiaRecorrencia', () => {
+  it('mantém o dia quando ele existe no mês (mês de 30 dias)', () => {
+    expect(resolverDiaRecorrencia('2026-09', 30)).toBe('2026-09-30')
+  })
+
+  it('ajusta dia 31 para o último dia de um mês de 30 dias', () => {
+    expect(resolverDiaRecorrencia('2026-09', 31)).toBe('2026-09-30')
+  })
+
+  it('ajusta dia 31 para 28 em fevereiro de ano comum', () => {
+    expect(resolverDiaRecorrencia('2026-02', 31)).toBe('2026-02-28')
+  })
+
+  it('ajusta dia 31 para 29 em fevereiro de ano bissexto', () => {
+    expect(resolverDiaRecorrencia('2024-02', 31)).toBe('2024-02-29')
   })
 })
 

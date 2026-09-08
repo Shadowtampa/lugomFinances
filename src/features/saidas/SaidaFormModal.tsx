@@ -7,15 +7,19 @@ import Select from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
 import type { ApiError } from '../../lib/erros'
 import { mensagemDoErro } from '../../lib/erros'
+import { mesAtual, resolverDiaRecorrencia } from '../../lib/date'
 import { formatBRL } from '../../lib/money'
 import { atualizarSaida, criarSaida } from '../../services/saidas'
-import type { Categoria, Saida, SaldoCategoria } from '../../types/domain'
+import { confirmarSaidaRecorrente } from '../../services/recorrencias'
+import type { Categoria, RecorrenciaPendente, Saida, SaldoCategoria } from '../../types/domain'
 import { avaliarFonte, type FonteComSaldo } from './elegibilidade'
 
 interface SaidaFormModalProps {
   aberto: boolean
   saida?: Saida
   duplicarDe?: Saida
+  confirmarPendencia?: RecorrenciaPendente
+  templatePendencia?: Saida
   fontes: FonteComSaldo[]
   categorias: Categoria[]
   saldosCategorias: SaldoCategoria[]
@@ -45,6 +49,8 @@ function SaidaFormModal({
   aberto,
   saida,
   duplicarDe,
+  confirmarPendencia,
+  templatePendencia,
   fontes,
   categorias,
   saldosCategorias,
@@ -54,25 +60,33 @@ function SaidaFormModal({
   const { showToast } = useToast()
   const tituloRef = useRef<HTMLInputElement>(null)
 
-  const origem = saida ?? duplicarDe
+  const origem = saida ?? duplicarDe ?? templatePendencia
 
   const splitsIniciais: LinhaSplit[] = origem
     ? origem.splits.map((s) => ({ fonteId: s.fonteId, valorCentavos: s.valorCentavos }))
     : []
 
-  const [titulo, setTitulo] = useState(origem?.titulo ?? '')
+  const [titulo, setTitulo] = useState(confirmarPendencia?.titulo ?? origem?.titulo ?? '')
   const [erroTitulo, setErroTitulo] = useState<string | null>(null)
-  const [valorCentavos, setValorCentavos] = useState(origem?.valorTotalCentavos ?? 0)
+  const [valorCentavos, setValorCentavos] = useState(
+    confirmarPendencia?.valorSugeridoCentavos ?? origem?.valorTotalCentavos ?? 0,
+  )
   const [erroValor, setErroValor] = useState<string | null>(null)
   const [categoriaId, setCategoriaId] = useState(origem?.categoriaId ?? '')
   const [erroCategoria, setErroCategoria] = useState<string | null>(null)
-  const [data, setData] = useState(origem?.data ?? hojeISO())
+  const [data, setData] = useState(
+    confirmarPendencia
+      ? resolverDiaRecorrencia(mesAtual(), confirmarPendencia.diaRecorrencia ?? 1)
+      : (origem?.data ?? hojeISO()),
+  )
   const [erroData, setErroData] = useState<string | null>(null)
   const [recorrente, setRecorrente] = useState(origem?.recorrente ?? false)
   const [diaRecorrencia, setDiaRecorrencia] = useState(
     origem?.diaRecorrencia ?? diaDe(origem?.data ?? hojeISO()),
   )
   const [erroDia, setErroDia] = useState<string | null>(null)
+  const [totalParcelas, setTotalParcelas] = useState<number | ''>(origem?.totalParcelas ?? '')
+  const [erroParcelas, setErroParcelas] = useState<string | null>(null)
 
   const [modoSplit, setModoSplit] = useState(splitsIniciais.length > 1)
   const [fonteSimples, setFonteSimples] = useState(splitsIniciais[0]?.fonteId ?? '')
@@ -246,6 +260,13 @@ function SaidaFormModal({
       setErroDia(null)
     }
 
+    if (recorrente && totalParcelas !== '' && (!Number.isInteger(totalParcelas) || totalParcelas < 1)) {
+      setErroParcelas('Número de parcelas deve ser um inteiro maior que zero.')
+      temErro = true
+    } else {
+      setErroParcelas(null)
+    }
+
     let splitsFinais: LinhaSplit[]
 
     if (modoSplit) {
@@ -300,10 +321,19 @@ function SaidaFormModal({
       data,
       recorrente,
       diaRecorrencia: recorrente ? diaRecorrencia : null,
+      totalParcelas: recorrente && totalParcelas !== '' ? totalParcelas : null,
       splits: splitsFinais,
     }
 
     try {
+      if (confirmarPendencia) {
+        await confirmarSaidaRecorrente(confirmarPendencia, valorCentavos, data, splitsFinais)
+        showToast('Saída registrada.', 'success')
+        onSalvo()
+        onFechar()
+        return
+      }
+
       if (saida) {
         await atualizarSaida(saida.id, {
           ...dados,
@@ -328,7 +358,7 @@ function SaidaFormModal({
     <Modal
       open={aberto}
       onClose={onFechar}
-      title={saida ? 'Editar saída' : 'Nova saída'}
+      title={confirmarPendencia ? 'Lançar pendência' : saida ? 'Editar saída' : 'Nova saída'}
       size={modoSplit ? 'xl' : 'md'}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -479,38 +509,69 @@ function SaidaFormModal({
           required
         />
 
-        <label className="flex items-center gap-2 text-sm font-medium text-ink">
-          <input
-            type="checkbox"
-            checked={recorrente}
-            onChange={(event) => setRecorrente(event.target.checked)}
-          />
-          Recorrente
-        </label>
-
-        {recorrente && (
-          <div className="animate-expandir flex flex-col gap-1">
-            <label className="text-sm font-medium text-ink" htmlFor="dia-recorrencia-saida">
-              Dia da recorrência
+        {!confirmarPendencia && (
+          <>
+            <label className="flex items-center gap-2 text-sm font-medium text-ink">
+              <input
+                type="checkbox"
+                checked={recorrente}
+                onChange={(event) => setRecorrente(event.target.checked)}
+              />
+              Recorrente
             </label>
-            <input
-              id="dia-recorrencia-saida"
-              type="number"
-              min={1}
-              max={31}
-              value={diaRecorrencia}
-              onChange={(event) => setDiaRecorrencia(Number(event.target.value))}
-              className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
-                erroDia ? 'border-alerta' : 'border-line'
-              }`}
-            />
-            {erroDia && <span className="text-xs text-alerta">{erroDia}</span>}
-            {!erroDia && diaRecorrencia > 28 && (
-              <span className="text-xs text-ink-soft">
-                Em meses mais curtos, será sugerido o último dia do mês.
-              </span>
+
+            {recorrente && (
+              <div className="animate-expandir flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-ink" htmlFor="dia-recorrencia-saida">
+                    Dia da recorrência
+                  </label>
+                  <input
+                    id="dia-recorrencia-saida"
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={diaRecorrencia}
+                    onChange={(event) => setDiaRecorrencia(Number(event.target.value))}
+                    className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
+                      erroDia ? 'border-alerta' : 'border-line'
+                    }`}
+                  />
+                  {erroDia && <span className="text-xs text-alerta">{erroDia}</span>}
+                  {!erroDia && diaRecorrencia > 28 && (
+                    <span className="text-xs text-ink-soft">
+                      Em meses mais curtos, será sugerido o último dia do mês.
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-ink" htmlFor="total-parcelas-saida">
+                    Repetir por quantas vezes
+                  </label>
+                  <input
+                    id="total-parcelas-saida"
+                    type="number"
+                    min={1}
+                    value={totalParcelas}
+                    onChange={(event) =>
+                      setTotalParcelas(event.target.value === '' ? '' : Number(event.target.value))
+                    }
+                    className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
+                      erroParcelas ? 'border-alerta' : 'border-line'
+                    }`}
+                  />
+                  {erroParcelas && <span className="text-xs text-alerta">{erroParcelas}</span>}
+                  {!erroParcelas && (
+                    <span className="text-xs text-ink-soft">
+                      Deixe em branco para repetir indefinidamente. Ex.: uma compra parcelada em 4x
+                      → 4.
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {ehTemplate && (

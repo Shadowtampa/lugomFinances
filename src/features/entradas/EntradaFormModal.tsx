@@ -5,16 +5,19 @@ import Modal from '../../components/ui/Modal'
 import MoneyInput from '../../components/ui/MoneyInput'
 import Select from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
+import { mesAtual, resolverDiaRecorrencia } from '../../lib/date'
 import { formatBRL } from '../../lib/money'
 import { mensagemDoErro } from '../../lib/erros'
 import { atualizarEntrada, criarEntrada } from '../../services/entradas'
 import { listarSaldosFontes } from '../../services/fontes'
-import type { Entrada, Fonte } from '../../types/domain'
+import { confirmarEntradaRecorrente } from '../../services/recorrencias'
+import type { Entrada, Fonte, RecorrenciaPendente } from '../../types/domain'
 
 interface EntradaFormModalProps {
   aberto: boolean
   entrada?: Entrada
   duplicarDe?: Entrada
+  confirmarPendencia?: RecorrenciaPendente
   fontes: Fonte[]
   onFechar(): void
   onSalvo(fonteId: string): void
@@ -36,6 +39,7 @@ function EntradaFormModal({
   aberto,
   entrada,
   duplicarDe,
+  confirmarPendencia,
   fontes,
   onFechar,
   onSalvo,
@@ -45,19 +49,29 @@ function EntradaFormModal({
 
   const origem = entrada ?? duplicarDe
 
-  const [titulo, setTitulo] = useState(origem?.titulo ?? '')
+  const [titulo, setTitulo] = useState(confirmarPendencia?.titulo ?? origem?.titulo ?? '')
   const [erroTitulo, setErroTitulo] = useState<string | null>(null)
-  const [valorCentavos, setValorCentavos] = useState(origem?.valorCentavos ?? 0)
+  const [valorCentavos, setValorCentavos] = useState(
+    confirmarPendencia?.valorSugeridoCentavos ?? origem?.valorCentavos ?? 0,
+  )
   const [erroValor, setErroValor] = useState<string | null>(null)
-  const [fonteId, setFonteId] = useState(origem?.fonteId ?? fontes[0]?.id ?? '')
+  const [fonteId, setFonteId] = useState(
+    confirmarPendencia?.fonteId ?? origem?.fonteId ?? fontes[0]?.id ?? '',
+  )
   const [erroFonte, setErroFonte] = useState<string | null>(null)
-  const [data, setData] = useState(origem?.data ?? hojeISO())
+  const [data, setData] = useState(
+    confirmarPendencia
+      ? resolverDiaRecorrencia(mesAtual(), confirmarPendencia.diaRecorrencia ?? 1)
+      : (origem?.data ?? hojeISO()),
+  )
   const [erroData, setErroData] = useState<string | null>(null)
   const [recorrente, setRecorrente] = useState(origem?.recorrente ?? false)
   const [diaRecorrencia, setDiaRecorrencia] = useState(
     origem?.diaRecorrencia ?? diaDe(origem?.data ?? hojeISO()),
   )
   const [erroDia, setErroDia] = useState<string | null>(null)
+  const [totalParcelas, setTotalParcelas] = useState<number | ''>(origem?.totalParcelas ?? '')
+  const [erroParcelas, setErroParcelas] = useState<string | null>(null)
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -66,10 +80,6 @@ function EntradaFormModal({
   }, [])
 
   const ehTemplate = entrada?.recorrente === true && entrada.templateId === null
-
-  useEffect(() => {
-    tituloRef.current?.focus()
-  }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -113,11 +123,25 @@ function EntradaFormModal({
       setErroDia(null)
     }
 
+    if (recorrente && totalParcelas !== '' && (!Number.isInteger(totalParcelas) || totalParcelas < 1)) {
+      setErroParcelas('Número de parcelas deve ser um inteiro maior que zero.')
+      temErro = true
+    } else {
+      setErroParcelas(null)
+    }
+
     if (temErro) return
 
     setEnviando(true)
 
     try {
+      if (confirmarPendencia) {
+        const entradaCriada = await confirmarEntradaRecorrente(confirmarPendencia, valorCentavos, data)
+        onSalvo(entradaCriada.fonteId)
+        onFechar()
+        return
+      }
+
       if (entrada && valorCentavos !== entrada.valorCentavos) {
         const saldos = await listarSaldosFontes()
         const saldoFonteAntiga = saldos.find((s) => s.id === entrada.fonteId)
@@ -154,6 +178,7 @@ function EntradaFormModal({
         data,
         recorrente,
         diaRecorrencia: recorrente ? diaRecorrencia : null,
+        totalParcelas: recorrente && totalParcelas !== '' ? totalParcelas : null,
       }
 
       if (entrada) {
@@ -171,7 +196,11 @@ function EntradaFormModal({
   }
 
   return (
-    <Modal open={aberto} onClose={onFechar} title={entrada ? 'Editar entrada' : 'Nova entrada'}>
+    <Modal
+      open={aberto}
+      onClose={onFechar}
+      title={confirmarPendencia ? 'Lançar pendência' : entrada ? 'Editar entrada' : 'Nova entrada'}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           ref={tituloRef}
@@ -212,38 +241,69 @@ function EntradaFormModal({
           required
         />
 
-        <label className="flex items-center gap-2 text-sm font-medium text-ink">
-          <input
-            type="checkbox"
-            checked={recorrente}
-            onChange={(event) => setRecorrente(event.target.checked)}
-          />
-          Recorrente
-        </label>
-
-        {recorrente && (
-          <div className="animate-expandir flex flex-col gap-1">
-            <label className="text-sm font-medium text-ink" htmlFor="dia-recorrencia">
-              Dia da recorrência
+        {!confirmarPendencia && (
+          <>
+            <label className="flex items-center gap-2 text-sm font-medium text-ink">
+              <input
+                type="checkbox"
+                checked={recorrente}
+                onChange={(event) => setRecorrente(event.target.checked)}
+              />
+              Recorrente
             </label>
-            <input
-              id="dia-recorrencia"
-              type="number"
-              min={1}
-              max={31}
-              value={diaRecorrencia}
-              onChange={(event) => setDiaRecorrencia(Number(event.target.value))}
-              className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
-                erroDia ? 'border-alerta' : 'border-line'
-              }`}
-            />
-            {erroDia && <span className="text-xs text-alerta">{erroDia}</span>}
-            {!erroDia && diaRecorrencia > 28 && (
-              <span className="text-xs text-ink-soft">
-                Em meses mais curtos, será sugerido o último dia do mês.
-              </span>
+
+            {recorrente && (
+              <div className="animate-expandir flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-ink" htmlFor="dia-recorrencia">
+                    Dia da recorrência
+                  </label>
+                  <input
+                    id="dia-recorrencia"
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={diaRecorrencia}
+                    onChange={(event) => setDiaRecorrencia(Number(event.target.value))}
+                    className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
+                      erroDia ? 'border-alerta' : 'border-line'
+                    }`}
+                  />
+                  {erroDia && <span className="text-xs text-alerta">{erroDia}</span>}
+                  {!erroDia && diaRecorrencia > 28 && (
+                    <span className="text-xs text-ink-soft">
+                      Em meses mais curtos, será sugerido o último dia do mês.
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-ink" htmlFor="total-parcelas">
+                    Repetir por quantas vezes
+                  </label>
+                  <input
+                    id="total-parcelas"
+                    type="number"
+                    min={1}
+                    value={totalParcelas}
+                    onChange={(event) =>
+                      setTotalParcelas(event.target.value === '' ? '' : Number(event.target.value))
+                    }
+                    className={`rounded border px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre ${
+                      erroParcelas ? 'border-alerta' : 'border-line'
+                    }`}
+                  />
+                  {erroParcelas && <span className="text-xs text-alerta">{erroParcelas}</span>}
+                  {!erroParcelas && (
+                    <span className="text-xs text-ink-soft">
+                      Deixe em branco para repetir indefinidamente. Ex.: uma compra parcelada em 4x
+                      → 4.
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {ehTemplate && (

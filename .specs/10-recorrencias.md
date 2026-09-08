@@ -11,10 +11,10 @@ mês" vira realidade.
 ## Escopo
 
 **Dentro:** painel de pendências, confirmação individual, edição de valor no momento
-da confirmação, ignorar mês, encerrar recorrência, resolução de dia inválido.
-
-**Fora:** lançamento automático por cron, notificação push de vencimento,
+da confirmação, ignorar mês, encerrar recorrência, resolução de dia inválido,
 parcelamento com número fixo de parcelas.
+
+**Fora:** lançamento automático por cron, notificação push de vencimento.
 
 ---
 
@@ -159,6 +159,33 @@ No dashboard, quando houver pendências, um bloco discreto acima dos últimos
 lançamentos: "2 lançamentos recorrentes pendentes em setembro." + link. Não um banner
 grande — é um lembrete, não um alarme.
 
+### 10.8 Parcelamento (recorrência finita)
+
+Uma recorrência pode ter um número fixo de parcelas em vez de repetir para
+sempre. Ex.: uma compra parcelada em 4x — o template criado agora é a parcela
+1/4, e o sistema permite lançar só mais 3 vezes antes de encerrar sozinho.
+
+- Campo opcional no formulário de Entrada/Saída (M7/M8), visível só quando
+  "Recorrente" está marcado: **"Repetir por quantas vezes"**. Vazio = repete
+  indefinidamente (comportamento atual, inalterado). Quando preenchido, o
+  número **inclui** o lançamento que está sendo criado agora — uma compra "4x"
+  é `total_parcelas = 4`.
+- Coluna `total_parcelas` (nullable, `>= 1`, exige `recorrente = true`) em
+  `entradas` e `saidas`.
+- `v_recorrencias_pendentes` para de listar uma pendência assim que o número de
+  lançamentos já feitos a partir do template (incluindo o próprio template)
+  atingir `total_parcelas` — **independente** do valor de `recorrencia_ativa`,
+  para que reativar manualmente uma recorrência esgotada não volte a gerar
+  pendência.
+- Ao confirmar a última parcela, o sistema marca a recorrência como encerrada
+  automaticamente (`recorrencia_ativa = false`) — isso não viola a RN-08
+  ("nunca cria lançamento sozinho"): o lançamento em si continua exigindo
+  confirmação manual, só o status do template é atualizado.
+- Na seção "Todas as recorrências", uma recorrência que atingiu o total de
+  parcelas aparece como **"Concluída"** (não "Encerrada") e sem a ação
+  "Reativar" — reativá-la não teria efeito, já que a view não voltaria a
+  gerá-la como pendente.
+
 ---
 
 ## Critérios de aceite
@@ -177,6 +204,10 @@ grande — é um lembrete, não um alarme.
 - [ ] Encerrar recorrência para de gerar pendências e mantém o histórico
 - [ ] Badge de contagem correto na navegação
 - [ ] Testes de `resolverDiaRecorrencia` passando para os 3 casos de borda
+- [ ] Template de 4 parcelas some das pendências após a 4ª confirmação, mesmo
+      que reativado manualmente em seguida
+- [ ] Template de 4 parcelas aparece como "4/4 · Concluída" em "Todas as
+      recorrências", sem ação "Reativar"
 
 ## Definition of Done
 

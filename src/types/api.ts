@@ -40,6 +40,7 @@ export interface EntradaRow {
   dia_recorrencia: number | null
   recorrencia_ativa: boolean
   template_id: string | null
+  total_parcelas: number | null
   created_at: string
 }
 
@@ -61,6 +62,7 @@ export interface SaidaRow {
   dia_recorrencia: number | null
   recorrencia_ativa: boolean
   template_id: string | null
+  total_parcelas: number | null
   created_at: string
   saida_splits?: Pick<SaidaSplitRow, 'fonte_id' | 'valor_centavos'>[]
 }
@@ -105,6 +107,22 @@ export interface RecorrenciaPendenteRow {
   titulo: string
   valor_sugerido_centavos: number
   dia_recorrencia: number | null
+  fonte_id: string | null
+  categoria_id: string | null
+  total_parcelas: number | null
+  parcelas_lancadas: number
+}
+
+export interface RecorrenciaTemplateRow {
+  tipo_lancamento: 'entrada' | 'saida'
+  template_id: string
+  user_id: string
+  titulo: string
+  valor_centavos: number
+  dia_recorrencia: number | null
+  recorrencia_ativa: boolean
+  total_parcelas: number | null
+  parcelas_lancadas: number
   fonte_id: string | null
   categoria_id: string | null
 }

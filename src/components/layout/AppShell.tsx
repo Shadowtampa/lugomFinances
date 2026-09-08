@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
+import { useAsync } from '../../hooks/useAsync'
+import { listarPendentes } from '../../services/recorrencias'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Painel', end: true },
@@ -17,8 +19,25 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
   }`
 }
 
+function BadgePendencias({ count, atrasado }: { count: number; atrasado: boolean }) {
+  if (count === 0) return null
+  return (
+    <span
+      className={`ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white ${
+        atrasado ? 'bg-alerta' : 'bg-ink-soft'
+      }`}
+    >
+      {count}
+    </span>
+  )
+}
+
 function AppShell({ children }: { children: ReactNode }) {
   const { user, sair } = useAuth()
+  const location = useLocation()
+  const pendentes = useAsync(listarPendentes, [location.pathname])
+  const contagemPendencias = pendentes.data?.length ?? 0
+  const temAtrasado = (pendentes.data ?? []).some((p) => (p.diaRecorrencia ?? 0) < new Date().getDate())
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -27,6 +46,9 @@ function AppShell({ children }: { children: ReactNode }) {
         {NAV_ITEMS.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
             {item.label}
+            {item.to === '/recorrencias' && (
+              <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
+            )}
           </NavLink>
         ))}
 
@@ -56,6 +78,9 @@ function AppShell({ children }: { children: ReactNode }) {
               }
             >
               {item.label}
+              {item.to === '/recorrencias' && (
+                <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
+              )}
             </NavLink>
           ))}
           <button

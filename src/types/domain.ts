@@ -44,6 +44,7 @@ export type Entrada = {
   diaRecorrencia: number | null
   recorrenciaAtiva: boolean
   templateId: string | null
+  totalParcelas: number | null
 }
 
 export type SaidaSplit = {
@@ -61,6 +62,7 @@ export type Saida = {
   diaRecorrencia: number | null
   recorrenciaAtiva: boolean
   templateId: string | null
+  totalParcelas: number | null
   splits: SaidaSplit[]
 }
 
@@ -88,6 +90,21 @@ export type RecorrenciaPendente = {
   titulo: string
   valorSugeridoCentavos: number
   diaRecorrencia: number | null
+  fonteId: string | null
+  categoriaId: string | null
+  totalParcelas: number | null
+  parcelasLancadas: number
+}
+
+export type RecorrenciaTemplate = {
+  tipo: 'entrada' | 'saida'
+  templateId: string
+  titulo: string
+  valorCentavos: number
+  diaRecorrencia: number | null
+  recorrenciaAtiva: boolean
+  totalParcelas: number | null
+  parcelasLancadas: number
   fonteId: string | null
   categoriaId: string | null
 }

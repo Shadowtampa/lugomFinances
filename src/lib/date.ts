@@ -30,6 +30,12 @@ export function nomeDoMes(ym: string): string {
   return `${NOMES_MESES[mes - 1]} de ${ano}`
 }
 
+export function resolverDiaRecorrencia(ym: string, dia: number): string {
+  const ultimoDia = Number(ultimoDiaDoMes(ym).split('-')[2])
+  const diaEfetivo = Math.min(dia, ultimoDia)
+  return `${ym}-${String(diaEfetivo).padStart(2, '0')}`
+}
+
 export function deslocarMes(ym: string, delta: number): string {
   const [ano, mes] = ym.split('-').map(Number)
   const data = new Date(ano, mes - 1 + delta, 1)

@@ -26,6 +26,11 @@ export async function listarEntradas(filtro?: {
   return rows.map(paraEntrada)
 }
 
+export async function obterEntrada(id: string): Promise<Entrada> {
+  const row = unwrap<EntradaRow>(await supabase.from('entradas').select('*').eq('id', id).single())
+  return paraEntrada(row)
+}
+
 export async function criarEntrada(dados: Omit<Entrada, 'id'>): Promise<Entrada> {
   const row = unwrap<EntradaRow>(
     await supabase.from('entradas').insert(deEntrada(dados)).select().single(),

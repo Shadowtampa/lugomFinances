@@ -1,31 +1,47 @@
 import { unwrap } from '../lib/erros'
 import { supabase } from '../lib/supabase'
-import type { EntradaRow, RecorrenciaPendenteRow, ResultadoCriarSaidaRow } from '../types/api'
-import type { Entrada, RecorrenciaPendente, ResultadoCriarSaida, SaidaSplit } from '../types/domain'
-import { deEntrada, paraEntrada, paraResultadoCriarSaida } from './mappers'
+import type {
+  EntradaRow,
+  RecorrenciaPendenteRow,
+  RecorrenciaTemplateRow,
+  ResultadoCriarSaidaRow,
+} from '../types/api'
+import type {
+  Entrada,
+  RecorrenciaPendente,
+  RecorrenciaTemplate,
+  ResultadoCriarSaida,
+  SaidaSplit,
+} from '../types/domain'
+import { atualizarEntrada } from './entradas'
+import { deEntrada, paraEntrada, paraRecorrenciaPendente, paraRecorrenciaTemplate, paraResultadoCriarSaida } from './mappers'
+import { definirRecorrenciaAtivaSaida } from './saidas'
 
 export async function listarPendentes(): Promise<RecorrenciaPendente[]> {
   const rows = unwrap<RecorrenciaPendenteRow[]>(
     await supabase.from('v_recorrencias_pendentes').select('*'),
   )
-  return rows.map((row) => ({
-    tipo: row.tipo_lancamento,
-    templateId: row.template_id,
-    titulo: row.titulo,
-    valorSugeridoCentavos: row.valor_sugerido_centavos,
-    diaRecorrencia: row.dia_recorrencia,
-    fonteId: row.fonte_id,
-    categoriaId: row.categoria_id,
-  }))
+  return rows.map(paraRecorrenciaPendente)
+}
+
+export async function listarTemplates(): Promise<RecorrenciaTemplate[]> {
+  const rows = unwrap<RecorrenciaTemplateRow[]>(
+    await supabase.from('v_recorrencias_templates').select('*'),
+  )
+  return rows.map(paraRecorrenciaTemplate)
+}
+
+function esgotouParcelas(pendencia: RecorrenciaPendente): boolean {
+  return pendencia.totalParcelas !== null && pendencia.parcelasLancadas + 1 >= pendencia.totalParcelas
 }
 
 export async function confirmarEntradaRecorrente(
-  templateId: string,
+  pendencia: RecorrenciaPendente,
   valorCentavos: number,
   data: string,
 ): Promise<Entrada> {
   const template = unwrap<EntradaRow>(
-    await supabase.from('entradas').select('*').eq('id', templateId).single(),
+    await supabase.from('entradas').select('*').eq('id', pendencia.templateId).single(),
   )
 
   const row = unwrap<EntradaRow>(
@@ -38,23 +54,28 @@ export async function confirmarEntradaRecorrente(
           valorCentavos,
           data,
           recorrente: false,
-          templateId,
+          templateId: pendencia.templateId,
         }),
       )
       .select()
       .single(),
   )
+
+  if (esgotouParcelas(pendencia)) {
+    await atualizarEntrada(pendencia.templateId, { recorrenciaAtiva: false })
+  }
+
   return paraEntrada(row)
 }
 
 export async function confirmarSaidaRecorrente(
-  templateId: string,
+  pendencia: RecorrenciaPendente,
   valorCentavos: number,
   data: string,
   splits: SaidaSplit[],
 ): Promise<ResultadoCriarSaida> {
   const template = unwrap<{ titulo: string; categoria_id: string }>(
-    await supabase.from('saidas').select('titulo,categoria_id').eq('id', templateId).single(),
+    await supabase.from('saidas').select('titulo,categoria_id').eq('id', pendencia.templateId).single(),
   )
 
   const row = unwrap<ResultadoCriarSaidaRow>(
@@ -69,8 +90,41 @@ export async function confirmarSaidaRecorrente(
       })),
       p_recorrente: false,
       p_dia_recorrencia: null,
-      p_template_id: templateId,
+      p_template_id: pendencia.templateId,
+      p_total_parcelas: null,
     }),
   )
+
+  if (esgotouParcelas(pendencia)) {
+    await definirRecorrenciaAtivaSaida(pendencia.templateId, false)
+  }
+
   return paraResultadoCriarSaida(row)
+}
+
+export async function ignorarPendencia(
+  templateId: string,
+  tipo: 'entrada' | 'saida',
+  competencia: string,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('recorrencias_ignoradas')
+      .insert({ template_id: templateId, tipo_lancamento: tipo, competencia }),
+  )
+}
+
+export async function desfazerIgnorar(
+  templateId: string,
+  tipo: 'entrada' | 'saida',
+  competencia: string,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('recorrencias_ignoradas')
+      .delete()
+      .eq('template_id', templateId)
+      .eq('tipo_lancamento', tipo)
+      .eq('competencia', competencia),
+  )
 }

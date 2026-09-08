@@ -34,6 +34,21 @@ export async function listarSaidas(filtro?: {
     : saidas
 }
 
+export async function obterSaida(id: string): Promise<Saida> {
+  const row = unwrap<SaidaRow>(
+    await supabase
+      .from('saidas')
+      .select('*, saida_splits(fonte_id,valor_centavos)')
+      .eq('id', id)
+      .single(),
+  )
+  return paraSaida(row)
+}
+
+export async function definirRecorrenciaAtivaSaida(id: string, ativa: boolean): Promise<void> {
+  unwrap(await supabase.from('saidas').update({ recorrencia_ativa: ativa }).eq('id', id))
+}
+
 function paraSplitsRpc(splits: Saida['splits']) {
   return splits.map((split) => ({ fonte_id: split.fonteId, valor_centavos: split.valorCentavos }))
 }
@@ -49,6 +64,7 @@ export async function criarSaida(dados: Omit<Saida, 'id'>): Promise<ResultadoCri
       p_recorrente: dados.recorrente,
       p_dia_recorrencia: dados.diaRecorrencia,
       p_template_id: dados.templateId,
+      p_total_parcelas: dados.totalParcelas,
     }),
   )
   return paraResultadoCriarSaida(row)
@@ -69,6 +85,7 @@ export async function atualizarSaida(
       p_recorrente: dados.recorrente,
       p_dia_recorrencia: dados.diaRecorrencia,
       p_template_id: dados.templateId,
+      p_total_parcelas: dados.totalParcelas,
     }),
   )
   return paraResultadoCriarSaida(row)
