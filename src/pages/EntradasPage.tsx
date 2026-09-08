@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
+import AcoesMenu from '../components/ui/AcoesMenu'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Modal from '../components/ui/Modal'
@@ -265,85 +266,58 @@ function EntradasPage() {
             return (
               <li
                 key={entrada.id}
-                className="group relative flex items-center gap-3 border-b border-line py-3 cursor-pointer"
+                className="group relative flex flex-col items-start gap-1 border-b border-line py-3 cursor-pointer sm:flex-row sm:items-center sm:gap-3"
                 onClick={() => abrirEditar(entrada)}
               >
-                <span className="w-20 shrink-0 text-sm text-ink-soft">
-                  {formatarData(entrada.data)}
-                </span>
-                <span className="ml-2 flex-1 truncate text-sm text-ink">{entrada.titulo}</span>
-                <span className="flex shrink-0 items-center gap-1.5 text-sm text-ink-soft">
-                  {fonte && (
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: fonte.cor }}
-                      aria-hidden="true"
-                    />
-                  )}
-                  {fonte?.nome ?? '—'}
-                </span>
-                <span className="font-money w-28 shrink-0 text-right text-sm text-livre">
-                  {formatBRL(entrada.valorCentavos)}
-                </span>
-                {entrada.recorrente && (
-                  <span title={`Recorrente, todo dia ${entrada.diaRecorrencia}`}>↻</span>
-                )}
+                <div className="flex w-full items-center gap-3 pr-12 sm:contents sm:pr-0">
+                  <span className="w-20 shrink-0 text-sm text-ink-soft">
+                    {formatarData(entrada.data)}
+                  </span>
+                  <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
+                    {entrada.titulo}
+                  </span>
+                  <span className="sm:hidden">
+                    {entrada.recorrente && (
+                      <span title={`Recorrente, todo dia ${entrada.diaRecorrencia}`}>↻</span>
+                    )}
+                  </span>
+                </div>
 
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    aria-label="Mais ações"
-                    className="rounded px-2 py-1 text-ink-soft opacity-100 hover:bg-base sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setMenuAbertoId(menuAbertoId === entrada.id ? null : entrada.id)
-                    }}
-                  >
-                    ⋯
-                  </button>
-                  {menuAbertoId === entrada.id && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setMenuAbertoId(null)
-                        }}
+                <div className="flex w-full items-center gap-3 pl-20 sm:contents sm:pl-0">
+                  <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm text-ink-soft sm:flex-none">
+                    {fonte && (
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: fonte.cor }}
+                        aria-hidden="true"
                       />
-                      <div className="absolute right-0 top-full z-20 mt-1 rounded border border-line bg-surface shadow-lg">
-                        <button
-                          type="button"
-                          className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            abrirEditar(entrada)
-                          }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            abrirDuplicar(entrada)
-                          }}
-                        >
-                          Duplicar
-                        </button>
-                        <button
-                          type="button"
-                          className="whitespace-nowrap px-4 py-2 text-left text-sm text-alerta hover:bg-base"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            iniciarExcluir(entrada)
-                          }}
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </>
+                    )}
+                    <span className="truncate">{fonte?.nome ?? '—'}</span>
+                  </span>
+                  <span className="font-money w-28 shrink-0 text-right text-sm text-livre">
+                    {formatBRL(entrada.valorCentavos)}
+                  </span>
+                  {entrada.recorrente && (
+                    <span
+                      className="hidden sm:inline"
+                      title={`Recorrente, todo dia ${entrada.diaRecorrencia}`}
+                    >
+                      ↻
+                    </span>
                   )}
+                </div>
+
+                <div className="absolute right-0 top-1.5 sm:static sm:top-auto">
+                  <AcoesMenu
+                    aberto={menuAbertoId === entrada.id}
+                    onToggle={() => setMenuAbertoId(menuAbertoId === entrada.id ? null : entrada.id)}
+                    onFechar={() => setMenuAbertoId(null)}
+                    itens={[
+                      { label: 'Editar', onClick: () => abrirEditar(entrada) },
+                      { label: 'Duplicar', onClick: () => abrirDuplicar(entrada) },
+                      { label: 'Excluir', onClick: () => iniciarExcluir(entrada), perigo: true },
+                    ]}
+                  />
                 </div>
               </li>
             )

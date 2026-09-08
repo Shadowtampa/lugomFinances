@@ -249,8 +249,8 @@ function RecorrenciasPage() {
             </h2>
 
             {ignorado && (
-              <div className="mb-3 flex items-center justify-between rounded border border-line bg-base p-3 text-sm">
-                <span>"{ignorado.pendencia.titulo}" foi ignorado.</span>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded border border-line bg-base p-3 text-sm">
+                <span className="min-w-0 truncate">"{ignorado.pendencia.titulo}" foi ignorado.</span>
                 <Button variant="ghost" onClick={handleDesfazerIgnorar}>
                   Desfazer
                 </Button>
@@ -326,17 +326,17 @@ function RecorrenciasPage() {
                 {templatesAtivos.map((template) => (
                   <li
                     key={`${template.tipo}-${template.templateId}`}
-                    className="flex items-center justify-between gap-2 border-b border-line py-2"
+                    className="flex flex-col gap-2 border-b border-line py-2 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <p className="text-sm text-ink">{template.titulo}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-ink">{template.titulo}</p>
                       <p className="text-xs text-ink-soft">
                         {template.tipo === 'entrada' ? 'entrada' : 'saída'} · dia{' '}
                         {template.diaRecorrencia} ·{' '}
                         {progressoLabel(template.totalParcelas, template.parcelasLancadas)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
                       <span className="font-money text-sm text-ink-soft">
                         {formatBRL(template.valorCentavos)}
                       </span>
@@ -365,10 +365,10 @@ function RecorrenciasPage() {
                   return (
                     <li
                       key={`${template.tipo}-${template.templateId}`}
-                      className="flex items-center justify-between gap-2 border-b border-line py-2"
+                      className="flex flex-col gap-2 border-b border-line py-2 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div>
-                        <p className="text-sm text-ink">{template.titulo}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-ink">{template.titulo}</p>
                         <p className="text-xs text-ink-soft">
                           {template.tipo === 'entrada' ? 'entrada' : 'saída'} ·{' '}
                           {concluida
@@ -376,7 +376,7 @@ function RecorrenciasPage() {
                             : 'Encerrada'}
                         </p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <span className="font-money text-sm text-ink-soft">
                           {formatBRL(template.valorCentavos)}
                         </span>

@@ -160,7 +160,7 @@ function CategoriasPage() {
             {linhas.map((categoria) => (
               <li
                 key={categoria.id}
-                className={`flex items-start gap-3 border-b border-line py-3 pl-3 ${
+                className={`flex flex-col gap-2 border-b border-line py-3 pl-3 sm:flex-row sm:items-start sm:gap-3 ${
                   categoria.arquivada ? 'opacity-50' : ''
                 }`}
                 style={{ borderLeft: `3px solid ${categoria.cor}` }}

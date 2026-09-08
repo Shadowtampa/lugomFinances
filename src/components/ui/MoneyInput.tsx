@@ -39,14 +39,14 @@ function MoneyInput({
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label htmlFor={inputId} className="text-sm font-medium text-ink">
         {label}
       </label>
       <input
         id={inputId}
         inputMode="numeric"
-        className={`rounded border px-3 py-2 text-base font-money text-ink outline-none focus:ring-2 focus:ring-livre ${
+        className={`w-full min-w-0 rounded border px-3 py-2 text-base font-money text-ink outline-none focus:ring-2 focus:ring-livre ${
           error ? 'border-alerta' : 'border-line'
         } ${className}`}
         value={display}

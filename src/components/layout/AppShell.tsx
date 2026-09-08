@@ -9,8 +9,8 @@ const NAV_ITEMS = [
   { to: '/entradas', label: 'Entradas' },
   { to: '/saidas', label: 'Saídas' },
   { to: '/fontes', label: 'Fontes' },
-  { to: '/categorias', label: 'Categorias' },
-  { to: '/recorrencias', label: 'Recorrências' },
+  { to: '/categorias', label: 'Categorias', labelMobile: 'Categ.' },
+  { to: '/recorrencias', label: 'Recorrências', labelMobile: 'Recorr.' },
 ]
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -65,19 +65,19 @@ function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <div className="flex flex-1 flex-col">
-        <main className="flex-1 p-4 pb-20 md:pb-4">{children}</main>
+        <main className="flex-1 p-4 pb-24 md:pb-4">{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 flex items-center justify-around border-t border-line bg-surface p-2 md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 flex items-center justify-between gap-0.5 border-t border-line bg-surface px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `rounded px-2 py-1 text-xs font-medium ${isActive ? 'text-livre' : 'text-ink-soft'}`
+                `flex min-h-11 items-center whitespace-nowrap rounded px-1 py-1 text-[11px] font-medium ${isActive ? 'text-livre' : 'text-ink-soft'}`
               }
             >
-              {item.label}
+              {item.labelMobile ?? item.label}
               {item.to === '/recorrencias' && (
                 <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
               )}
@@ -86,7 +86,7 @@ function AppShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => sair()}
-            className="rounded px-2 py-1 text-xs font-medium text-ink-soft"
+            className="flex min-h-11 items-center whitespace-nowrap rounded px-1 py-1 text-[11px] font-medium text-ink-soft"
           >
             Sair
           </button>
@@ -98,7 +98,7 @@ function AppShell({ children }: { children: ReactNode }) {
 
 export function PageHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex items-center justify-between">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 className="text-xl font-semibold text-ink">{title}</h1>
       {action}
     </div>

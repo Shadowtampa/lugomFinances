@@ -455,15 +455,18 @@ function SaidaFormModal({
                     )}
                   </div>
                   <div className="flex items-end gap-2">
-                    <MoneyInput
-                      label="Valor"
-                      value={linha.valorCentavos}
-                      onChange={(centavos) => atualizarLinha(indice, 'valorCentavos', centavos)}
-                    />
+                    <div className="min-w-0 flex-1">
+                      <MoneyInput
+                        label="Valor"
+                        value={linha.valorCentavos}
+                        onChange={(centavos) => atualizarLinha(indice, 'valorCentavos', centavos)}
+                      />
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       aria-label="Remover fonte"
+                      className="shrink-0"
                       disabled={splits.length <= 1}
                       onClick={() => removerLinha(indice)}
                     >
@@ -582,7 +585,7 @@ function SaidaFormModal({
 
         {erroGeral && <p className="text-sm text-alerta">{erroGeral}</p>}
 
-        <div className="mt-2 flex justify-end gap-2">
+        <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="secondary" onClick={onFechar}>
             Cancelar
           </Button>

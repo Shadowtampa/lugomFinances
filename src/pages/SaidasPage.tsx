@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
+import AcoesMenu from '../components/ui/AcoesMenu'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Modal from '../components/ui/Modal'
@@ -284,95 +285,71 @@ function SaidasPage() {
             return (
               <li key={saida.id} className="border-b border-line">
                 <div
-                  className="group relative flex cursor-pointer items-center gap-3 py-3"
+                  className="group relative flex cursor-pointer flex-col items-start gap-1 py-3 sm:flex-row sm:items-center sm:gap-3"
                   onClick={() =>
                     saida.splits.length > 1 && setExpandidoId(expandido ? null : saida.id)
                   }
                 >
-                  <span className="w-20 shrink-0 text-sm text-ink-soft">
-                    {formatarData(saida.data)}
-                  </span>
-                  <span className="ml-2 flex-1 truncate text-sm text-ink">{saida.titulo}</span>
-                  <span className="flex shrink-0 items-center gap-1.5 text-sm text-ink-soft">
-                    {categoria && (
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: categoria.cor }}
-                        aria-hidden="true"
-                      />
-                    )}
-                    {categoria?.nome ?? '—'}
-                  </span>
-                  <span className="w-40 shrink-0 truncate text-sm text-ink-soft">
-                    {fonteLabel(saida, mapaFontes)}
-                  </span>
-                  <span className="font-money w-28 shrink-0 text-right text-sm text-ink">
-                    {formatBRL(saida.valorTotalCentavos)}
-                  </span>
-                  {saida.recorrente && (
-                    <span title={`Recorrente, todo dia ${saida.diaRecorrencia}`}>↻</span>
-                  )}
+                  <div className="flex w-full items-center gap-3 pr-12 sm:contents sm:pr-0">
+                    <span className="w-20 shrink-0 text-sm text-ink-soft">
+                      {formatarData(saida.data)}
+                    </span>
+                    <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
+                      {saida.titulo}
+                    </span>
+                    <span className="sm:hidden">
+                      {saida.recorrente && (
+                        <span title={`Recorrente, todo dia ${saida.diaRecorrencia}`}>↻</span>
+                      )}
+                    </span>
+                  </div>
 
-                  <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      aria-label="Mais ações"
-                      className="rounded px-2 py-1 text-ink-soft opacity-100 hover:bg-base sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setMenuAbertoId(menuAbertoId === saida.id ? null : saida.id)
-                      }}
-                    >
-                      ⋯
-                    </button>
-                    {menuAbertoId === saida.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setMenuAbertoId(null)
-                          }}
+                  <div className="flex w-full items-center gap-3 pl-20 sm:contents sm:pl-0">
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm text-ink-soft sm:flex-none">
+                      {categoria && (
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: categoria.cor }}
+                          aria-hidden="true"
                         />
-                        <div className="absolute right-0 top-full z-20 mt-1 rounded border border-line bg-surface shadow-lg">
-                          <button
-                            type="button"
-                            className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              abrirEditar(saida)
-                            }}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            className="whitespace-nowrap px-4 py-2 text-left text-sm text-ink hover:bg-base"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              abrirDuplicar(saida)
-                            }}
-                          >
-                            Duplicar
-                          </button>
-                          <button
-                            type="button"
-                            className="whitespace-nowrap px-4 py-2 text-left text-sm text-alerta hover:bg-base"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              iniciarExcluir(saida)
-                            }}
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </>
+                      )}
+                      <span className="truncate">
+                        {categoria?.nome ?? '—'}
+                        <span className="sm:hidden"> · {fonteLabel(saida, mapaFontes)}</span>
+                      </span>
+                    </span>
+                    <span className="hidden shrink-0 truncate text-sm text-ink-soft sm:block sm:w-40">
+                      {fonteLabel(saida, mapaFontes)}
+                    </span>
+                    <span className="font-money shrink-0 text-right text-sm text-ink sm:w-28">
+                      {formatBRL(saida.valorTotalCentavos)}
+                    </span>
+                    {saida.recorrente && (
+                      <span
+                        className="hidden sm:inline"
+                        title={`Recorrente, todo dia ${saida.diaRecorrencia}`}
+                      >
+                        ↻
+                      </span>
                     )}
+                  </div>
+
+                  <div className="absolute right-0 top-1.5 sm:static sm:top-auto">
+                    <AcoesMenu
+                      aberto={menuAbertoId === saida.id}
+                      onToggle={() => setMenuAbertoId(menuAbertoId === saida.id ? null : saida.id)}
+                      onFechar={() => setMenuAbertoId(null)}
+                      itens={[
+                        { label: 'Editar', onClick: () => abrirEditar(saida) },
+                        { label: 'Duplicar', onClick: () => abrirDuplicar(saida) },
+                        { label: 'Excluir', onClick: () => iniciarExcluir(saida), perigo: true },
+                      ]}
+                    />
                   </div>
                 </div>
 
                 {expandido && (
-                  <div className="ml-2 flex flex-col gap-1 pb-3 pl-20 text-sm text-ink-soft">
+                  <div className="ml-2 flex flex-col gap-1 break-words pb-3 pl-20 text-sm text-ink-soft">
                     {saida.splits.map((split) => (
                       <span key={split.fonteId}>
                         {mapaFontes.get(split.fonteId)?.nome ?? '—'}: {formatBRL(split.valorCentavos)}
