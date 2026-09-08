@@ -9,7 +9,7 @@ import BarraCartao from '../features/fontes/BarraCartao'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import { useAsync } from '../hooks/useAsync'
-import { formatarData } from '../lib/date'
+import { ehFuturo, formatarData } from '../lib/date'
 import { formatBRL } from '../lib/money'
 import { listarSaldosCategorias } from '../services/categorias'
 import { listarEntradas } from '../services/entradas'
@@ -41,7 +41,7 @@ async function carregarLancamentos(): Promise<Lancamento[]> {
   const lancamentos: Lancamento[] = [
     ...entradas.map((item): Lancamento => ({ tipo: 'entrada', item })),
     ...saidas.map((item): Lancamento => ({ tipo: 'saida', item })),
-  ]
+  ].filter((l) => !ehFuturo(l.item.data))
   return lancamentos.sort((a, b) => b.item.data.localeCompare(a.item.data)).slice(0, 10)
 }
 

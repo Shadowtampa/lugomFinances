@@ -51,6 +51,9 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   disponível: tem `limite_centavos` e `dia_fatura`. Seu saldo é sempre `≤ 0` e
   representa a dívida atual. No dia da fatura, uma pendência assistida (como as de
   M10) permite pagar a dívida a partir de uma fonte real.
+- **Lançamento futuro** (M14) — uma Entrada ou Saída com `data` no futuro. Fica
+  visível no sistema desde já, mas só passa a contar no saldo quando a data chega
+  — não é um status, é um filtro de data nas views de saldo.
 
 ### Por que "Fonte" e não "Entrada" como origem da Saída
 
@@ -114,6 +117,12 @@ Nunca `float`. A conversão para reais acontece só na borda da UI.
 pendência assistida (RN-08) aparece em Recorrências. Confirmar gera, atomicamente,
 uma Entrada no cartão (reduz a dívida) e uma Saída normal (categoria "Fatura de
 cartão") saindo da fonte pagadora escolhida — sujeita à RN-02/RN-03 dessa fonte.
+
+**RN-14** (M14) — Uma Entrada ou Saída com `data` no futuro é um **lançamento
+futuro**: não conta em `v_saldo_fontes`, `v_saldo_categorias` nem
+`v_resumo_geral` enquanto `data > hoje`. Ao chegar o dia, passa a contar
+sozinha, sem ação do usuário nem job agendado — é sempre a mesma consulta,
+só que a comparação de data já muda de resultado.
 
 ## 5. Stack
 
@@ -188,6 +197,7 @@ anterior está pronto e funcionando.
 | M11 | `11-layout-mobile.md` | Passada de responsividade sobre todas as telas existentes |
 | M12 | `12-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) |
 | M13 | `13-cartao-credito.md` | Cartão de crédito: Fonte com limite, bloqueio por limite, fatura assistida |
+| M14 | `14-lancamentos-futuros.md` | Entrada/Saída com data futura: não conta no saldo até o dia chegar |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo
@@ -196,7 +206,8 @@ ambos antes de M11 (que audita todas as telas), que por sua vez vem antes de M12
 faz sentido consolidar as notificações de saldo depois que o layout final (inclusive
 mobile) estiver fechado. M13 (cartão de crédito) vem depois de M12 porque reaproveita
 o `PainelSaldo` na confirmação de fatura — o MVP original terminava em M12, então M13
-é uma extensão pós-MVP.
+e M14 são extensões pós-MVP. M14 (lançamentos futuros) não depende de M13, mas fica
+depois por ordem de pedido — pode ser antecipada se fizer mais sentido no momento.
 
 ## 8. Convenções de código
 

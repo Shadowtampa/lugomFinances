@@ -41,3 +41,12 @@ export function deslocarMes(ym: string, delta: number): string {
   const data = new Date(ano, mes - 1 + delta, 1)
   return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
 }
+
+export function hojeISO(): string {
+  const hoje = new Date()
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+}
+
+export function ehFuturo(data: string): boolean {
+  return data > hojeISO()
+}

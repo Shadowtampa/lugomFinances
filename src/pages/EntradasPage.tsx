@@ -11,7 +11,7 @@ import { useToast } from '../components/ui/Toast'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
-import { deslocarMes, formatarData, mesAtual, nomeDoMes } from '../lib/date'
+import { deslocarMes, ehFuturo, formatarData, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
 import { formatBRL } from '../lib/money'
 import {
@@ -278,6 +278,14 @@ function EntradasPage() {
                       <span title={`Recorrente, todo dia ${entrada.diaRecorrencia}`}>↻</span>
                     )}
                   </span>
+                  {ehFuturo(entrada.data) && (
+                    <span
+                      className="shrink-0 text-xs text-ink-soft"
+                      title={`Só conta no saldo a partir de ${formatarData(entrada.data)}.`}
+                    >
+                      agendado
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex w-full items-center gap-3 pl-20 sm:contents sm:pl-0">

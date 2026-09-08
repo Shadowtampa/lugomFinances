@@ -11,7 +11,7 @@ import { useToast } from '../components/ui/Toast'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
-import { deslocarMes, formatarData, mesAtual, nomeDoMes } from '../lib/date'
+import { deslocarMes, ehFuturo, formatarData, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
 import { formatBRL } from '../lib/money'
 import { listarCategorias, listarSaldosCategorias } from '../services/categorias'
@@ -302,6 +302,14 @@ function SaidasPage() {
                         <span title={`Recorrente, todo dia ${saida.diaRecorrencia}`}>↻</span>
                       )}
                     </span>
+                    {ehFuturo(saida.data) && (
+                      <span
+                        className="shrink-0 text-xs text-ink-soft"
+                        title={`Só conta no saldo a partir de ${formatarData(saida.data)}.`}
+                      >
+                        agendado
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex w-full items-center gap-3 pl-20 sm:contents sm:pl-0">
