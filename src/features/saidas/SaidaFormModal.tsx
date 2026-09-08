@@ -3,8 +3,9 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import MoneyInput from '../../components/ui/MoneyInput'
+import type { LinhaSaldo } from '../../components/ui/PainelSaldo'
 import Select from '../../components/ui/Select'
-import { useToast } from '../../components/ui/Toast'
+import { usePainelSaldo } from '../../contexts/PainelSaldoContext'
 import type { ApiError } from '../../lib/erros'
 import { mensagemDoErro } from '../../lib/erros'
 import { mesAtual, resolverDiaRecorrencia } from '../../lib/date'
@@ -45,6 +46,12 @@ function opcaoLabel(fonte: FonteComSaldo, motivo: string | undefined): string {
   return motivo ? `${fonte.nome} — ${motivo}` : fonte.nome
 }
 
+function previewFonte(fonte: FonteComSaldo | undefined, valorCentavos: number) {
+  if (!fonte || valorCentavos <= 0) return null
+  const depois = fonte.saldoCentavos - valorCentavos
+  return { texto: `${fonte.nome}: ${formatBRL(fonte.saldoCentavos)} → ${formatBRL(depois)}`, negativo: depois < 0 }
+}
+
 function SaidaFormModal({
   aberto,
   saida,
@@ -57,7 +64,7 @@ function SaidaFormModal({
   onFechar,
   onSalvo,
 }: SaidaFormModalProps) {
-  const { showToast } = useToast()
+  const { mostrarPainelSaldo } = usePainelSaldo()
   const tituloRef = useRef<HTMLInputElement>(null)
 
   const origem = saida ?? duplicarDe ?? templatePendencia
@@ -130,6 +137,79 @@ function SaidaFormModal({
     const excesso = valorCentavos - disponivel
     return `Isso vai deixar ${saldoCategoriaAtual.nome} ${formatBRL(excesso)} acima do limite. Você ainda pode registrar.`
   }, [saldoCategoriaAtual, valorCentavos])
+
+  const previewCategoria = useMemo(() => {
+    if (!saldoCategoriaAtual || valorCentavos <= 0) return null
+    if (saldoCategoriaAtual.limiteMensalCentavos === null) {
+      const depois = saldoCategoriaAtual.gastoMesAtualCentavos + valorCentavos
+      return {
+        texto: `${saldoCategoriaAtual.nome}: ${formatBRL(saldoCategoriaAtual.gastoMesAtualCentavos)} gastos neste mês → ${formatBRL(depois)}`,
+        negativo: false,
+      }
+    }
+    const antes = saldoCategoriaAtual.saldoDisponivelCentavos ?? 0
+    const depois = antes - valorCentavos
+    if (antes < 0) {
+      return {
+        texto: `${saldoCategoriaAtual.nome}: ${formatBRL(Math.abs(antes))} acima do limite → ${formatBRL(Math.abs(depois))} acima do limite`,
+        negativo: true,
+      }
+    }
+    if (depois < 0) {
+      return {
+        texto: `${saldoCategoriaAtual.nome}: restam ${formatBRL(antes)} → ${formatBRL(Math.abs(depois))} acima do limite`,
+        negativo: true,
+      }
+    }
+    return {
+      texto: `${saldoCategoriaAtual.nome}: restam ${formatBRL(antes)} → ${formatBRL(depois)}`,
+      negativo: false,
+    }
+  }, [saldoCategoriaAtual, valorCentavos])
+
+  function montarLinhaCategoria(resultado: {
+    categoriaId: string
+    nome: string
+    limiteMensalCentavos: number | null
+    saldoDisponivelCentavos: number | null
+    gastoMesAtualCentavos: number
+  }): LinhaSaldo {
+    const cor = categorias.find((c) => c.id === resultado.categoriaId)?.cor ?? '#999999'
+    if (resultado.limiteMensalCentavos === null) {
+      return {
+        rotulo: resultado.nome,
+        cor,
+        valorCentavos: resultado.gastoMesAtualCentavos,
+        sufixo: 'gastos neste mês',
+      }
+    }
+    const disponivel = resultado.saldoDisponivelCentavos ?? 0
+    if (disponivel < 0) {
+      return {
+        rotulo: resultado.nome,
+        cor,
+        valorCentavos: Math.abs(disponivel),
+        sufixo: 'acima do limite',
+        tom: 'atencao',
+      }
+    }
+    return { rotulo: resultado.nome, cor, valorCentavos: disponivel, sufixo: 'restantes' }
+  }
+
+  function montarLinhasFontesEnota(resultado: { fontes: { fonteId: string; nome: string; saldoCentavos: number }[] }) {
+    const notas: string[] = []
+    const linhas: LinhaSaldo[] = resultado.fontes.map((f) => {
+      const antes = mapaFontes.get(f.fonteId)?.saldoCentavos ?? f.saldoCentavos
+      const cor = mapaFontes.get(f.fonteId)?.cor ?? '#999999'
+      const limiar = Math.max(antes * 0.1, 5000)
+      if (f.saldoCentavos < limiar) notas.push(`${f.nome} está quase no fim.`)
+      if (f.saldoCentavos === 0) {
+        return { rotulo: f.nome, cor, valorCentavos: 0, sufixo: '— sem saldo', tom: 'neutro' as const }
+      }
+      return { rotulo: f.nome, cor, valorCentavos: f.saldoCentavos }
+    })
+    return { linhas, nota: notas.length > 0 ? notas.join(' ') : undefined }
+  }
 
   function ativarModoSplit() {
     setSplits([{ fonteId: fonteSimples, valorCentavos }])
@@ -327,24 +407,36 @@ function SaidaFormModal({
 
     try {
       if (confirmarPendencia) {
-        await confirmarSaidaRecorrente(confirmarPendencia, valorCentavos, data, splitsFinais)
-        showToast('Saída registrada.', 'success')
+        const resultado = await confirmarSaidaRecorrente(confirmarPendencia, valorCentavos, data, splitsFinais)
+        const { linhas, nota } = montarLinhasFontesEnota(resultado)
+        mostrarPainelSaldo({
+          titulo: `${tituloAparado} registrada`,
+          fontes: linhas,
+          categoria: resultado.categoria ? montarLinhaCategoria(resultado.categoria) : undefined,
+          nota,
+        })
         onSalvo()
         onFechar()
         return
       }
 
+      let resultado
       if (saida) {
-        await atualizarSaida(saida.id, {
+        resultado = await atualizarSaida(saida.id, {
           ...dados,
           recorrenciaAtiva: saida.recorrenciaAtiva,
           templateId: saida.templateId,
         })
-        showToast('Saída atualizada.', 'success')
       } else {
-        await criarSaida({ ...dados, recorrenciaAtiva: recorrente, templateId: null })
-        showToast('Saída registrada.', 'success')
+        resultado = await criarSaida({ ...dados, recorrenciaAtiva: recorrente, templateId: null })
       }
+      const { linhas, nota } = montarLinhasFontesEnota(resultado)
+      mostrarPainelSaldo({
+        titulo: `${tituloAparado} ${saida ? 'atualizada' : 'registrada'}`,
+        fontes: linhas,
+        categoria: resultado.categoria ? montarLinhaCategoria(resultado.categoria) : undefined,
+        nota,
+      })
       onSalvo()
       onFechar()
     } catch (e) {
@@ -394,6 +486,11 @@ function SaidaFormModal({
             ))}
           </Select>
           {avisoEstouro && <p className="text-xs text-aviso">{avisoEstouro}</p>}
+          {previewCategoria && (
+            <p className={`text-xs ${previewCategoria.negativo ? 'text-alerta' : 'text-ink-soft'}`}>
+              {previewCategoria.texto}
+            </p>
+          )}
         </div>
 
         {!modoSplit && (
@@ -415,6 +512,16 @@ function SaidaFormModal({
             {!categoriaId && (
               <span className="text-xs text-ink-soft">Selecione uma categoria primeiro.</span>
             )}
+            {(() => {
+              const preview = previewFonte(mapaFontes.get(fonteSimples), valorCentavos)
+              return (
+                preview && (
+                  <span className={`text-xs ${preview.negativo ? 'text-alerta' : 'text-ink-soft'}`}>
+                    {preview.texto}
+                  </span>
+                )
+              )
+            })()}
             <Button type="button" variant="ghost" className="self-start" onClick={ativarModoSplit}>
               Dividir entre fontes
             </Button>
@@ -448,11 +555,19 @@ function SaidaFormModal({
                         </option>
                       ))}
                     </Select>
-                    {fonteSelecionada && (
-                      <span className="text-xs text-ink-soft">
-                        {formatBRL(fonteSelecionada.saldoCentavos)} disponíveis
-                      </span>
-                    )}
+                    {fonteSelecionada &&
+                      (() => {
+                        const preview = previewFonte(fonteSelecionada, linha.valorCentavos)
+                        return preview ? (
+                          <span className={`text-xs ${preview.negativo ? 'text-alerta' : 'text-ink-soft'}`}>
+                            {preview.texto}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-ink-soft">
+                            {formatBRL(fonteSelecionada.saldoCentavos)} disponíveis
+                          </span>
+                        )
+                      })()}
                   </div>
                   <div className="flex items-end gap-2">
                     <div className="min-w-0 flex-1">

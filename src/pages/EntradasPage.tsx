@@ -9,6 +9,7 @@ import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
+import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
 import { deslocarMes, formatarData, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
@@ -19,14 +20,19 @@ import {
   listarEntradas,
 } from '../services/entradas'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
-import type { Entrada, Fonte } from '../types/domain'
+import type { Entrada } from '../types/domain'
 
 async function carregarDados(mes: string, fonteId: string) {
-  const [entradas, saldos, fontes] = await Promise.all([
+  const [entradas, saldos, fontesBase] = await Promise.all([
     listarEntradas({ mes, fonteId: fonteId || undefined }),
     listarSaldosFontes(),
     listarFontes(),
   ])
+  const mapaSaldos = new Map(saldos.map((s) => [s.id, s.saldoCentavos]))
+  const fontes: FonteComSaldo[] = fontesBase.map((f) => ({
+    ...f,
+    saldoCentavos: mapaSaldos.get(f.id) ?? 0,
+  }))
   return { entradas, saldos, fontes }
 }
 
@@ -70,7 +76,7 @@ function EntradasPage() {
   }
 
   const mapaFontes = useMemo(() => {
-    const mapa = new Map<string, Fonte>()
+    const mapa = new Map<string, FonteComSaldo>()
     for (const fonte of dados.data?.fontes ?? []) mapa.set(fonte.id, fonte)
     return mapa
   }, [dados.data])
@@ -152,17 +158,8 @@ function EntradasPage() {
     }
   }
 
-  async function handleSalvo(fonteIdSalvo: string) {
+  function handleSalvo() {
     dados.recarregar()
-    try {
-      const saldos = await listarSaldosFontes()
-      const saldoFonte = saldos.find((s) => s.id === fonteIdSalvo)
-      if (saldoFonte) {
-        showToast(`Entrada registrada. ${saldoFonte.nome} agora tem ${formatBRL(saldoFonte.saldoCentavos)}.`, 'success')
-      }
-    } catch {
-      // toast é cosmético — a lista já foi recarregada
-    }
   }
 
   const semFontes = (dados.data?.fontes.length ?? 0) === 0
@@ -332,9 +329,9 @@ function EntradasPage() {
         duplicarDe={duplicandoDe}
         fontes={dados.data?.fontes ?? []}
         onFechar={() => setFormAberto(false)}
-        onSalvo={(fonteIdSalvo) => {
+        onSalvo={() => {
           setFormAberto(false)
-          handleSalvo(fonteIdSalvo)
+          handleSalvo()
         }}
       />
 

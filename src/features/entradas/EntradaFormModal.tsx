@@ -5,20 +5,22 @@ import Modal from '../../components/ui/Modal'
 import MoneyInput from '../../components/ui/MoneyInput'
 import Select from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
+import { usePainelSaldo } from '../../contexts/PainelSaldoContext'
 import { mesAtual, resolverDiaRecorrencia } from '../../lib/date'
 import { formatBRL } from '../../lib/money'
 import { mensagemDoErro } from '../../lib/erros'
 import { atualizarEntrada, criarEntrada } from '../../services/entradas'
 import { listarSaldosFontes } from '../../services/fontes'
 import { confirmarEntradaRecorrente } from '../../services/recorrencias'
-import type { Entrada, Fonte, RecorrenciaPendente } from '../../types/domain'
+import type { Entrada, RecorrenciaPendente } from '../../types/domain'
+import type { FonteComSaldo } from '../saidas/elegibilidade'
 
 interface EntradaFormModalProps {
   aberto: boolean
   entrada?: Entrada
   duplicarDe?: Entrada
   confirmarPendencia?: RecorrenciaPendente
-  fontes: Fonte[]
+  fontes: FonteComSaldo[]
   onFechar(): void
   onSalvo(fonteId: string): void
 }
@@ -35,6 +37,12 @@ function diaDe(dataISO: string): number {
   return Number(dataISO.split('-')[2])
 }
 
+function previewFonte(fonte: FonteComSaldo | undefined, valorCentavos: number) {
+  if (!fonte || valorCentavos <= 0) return null
+  const depois = fonte.saldoCentavos + valorCentavos
+  return `${fonte.nome}: ${formatBRL(fonte.saldoCentavos)} → ${formatBRL(depois)}`
+}
+
 function EntradaFormModal({
   aberto,
   entrada,
@@ -45,6 +53,7 @@ function EntradaFormModal({
   onSalvo,
 }: EntradaFormModalProps) {
   const { showToast } = useToast()
+  const { mostrarPainelSaldo } = usePainelSaldo()
   const tituloRef = useRef<HTMLInputElement>(null)
 
   const origem = entrada ?? duplicarDe
@@ -134,9 +143,24 @@ function EntradaFormModal({
 
     setEnviando(true)
 
+    async function mostrarPainelFonte(fonteIdSalvo: string) {
+      try {
+        const saldos = await listarSaldosFontes()
+        const saldoFonte = saldos.find((s) => s.id === fonteIdSalvo)
+        if (!saldoFonte) return
+        mostrarPainelSaldo({
+          titulo: 'Entrada registrada',
+          fontes: [{ rotulo: saldoFonte.nome, cor: saldoFonte.cor, valorCentavos: saldoFonte.saldoCentavos }],
+        })
+      } catch {
+        // painel é cosmético — a lista já foi recarregada
+      }
+    }
+
     try {
       if (confirmarPendencia) {
         const entradaCriada = await confirmarEntradaRecorrente(confirmarPendencia, valorCentavos, data)
+        await mostrarPainelFonte(entradaCriada.fonteId)
         onSalvo(entradaCriada.fonteId)
         onFechar()
         return
@@ -186,6 +210,7 @@ function EntradaFormModal({
       } else {
         await criarEntrada({ ...dados, recorrenciaAtiva: recorrente, templateId: null })
       }
+      await mostrarPainelFonte(fonteId)
       onSalvo(fonteId)
       onFechar()
     } catch (e) {
@@ -219,18 +244,27 @@ function EntradaFormModal({
           error={erroValor ?? undefined}
         />
 
-        <Select
-          label="Fonte"
-          value={fonteId}
-          onChange={(event) => setFonteId(event.target.value)}
-          error={erroFonte ?? undefined}
-        >
-          {fontes.map((fonte) => (
-            <option key={fonte.id} value={fonte.id}>
-              {fonte.nome}
-            </option>
-          ))}
-        </Select>
+        <div className="flex flex-col gap-1">
+          <Select
+            label="Fonte"
+            value={fonteId}
+            onChange={(event) => setFonteId(event.target.value)}
+            error={erroFonte ?? undefined}
+          >
+            {fontes.map((fonte) => (
+              <option key={fonte.id} value={fonte.id}>
+                {fonte.nome}
+              </option>
+            ))}
+          </Select>
+          {(() => {
+            const preview = previewFonte(
+              fontes.find((f) => f.id === fonteId),
+              valorCentavos,
+            )
+            return preview && <span className="text-xs text-ink-soft">{preview}</span>
+          })()}
+        </div>
 
         <Input
           label="Data"
