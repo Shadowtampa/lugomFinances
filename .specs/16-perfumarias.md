@@ -27,14 +27,13 @@
 
 `package.json` → `"version": "1.16"`. Exibida como `v1.16` no rodapé do sidebar desktop (`AppShell.tsx`), abaixo do botão "Sair". Não aparece na bottom nav mobile (sem espaço).
 
-### 16.2 Menu mobile configurável
+### 16.2 Menu mobile via drawer lateral
 
-Hoje a bottom nav mobile mostra todos os 6 itens de `NAV_ITEMS` + "Sair", apertado demais em telas pequenas.
+A bottom nav mobile foi removida — navegação em mobile passa a ser só pelo drawer lateral.
 
 - Um botão hamburger (`☰`) aparece no `PageHeader`, só em mobile (`md:hidden`), ao lado do título da página.
-- Ao clicar, abre um modal ("Menu mobile") com um checkbox por item de navegação, permitindo escolher quais aparecem na bottom nav.
-- Seleção persiste em `localStorage` (chave `lugom:nav-mobile`), padrão: Painel, Entradas, Saídas, Fontes.
-- "Sair" continua sempre visível na bottom nav, fora da seleção.
+- Ao clicar, abre um drawer lateral (mesmo conteúdo do sidebar desktop: todos os itens de `NAV_ITEMS`, e-mail do usuário, "Sair", versão do app), com overlay escurecido atrás.
+- Fecha ao clicar no overlay, no "✕" ou ao selecionar um item de navegação.
 
 ### 16.3 Ícones no menu de ações
 
@@ -56,9 +55,8 @@ Nas listas de Entradas e Saídas:
 ## Critérios de aceite
 
 - [ ] `package.json` versão `1.16`; `v1.16` visível no rodapé do sidebar desktop.
-- [ ] Botão hamburger visível só em mobile no header de cada página; abre modal de seleção de itens da bottom nav.
-- [ ] Seleção de itens da bottom nav persiste após reload da página.
-- [ ] "Sair" sempre visível na bottom nav, independente da seleção.
+- [ ] Botão hamburger visível só em mobile no header de cada página; abre drawer lateral com todos os itens de navegação.
+- [ ] Não existe bottom nav em mobile; drawer fecha ao selecionar item, clicar fora ou no "✕".
 - [ ] Menu de ações (Editar/Duplicar/Excluir) exibe ícone + texto em Entradas e Saídas.
 - [ ] Em mobile, a 2ª linha do registro alinha à esquerda, sob a data.
 - [ ] Em desktop, a coluna de fonte/categoria alinha entre todas as linhas da lista.
@@ -66,4 +64,4 @@ Nas listas de Entradas e Saídas:
 
 ## Definition of Done
 
-Com o app rodando (`npm run dev`), abrir Entradas ou Saídas em viewport mobile (~375px): o menu de ações mostra ícones, a 2ª linha de cada registro alinha sob a data, e o hamburger no header abre um modal onde é possível trocar quais itens aparecem na barra inferior — a escolha sobrevive a um reload. Em viewport desktop, a coluna de fonte/categoria fica alinhada em todas as linhas da lista. O rodapé do sidebar mostra `v1.16`.
+Com o app rodando (`npm run dev`), abrir Entradas ou Saídas em viewport mobile (~375px): o menu de ações mostra ícones, a 2ª linha de cada registro alinha sob a data, e o hamburger no header abre um drawer lateral com todos os itens de navegação (sem bottom nav). Em viewport desktop, a coluna de fonte/categoria fica alinhada em todas as linhas da lista. O rodapé do sidebar mostra `v1.16`.
