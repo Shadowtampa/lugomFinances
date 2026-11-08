@@ -37,16 +37,20 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   - `tipo = 'livre'` → aceita saída de qualquer categoria.
   - `tipo = 'restrita'` → só aceita saídas de categorias explicitamente permitidas.
 - **Entrada** — um lançamento de dinheiro *entrando* numa Fonte. Ex: "Salário
-  Outubro, R$ 5.000, na fonte Conta Corrente". Pode ser recorrente.
+  Outubro, R$ 5.000, na fonte Conta Corrente".
 - **Saída** — um lançamento de dinheiro *saindo*. Tem uma Categoria e é rateada
-  entre uma ou mais Fontes (split). Pode ser recorrente.
+  entre uma ou mais Fontes (split).
 - **Split** — a parcela de uma Saída atribuída a uma Fonte específica. A soma dos
   splits sempre é igual ao valor total da Saída.
 - **Categoria** — a natureza do gasto. Ex: `Transporte`, `Alimentação`, `Moradia`.
   Tem um limite mensal opcional que acumula.
-- **Conta** — não é uma entidade separada. "Conta" (gasto fixo mensal, ex: aluguel,
-  internet) é apenas uma **Saída com `recorrente = true`**. A UI pode chamar de
-  "Conta fixa", mas o banco tem uma única tabela `saidas`.
+- **Recorrência** (M19) — uma conta a pagar acompanhada mês a mês (internet, plano
+  de saúde, parcelas), com valor previsto e dia de vencimento. **Não é um
+  lançamento e nunca afeta saldo**: é um checklist de "paga / não paga" por
+  competência (`recorrencias` + `recorrencias_pagamentos`). Um pagamento pode
+  apontar para a Saída real que o quitou (`saida_id`), mas não precisa. Só existem
+  recorrências de saída. (Até o M18, recorrência era uma Entrada/Saída com
+  `recorrente = true` que gerava lançamentos — modelo removido no M19.)
 - **Cartão de crédito** (M13) — uma Fonte com `eh_cartao = true`, sem saldo
   disponível: tem `limite_centavos` e `dia_fatura`. Seu saldo é sempre `≤ 0` e
   representa a dívida atual. No dia da fatura, uma pendência assistida (como as de
@@ -97,9 +101,12 @@ um aviso visual (saldo negativo em vermelho). Só a RN-02 e a RN-03 bloqueiam.
 1. o saldo restante de **cada Fonte** envolvida no split;
 2. o saldo restante da **Categoria** da saída.
 
-**RN-08** — Recorrência é **assistida, nunca automática**. Um lançamento marcado como
-recorrente vira um *template*. Todo mês o sistema lista os templates que ainda não
-foram lançados no mês corrente e o usuário confirma um a um (podendo editar o valor).
+**RN-08** (reescrita no M19) — Recorrência é **acompanhamento, nunca lançamento**.
+Para cada competência em que está vigente (`mes_inicio` ≤ mês, dentro de
+`total_parcelas`, `ativa`), a recorrência aparece como **Paga** (tem registro em
+`recorrencias_pagamentos`), **Atrasada** (sem pagamento e hoje passou do dia de
+vencimento resolvido no mês) ou **Pendente**. Marcar como paga não cria Saída
+nem mexe em saldo.
 
 **RN-09** — Saldo nunca é armazenado. É sempre derivado por view SQL a partir dos
 lançamentos. Isso elimina dessincronização.
@@ -114,7 +121,7 @@ Nunca `float`. A conversão para reais acontece só na borda da UI.
 (dívida). Bloqueia se `dívida_atual + valor_do_split > limite_centavos`.
 
 **RN-13** (M13) — Com dívida em aberto e `dia_fatura` do mês já passado, uma
-pendência assistida (RN-08) aparece em Recorrências. Confirmar gera, atomicamente,
+pendência de fatura (`v_faturas_pendentes`) aparece em Recorrências. Confirmar gera, atomicamente,
 uma Entrada no cartão (reduz a dívida) e uma Saída normal (categoria "Fatura de
 cartão") saindo da fonte pagadora escolhida — sujeita à RN-02/RN-03 dessa fonte.
 
@@ -167,19 +174,24 @@ auth.users (local, M17)
    │     id, user_id, nome, limite_mensal_centavos, vigencia_inicio, cor, arquivada
    │
    ├── entradas
-   │     id, user_id, fonte_id, titulo, valor_centavos, data,
-   │     recorrente, dia_recorrencia, recorrencia_ativa, template_id
+   │     id, user_id, fonte_id, titulo, valor_centavos, data, eh_pagamento_fatura
    │
-   └── saidas
-         id, user_id, categoria_id, titulo, valor_total_centavos, data,
-         recorrente, dia_recorrencia, recorrencia_ativa, template_id
+   ├── saidas
+   │     id, user_id, categoria_id, titulo, valor_total_centavos, data, eh_pagamento_fatura
+   │        │
+   │        └── saida_splits
+   │              id, saida_id, fonte_id, valor_centavos
+   │
+   └── recorrencias (M19 — fora de qualquer saldo)
+         id, user_id, titulo, valor_previsto_centavos, dia, categoria_id,
+         mes_inicio, total_parcelas, ativa
             │
-            └── saida_splits
-                  id, saida_id, fonte_id, valor_centavos
+            └── recorrencias_pagamentos
+                  id, recorrencia_id, competencia, pago_em, saida_id (opcional)
 ```
 
 **Views:** `v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`,
-`v_recorrencias_pendentes`.
+`v_recorrencias_mes` (M19), `v_faturas_pendentes` (M13/M19).
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.
@@ -205,6 +217,7 @@ anterior está pronto e funcionando.
 | M12 | `12-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) |
 | M13 | `13-cartao-credito.md` | Cartão de crédito: Fonte com limite, bloqueio por limite, fatura assistida |
 | M14 | `14-lancamentos-futuros.md` | Entrada/Saída com data futura: não conta no saldo até o dia chegar |
+| M19 | `19-recorrencias-acompanhamento.md` | Recorrência vira acompanhamento de contas a pagar (paga/pendente/atrasada), fora do saldo |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

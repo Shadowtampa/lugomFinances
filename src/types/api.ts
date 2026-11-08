@@ -39,11 +39,6 @@ export interface EntradaRow {
   titulo: string
   valor_centavos: number
   data: string
-  recorrente: boolean
-  dia_recorrencia: number | null
-  recorrencia_ativa: boolean
-  template_id: string | null
-  total_parcelas: number | null
   eh_pagamento_fatura: boolean
   created_at: string
 }
@@ -62,11 +57,6 @@ export interface SaidaRow {
   titulo: string
   valor_total_centavos: number
   data: string
-  recorrente: boolean
-  dia_recorrencia: number | null
-  recorrencia_ativa: boolean
-  template_id: string | null
-  total_parcelas: number | null
   eh_pagamento_fatura: boolean
   created_at: string
   saida_splits?: Pick<SaidaSplitRow, 'fonte_id' | 'valor_centavos'>[]
@@ -108,31 +98,43 @@ export interface ResumoGeralRow {
   saldo_restrito_centavos: number
 }
 
-export interface RecorrenciaPendenteRow {
-  tipo_lancamento: 'entrada' | 'saida' | 'fatura_cartao'
-  template_id: string
+export interface RecorrenciaRow {
+  id: string
   user_id: string
   titulo: string
-  valor_sugerido_centavos: number
-  dia_recorrencia: number | null
-  fonte_id: string | null
+  valor_previsto_centavos: number
+  dia: number
   categoria_id: string | null
+  mes_inicio: string
   total_parcelas: number | null
-  parcelas_lancadas: number
+  ativa: boolean
+  created_at: string
 }
 
-export interface RecorrenciaTemplateRow {
-  tipo_lancamento: 'entrada' | 'saida'
-  template_id: string
+export interface RecorrenciaMesRow {
+  recorrencia_id: string
   user_id: string
   titulo: string
-  valor_centavos: number
-  dia_recorrencia: number | null
-  recorrencia_ativa: boolean
-  total_parcelas: number | null
-  parcelas_lancadas: number
-  fonte_id: string | null
+  valor_previsto_centavos: number
+  dia: number
   categoria_id: string | null
+  categoria_nome: string | null
+  total_parcelas: number | null
+  ativa: boolean
+  competencia: string
+  parcela: number
+  pagamento_id: string | null
+  pago_em: string | null
+  saida_id: string | null
+  valor_pago_centavos: number | null
+}
+
+export interface FaturaPendenteRow {
+  fonte_id: string
+  user_id: string
+  nome: string
+  valor_sugerido_centavos: number
+  dia_fatura: number
 }
 
 // Retorno de criar_saida / atualizar_saida (RPC)

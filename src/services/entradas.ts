@@ -84,12 +84,3 @@ export async function excluirEntrada(id: string): Promise<void> {
   unwrap(await db.from('entradas').delete().eq('id', id))
 }
 
-export async function excluirTemplateRecorrente(
-  id: string,
-  excluirLancados: boolean,
-): Promise<void> {
-  if (excluirLancados) {
-    unwrap(await db.from('entradas').delete().eq('template_id', id))
-  }
-  unwrap(await db.from('entradas').delete().eq('id', id))
-}

@@ -9,11 +9,13 @@ import BarraCartao from '../features/fontes/BarraCartao'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import { useAsync } from '../hooks/useAsync'
-import { ehFuturo, formatarData } from '../lib/date'
+import { ehFuturo, formatarData, hojeISO, mesAtual, nomeDoMes } from '../lib/date'
+import { statusDaRecorrencia } from '../lib/recorrencias'
 import { formatBRL } from '../lib/money'
 import { listarSaldosCategorias } from '../services/categorias'
 import { listarEntradas } from '../services/entradas'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
+import { listarRecorrenciasDoMes } from '../services/recorrencias'
 import { obterResumoGeral } from '../services/resumo'
 import { listarSaidas } from '../services/saidas'
 import type { Entrada, Saida } from '../types/domain'
@@ -45,6 +47,38 @@ async function carregarLancamentos(): Promise<Lancamento[]> {
   return lancamentos.sort((a, b) => b.item.data.localeCompare(a.item.data)).slice(0, 10)
 }
 
+async function carregarRecorrenciasDoMes() {
+  const hoje = hojeISO()
+  const naoPagas = (await listarRecorrenciasDoMes(mesAtual())).filter((r) => !r.pagamentoId)
+  return {
+    pendentes: naoPagas.filter((r) => statusDaRecorrencia(r, hoje) === 'pendente').length,
+    atrasadas: naoPagas.filter((r) => statusDaRecorrencia(r, hoje) === 'atrasada').length,
+    faltaCentavos: naoPagas.reduce((s, r) => s + r.valorPrevistoCentavos, 0),
+  }
+}
+
+function CardRecorrencias({ pendentes, atrasadas, faltaCentavos }: { pendentes: number; atrasadas: number; faltaCentavos: number }) {
+  if (pendentes + atrasadas === 0) return null
+  const partes = [
+    pendentes > 0 && `${pendentes} pendente${pendentes === 1 ? '' : 's'}`,
+    atrasadas > 0 && `${atrasadas} atrasada${atrasadas === 1 ? '' : 's'}`,
+  ].filter(Boolean)
+  return (
+    <Link
+      to="/recorrencias"
+      className={`flex flex-wrap items-center justify-between gap-2 rounded border p-3 text-sm ${
+        atrasadas > 0 ? 'border-alerta/40 bg-alerta/5' : 'border-line bg-surface'
+      }`}
+    >
+      <span className="text-ink">
+        Recorrências de {nomeDoMes(mesAtual()).split(' ')[0].toLowerCase()}:{' '}
+        <span className={atrasadas > 0 ? 'text-alerta' : ''}>{partes.join(', ')}</span>
+      </span>
+      <span className="font-money text-ink-soft">{formatBRL(faltaCentavos)} a pagar</span>
+    </Link>
+  )
+}
+
 function Skeleton({ altura }: { altura: string }) {
   return <div className={`animate-pulse rounded bg-line ${altura}`} />
 }
@@ -68,6 +102,7 @@ function DashboardPage() {
   const fontes = useAsync(carregarFontes, [])
   const categorias = useAsync(listarSaldosCategorias, [])
   const lancamentos = useAsync(carregarLancamentos, [])
+  const recorrencias = useAsync(carregarRecorrenciasDoMes, [])
 
   const [formSaidaAberto, setFormSaidaAberto] = useState(false)
   const [formEntradaAberto, setFormEntradaAberto] = useState(false)
@@ -160,6 +195,8 @@ function DashboardPage() {
               </div>
             )}
           </section>
+
+          {recorrencias.data && <CardRecorrencias {...recorrencias.data} />}
 
           <section>
             <h2 className="mb-3 text-sm font-medium text-ink-soft">Fontes</h2>

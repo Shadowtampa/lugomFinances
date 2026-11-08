@@ -48,10 +48,10 @@ begin
     (v_fonte_vr, v_cat_supermercado);
 
   -- entradas
-  insert into entradas (user_id, fonte_id, titulo, valor_centavos, data, recorrente, dia_recorrencia)
-    values (v_user_id, v_fonte_conta, 'Salário', 500000, date_trunc('month', current_date) + interval '4 days', true, 5);
-  insert into entradas (user_id, fonte_id, titulo, valor_centavos, data, recorrente, dia_recorrencia)
-    values (v_user_id, v_fonte_vr, 'VR', 90000, date_trunc('month', current_date), true, 1);
+  insert into entradas (user_id, fonte_id, titulo, valor_centavos, data)
+    values (v_user_id, v_fonte_conta, 'Salário', 500000, date_trunc('month', current_date) + interval '4 days');
+  insert into entradas (user_id, fonte_id, titulo, valor_centavos, data)
+    values (v_user_id, v_fonte_vr, 'VR', 90000, date_trunc('month', current_date));
   insert into entradas (user_id, fonte_id, titulo, valor_centavos, data)
     values (v_user_id, v_fonte_conta, 'Freelance', 80000, current_date);
 

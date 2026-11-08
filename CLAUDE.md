@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-M1–M17 are built. The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
+M1–M17 and M19 are built (M18 pending merge). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
 
 Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossary, the business rules (RN-01 through RN-11), the stack decisions, and code conventions. They are mandatory and are not repeated in full here.
 
@@ -12,12 +12,12 @@ Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossar
 
 Lugom Financial Manager — a single-user personal finance app built on **envelope budgeting**. The core idea: money is not fungible. R$500 of meal-voucher money cannot pay for an Uber, even if the account's total balance covers it. The whole system exists to enforce that separation between *where money came from* (Fonte) and *what it was spent on* (Categoria).
 
-Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonyms): **Fonte** (envelope/wallet, `livre` or `restrita`), **Entrada** (money in), **Saída** (money out, always split across ≥1 Fonte), **Split** (a Saída's portion assigned to one Fonte), **Categoria** (spending nature, optional accumulating monthly limit). There is no separate "Conta" entity — a recurring fixed bill is just a Saída with `recorrente = true`.
+Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonyms): **Fonte** (envelope/wallet, `livre` or `restrita`), **Entrada** (money in), **Saída** (money out, always split across ≥1 Fonte), **Split** (a Saída's portion assigned to one Fonte), **Categoria** (spending nature, optional accumulating monthly limit). **Recorrência** (since M19) is a bill tracked month by month (paid / pending / overdue) in its own tables (`recorrencias`, `recorrencias_pagamentos`) — it is **not** a lançamento and never affects any balance. Entradas/Saídas have no recurrence fields anymore.
 
 ## Rules that must never be broken
 
 - Money is always `BIGINT` in cents (`_centavos` fields). Never `float`, never `numeric`.
-- A balance (saldo) is never stored — always derived by SQL view (`v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`, `v_recorrencias_pendentes`).
+- A balance (saldo) is never stored — always derived by SQL view (`v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`); `v_recorrencias_mes` and `v_faturas_pendentes` are tracking views, not balances.
 - A Saída (money out) is never inserted directly via `POST /saidas`. It always goes through the `criar_saida` RPC, which enforces the blocking rules transactionally.
 - A Saída must have ≥1 split and `Σ splits = valor_total` exactly.
 - A Saída can never drive a Fonte's balance negative (RN-02) — blocking. A restricted Fonte only accepts Saídas whose Categoria is on its allowlist (RN-03) — blocking. Exceeding a Categoria's monthly limit does **not** block (RN-06), it's cosmetic only (red balance).

@@ -2,8 +2,9 @@ import type {
   CategoriaRow,
   EntradaRow,
   FonteRow,
-  RecorrenciaPendenteRow,
-  RecorrenciaTemplateRow,
+  FaturaPendenteRow,
+  RecorrenciaMesRow,
+  RecorrenciaRow,
   ResultadoCriarSaidaRow,
   ResumoGeralRow,
   SaidaRow,
@@ -14,8 +15,9 @@ import type {
   Categoria,
   Entrada,
   Fonte,
-  RecorrenciaPendente,
-  RecorrenciaTemplate,
+  FaturaPendente,
+  Recorrencia,
+  RecorrenciaDoMes,
   ResultadoCriarSaida,
   ResumoGeral,
   Saida,
@@ -87,11 +89,6 @@ export function paraEntrada(row: EntradaRow): Entrada {
     titulo: row.titulo,
     valorCentavos: row.valor_centavos,
     data: row.data,
-    recorrente: row.recorrente,
-    diaRecorrencia: row.dia_recorrencia,
-    recorrenciaAtiva: row.recorrencia_ativa,
-    templateId: row.template_id,
-    totalParcelas: row.total_parcelas,
     ehPagamentoFatura: row.eh_pagamento_fatura,
   }
 }
@@ -103,11 +100,6 @@ export function paraSaida(row: SaidaRow): Saida {
     titulo: row.titulo,
     valorTotalCentavos: row.valor_total_centavos,
     data: row.data,
-    recorrente: row.recorrente,
-    diaRecorrencia: row.dia_recorrencia,
-    recorrenciaAtiva: row.recorrencia_ativa,
-    templateId: row.template_id,
-    totalParcelas: row.total_parcelas,
     ehPagamentoFatura: row.eh_pagamento_fatura,
     splits: (row.saida_splits ?? []).map((split) => ({
       fonteId: split.fonte_id,
@@ -124,32 +116,44 @@ export function paraResumoGeral(row: ResumoGeralRow): ResumoGeral {
   }
 }
 
-export function paraRecorrenciaPendente(row: RecorrenciaPendenteRow): RecorrenciaPendente {
+export function paraRecorrencia(row: RecorrenciaRow): Recorrencia {
   return {
-    tipo: row.tipo_lancamento,
-    templateId: row.template_id,
+    id: row.id,
     titulo: row.titulo,
-    valorSugeridoCentavos: row.valor_sugerido_centavos,
-    diaRecorrencia: row.dia_recorrencia,
-    fonteId: row.fonte_id,
+    valorPrevistoCentavos: row.valor_previsto_centavos,
+    dia: row.dia,
     categoriaId: row.categoria_id,
+    mesInicio: row.mes_inicio.slice(0, 7),
     totalParcelas: row.total_parcelas,
-    parcelasLancadas: row.parcelas_lancadas,
+    ativa: row.ativa,
   }
 }
 
-export function paraRecorrenciaTemplate(row: RecorrenciaTemplateRow): RecorrenciaTemplate {
+export function paraRecorrenciaDoMes(row: RecorrenciaMesRow): RecorrenciaDoMes {
   return {
-    tipo: row.tipo_lancamento,
-    templateId: row.template_id,
+    recorrenciaId: row.recorrencia_id,
     titulo: row.titulo,
-    valorCentavos: row.valor_centavos,
-    diaRecorrencia: row.dia_recorrencia,
-    recorrenciaAtiva: row.recorrencia_ativa,
-    totalParcelas: row.total_parcelas,
-    parcelasLancadas: row.parcelas_lancadas,
-    fonteId: row.fonte_id,
+    valorPrevistoCentavos: row.valor_previsto_centavos,
+    dia: row.dia,
     categoriaId: row.categoria_id,
+    categoriaNome: row.categoria_nome,
+    totalParcelas: row.total_parcelas,
+    ativa: row.ativa,
+    competencia: row.competencia.slice(0, 7),
+    parcela: row.parcela,
+    pagamentoId: row.pagamento_id,
+    pagoEm: row.pago_em,
+    saidaId: row.saida_id,
+    valorPagoCentavos: row.valor_pago_centavos,
+  }
+}
+
+export function paraFaturaPendente(row: FaturaPendenteRow): FaturaPendente {
+  return {
+    fonteId: row.fonte_id,
+    nome: row.nome,
+    valorSugeridoCentavos: row.valor_sugerido_centavos,
+    diaFatura: row.dia_fatura,
   }
 }
 
@@ -198,16 +202,25 @@ export function deFonte(dados: Partial<Omit<Fonte, 'id' | 'categoriasPermitidas'
   }
 }
 
+export function deRecorrencia(dados: Partial<Omit<Recorrencia, 'id'>>) {
+  return {
+    ...(dados.titulo !== undefined && { titulo: dados.titulo }),
+    ...(dados.valorPrevistoCentavos !== undefined && {
+      valor_previsto_centavos: dados.valorPrevistoCentavos,
+    }),
+    ...(dados.dia !== undefined && { dia: dados.dia }),
+    ...(dados.categoriaId !== undefined && { categoria_id: dados.categoriaId }),
+    ...(dados.mesInicio !== undefined && { mes_inicio: `${dados.mesInicio}-01` }),
+    ...(dados.totalParcelas !== undefined && { total_parcelas: dados.totalParcelas }),
+    ...(dados.ativa !== undefined && { ativa: dados.ativa }),
+  }
+}
+
 export function deEntrada(dados: Partial<Omit<Entrada, 'id'>>) {
   return {
     ...(dados.fonteId !== undefined && { fonte_id: dados.fonteId }),
     ...(dados.titulo !== undefined && { titulo: dados.titulo }),
     ...(dados.valorCentavos !== undefined && { valor_centavos: dados.valorCentavos }),
     ...(dados.data !== undefined && { data: dados.data }),
-    ...(dados.recorrente !== undefined && { recorrente: dados.recorrente }),
-    ...(dados.diaRecorrencia !== undefined && { dia_recorrencia: dados.diaRecorrencia }),
-    ...(dados.recorrenciaAtiva !== undefined && { recorrencia_ativa: dados.recorrenciaAtiva }),
-    ...(dados.templateId !== undefined && { template_id: dados.templateId }),
-    ...(dados.totalParcelas !== undefined && { total_parcelas: dados.totalParcelas }),
   }
 }

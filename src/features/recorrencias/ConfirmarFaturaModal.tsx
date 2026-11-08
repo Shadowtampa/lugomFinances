@@ -7,12 +7,12 @@ import { usePainelSaldo } from '../../contexts/PainelSaldoContext'
 import { mensagemDoErro } from '../../lib/erros'
 import { formatBRL } from '../../lib/money'
 import { confirmarFaturaCartao } from '../../services/recorrencias'
-import type { RecorrenciaPendente } from '../../types/domain'
+import type { FaturaPendente } from '../../types/domain'
 import type { FonteComSaldo } from '../saidas/elegibilidade'
 
 interface ConfirmarFaturaModalProps {
   aberto: boolean
-  pendencia?: RecorrenciaPendente
+  pendencia?: FaturaPendente
   cartao?: FonteComSaldo
   fontesPagadoras: FonteComSaldo[]
   onFechar(): void

@@ -1,105 +1,97 @@
 import { unwrap } from '../lib/erros'
 import { db } from '../lib/api'
 import type {
-  EntradaRow,
-  RecorrenciaPendenteRow,
-  RecorrenciaTemplateRow,
+  FaturaPendenteRow,
+  RecorrenciaMesRow,
+  RecorrenciaRow,
   ResultadoCriarSaidaRow,
 } from '../types/api'
 import type {
-  Entrada,
-  RecorrenciaPendente,
-  RecorrenciaTemplate,
+  FaturaPendente,
+  Recorrencia,
+  RecorrenciaDoMes,
   ResultadoCriarSaida,
-  SaidaSplit,
 } from '../types/domain'
-import { atualizarEntrada } from './entradas'
-import { deEntrada, paraEntrada, paraRecorrenciaPendente, paraRecorrenciaTemplate, paraResultadoCriarSaida } from './mappers'
-import { definirRecorrenciaAtivaSaida } from './saidas'
+import {
+  deRecorrencia,
+  paraFaturaPendente,
+  paraRecorrencia,
+  paraRecorrenciaDoMes,
+  paraResultadoCriarSaida,
+} from './mappers'
 
-export async function listarPendentes(): Promise<RecorrenciaPendente[]> {
-  const rows = unwrap<RecorrenciaPendenteRow[]>(
-    await db.from('v_recorrencias_pendentes').select('*'),
+export async function listarRecorrencias(): Promise<Recorrencia[]> {
+  const rows = unwrap<RecorrenciaRow[]>(
+    await db.from('recorrencias').select('*').order('dia').order('titulo'),
   )
-  return rows.map(paraRecorrenciaPendente)
+  return rows.map(paraRecorrencia)
 }
 
-export async function listarTemplates(): Promise<RecorrenciaTemplate[]> {
-  const rows = unwrap<RecorrenciaTemplateRow[]>(
-    await db.from('v_recorrencias_templates').select('*'),
-  )
-  return rows.map(paraRecorrenciaTemplate)
+export async function obterRecorrencia(id: string): Promise<Recorrencia> {
+  const row = unwrap<RecorrenciaRow>(await db.from('recorrencias').select('*').eq('id', id).single())
+  return paraRecorrencia(row)
 }
 
-function esgotouParcelas(pendencia: RecorrenciaPendente): boolean {
-  return pendencia.totalParcelas !== null && pendencia.parcelasLancadas + 1 >= pendencia.totalParcelas
+export async function criarRecorrencia(dados: Omit<Recorrencia, 'id'>): Promise<Recorrencia> {
+  const row = unwrap<RecorrenciaRow>(
+    await db.from('recorrencias').insert(deRecorrencia(dados)).select().single(),
+  )
+  return paraRecorrencia(row)
 }
 
-export async function confirmarEntradaRecorrente(
-  pendencia: RecorrenciaPendente,
-  valorCentavos: number,
-  data: string,
-): Promise<Entrada> {
-  const template = unwrap<EntradaRow>(
-    await db.from('entradas').select('*').eq('id', pendencia.templateId).single(),
+export async function atualizarRecorrencia(
+  id: string,
+  dados: Partial<Omit<Recorrencia, 'id'>>,
+): Promise<Recorrencia> {
+  const row = unwrap<RecorrenciaRow>(
+    await db.from('recorrencias').update(deRecorrencia(dados)).eq('id', id).select().single(),
   )
+  return paraRecorrencia(row)
+}
 
-  const row = unwrap<EntradaRow>(
+export async function definirRecorrenciaAtiva(id: string, ativa: boolean): Promise<void> {
+  unwrap(await db.from('recorrencias').update({ ativa }).eq('id', id))
+}
+
+export async function excluirRecorrencia(id: string): Promise<void> {
+  unwrap(await db.from('recorrencias').delete().eq('id', id))
+}
+
+/** competencia: YYYY-MM */
+export async function listarRecorrenciasDoMes(competencia: string): Promise<RecorrenciaDoMes[]> {
+  const rows = unwrap<RecorrenciaMesRow[]>(
     await db
-      .from('entradas')
-      .insert(
-        deEntrada({
-          fonteId: template.fonte_id,
-          titulo: template.titulo,
-          valorCentavos,
-          data,
-          recorrente: false,
-          templateId: pendencia.templateId,
-        }),
-      )
-      .select()
-      .single(),
+      .from('v_recorrencias_mes')
+      .select('*')
+      .eq('competencia', `${competencia}-01`)
+      .order('dia')
+      .order('titulo'),
   )
-
-  if (esgotouParcelas(pendencia)) {
-    await atualizarEntrada(pendencia.templateId, { recorrenciaAtiva: false })
-  }
-
-  return paraEntrada(row)
+  return rows.map(paraRecorrenciaDoMes)
 }
 
-export async function confirmarSaidaRecorrente(
-  pendencia: RecorrenciaPendente,
-  valorCentavos: number,
-  data: string,
-  splits: SaidaSplit[],
-): Promise<ResultadoCriarSaida> {
-  const template = unwrap<{ titulo: string; categoria_id: string }>(
-    await db.from('saidas').select('titulo,categoria_id').eq('id', pendencia.templateId).single(),
-  )
-
-  const row = unwrap<ResultadoCriarSaidaRow>(
-    await db.rpc('criar_saida', {
-      p_titulo: template.titulo,
-      p_valor_total_centavos: valorCentavos,
-      p_categoria_id: template.categoria_id,
-      p_data: data,
-      p_splits: splits.map((split) => ({
-        fonte_id: split.fonteId,
-        valor_centavos: split.valorCentavos,
-      })),
-      p_recorrente: false,
-      p_dia_recorrencia: null,
-      p_template_id: pendencia.templateId,
-      p_total_parcelas: null,
+/** competencia: YYYY-MM; pagoEm: YYYY-MM-DD */
+export async function marcarComoPaga(
+  recorrenciaId: string,
+  competencia: string,
+  pagoEm: string,
+): Promise<void> {
+  unwrap(
+    await db.from('recorrencias_pagamentos').insert({
+      recorrencia_id: recorrenciaId,
+      competencia: `${competencia}-01`,
+      pago_em: pagoEm,
     }),
   )
+}
 
-  if (esgotouParcelas(pendencia)) {
-    await definirRecorrenciaAtivaSaida(pendencia.templateId, false)
-  }
+export async function desmarcarPagamento(pagamentoId: string): Promise<void> {
+  unwrap(await db.from('recorrencias_pagamentos').delete().eq('id', pagamentoId))
+}
 
-  return paraResultadoCriarSaida(row)
+export async function listarFaturasPendentes(): Promise<FaturaPendente[]> {
+  const rows = unwrap<FaturaPendenteRow[]>(await db.from('v_faturas_pendentes').select('*'))
+  return rows.map(paraFaturaPendente)
 }
 
 export async function confirmarFaturaCartao(
@@ -117,31 +109,4 @@ export async function confirmarFaturaCartao(
     }),
   )
   return paraResultadoCriarSaida(row)
-}
-
-export async function ignorarPendencia(
-  templateId: string,
-  tipo: 'entrada' | 'saida',
-  competencia: string,
-): Promise<void> {
-  unwrap(
-    await db
-      .from('recorrencias_ignoradas')
-      .insert({ template_id: templateId, tipo_lancamento: tipo, competencia }),
-  )
-}
-
-export async function desfazerIgnorar(
-  templateId: string,
-  tipo: 'entrada' | 'saida',
-  competencia: string,
-): Promise<void> {
-  unwrap(
-    await db
-      .from('recorrencias_ignoradas')
-      .delete()
-      .eq('template_id', templateId)
-      .eq('tipo_lancamento', tipo)
-      .eq('competencia', competencia),
-  )
 }

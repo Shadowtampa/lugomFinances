@@ -2,7 +2,22 @@ import { createContext, useContext, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAsync } from '../../hooks/useAsync'
-import { listarPendentes } from '../../services/recorrencias'
+import { hojeISO, mesAtual } from '../../lib/date'
+import { statusDaRecorrencia } from '../../lib/recorrencias'
+import { listarFaturasPendentes, listarRecorrenciasDoMes } from '../../services/recorrencias'
+
+async function carregarPendencias() {
+  const [doMes, faturas] = await Promise.all([
+    listarRecorrenciasDoMes(mesAtual()),
+    listarFaturasPendentes(),
+  ])
+  const hoje = hojeISO()
+  const status = doMes.map((r) => statusDaRecorrencia(r, hoje)).filter((s) => s !== 'paga')
+  return {
+    contagem: status.length + faturas.length,
+    atrasado: faturas.length > 0 || status.includes('atrasada'),
+  }
+}
 
 const NAV_ITEMS = [
   { to: '/', label: 'Painel', end: true },
@@ -39,9 +54,9 @@ function BadgePendencias({ count, atrasado }: { count: number; atrasado: boolean
 function AppShell({ children }: { children: ReactNode }) {
   const { user, sair } = useAuth()
   const location = useLocation()
-  const pendentes = useAsync(listarPendentes, [location.pathname])
-  const contagemPendencias = pendentes.data?.length ?? 0
-  const temAtrasado = (pendentes.data ?? []).some((p) => (p.diaRecorrencia ?? 0) < new Date().getDate())
+  const pendencias = useAsync(carregarPendencias, [location.pathname])
+  const contagemPendencias = pendencias.data?.contagem ?? 0
+  const temAtrasado = pendencias.data?.atrasado ?? false
 
   const [drawerAberto, setDrawerAberto] = useState(false)
 

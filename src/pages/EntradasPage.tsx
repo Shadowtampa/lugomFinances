@@ -21,7 +21,6 @@ import { formatBRL } from '../lib/money'
 import {
   contarEntradas,
   excluirEntrada,
-  excluirTemplateRecorrente,
   listarEntradas,
   somarEntradasMes,
 } from '../services/entradas'
@@ -64,7 +63,6 @@ function EntradasPage() {
 
   const [entradaExcluindo, setEntradaExcluindo] = useState<Entrada | null>(null)
   const [bloqueioExclusao, setBloqueioExclusao] = useState<string | null>(null)
-  const [excluirLancados, setExcluirLancados] = useState(false)
   const [saldoProjetado, setSaldoProjetado] = useState<{ nome: string; centavos: number } | null>(
     null,
   )
@@ -130,7 +128,6 @@ function EntradasPage() {
   async function iniciarExcluir(entrada: Entrada) {
     setMenuAbertoId(null)
     setBloqueioExclusao(null)
-    setExcluirLancados(false)
 
     try {
       const saldos = await listarSaldosFontes()
@@ -159,12 +156,7 @@ function EntradasPage() {
     if (!entradaExcluindo || bloqueioExclusao) return
     setExcluindo(true)
     try {
-      const ehTemplate = entradaExcluindo.recorrente && entradaExcluindo.templateId === null
-      if (ehTemplate) {
-        await excluirTemplateRecorrente(entradaExcluindo.id, excluirLancados)
-      } else {
-        await excluirEntrada(entradaExcluindo.id)
-      }
+      await excluirEntrada(entradaExcluindo.id)
       showToast('Entrada excluída.', 'success')
       dados.recarregar()
       setEntradaExcluindo(null)
@@ -295,11 +287,6 @@ function EntradasPage() {
                   <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
                     {entrada.titulo}
                   </span>
-                  <span className="sm:hidden">
-                    {entrada.recorrente && (
-                      <span title={`Recorrente, todo dia ${entrada.diaRecorrencia}`}>↻</span>
-                    )}
-                  </span>
                   {ehFuturo(entrada.data) && (
                     <span
                       className="shrink-0 text-xs text-ink-soft"
@@ -324,14 +311,6 @@ function EntradasPage() {
                   <span className="font-money w-28 shrink-0 text-right text-sm text-livre">
                     {formatBRL(entrada.valorCentavos)}
                   </span>
-                  {entrada.recorrente && (
-                    <span
-                      className="hidden sm:inline"
-                      title={`Recorrente, todo dia ${entrada.diaRecorrencia}`}
-                    >
-                      ↻
-                    </span>
-                  )}
                 </div>
 
                 <div className="absolute right-0 top-1.5 sm:static sm:top-auto">
@@ -402,16 +381,6 @@ function EntradasPage() {
                 <> O saldo de {saldoProjetado.nome} cai para {formatBRL(saldoProjetado.centavos)}.</>
               )}
             </p>
-            {entradaExcluindo?.recorrente && entradaExcluindo.templateId === null && (
-              <label className="mb-4 flex items-center gap-2 text-sm text-ink">
-                <input
-                  type="checkbox"
-                  checked={excluirLancados}
-                  onChange={(event) => setExcluirLancados(event.target.checked)}
-                />
-                Excluir também os lançamentos já feitos a partir dele
-              </label>
-            )}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setEntradaExcluindo(null)}>
                 Cancelar

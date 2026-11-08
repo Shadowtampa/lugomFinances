@@ -322,11 +322,6 @@ function SaidasPage() {
                     <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
                       {saida.titulo}
                     </span>
-                    <span className="sm:hidden">
-                      {saida.recorrente && (
-                        <span title={`Recorrente, todo dia ${saida.diaRecorrencia}`}>↻</span>
-                      )}
-                    </span>
                     {ehFuturo(saida.data) && (
                       <span
                         className="shrink-0 text-xs text-ink-soft"
@@ -357,14 +352,6 @@ function SaidasPage() {
                     <span className="font-money shrink-0 text-right text-sm text-ink sm:w-28">
                       {formatBRL(saida.valorTotalCentavos)}
                     </span>
-                    {saida.recorrente && (
-                      <span
-                        className="hidden sm:inline"
-                        title={`Recorrente, todo dia ${saida.diaRecorrencia}`}
-                      >
-                        ↻
-                      </span>
-                    )}
                   </div>
 
                   <div className="absolute right-0 top-1.5 sm:static sm:top-auto">

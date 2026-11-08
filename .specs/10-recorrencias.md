@@ -1,3 +1,5 @@
+> **Substituído pelo M19** (`19-recorrencias-acompanhamento.md`): recorrência deixou de ser template de lançamento e virou acompanhamento de contas a pagar. Este arquivo fica só como histórico.
+
 # M10 — Recorrências (Contas Fixas)
 
 **Objetivo:** transformar os templates recorrentes em lançamentos reais do mês, com

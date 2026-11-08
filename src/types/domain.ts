@@ -43,11 +43,6 @@ export type Entrada = {
   titulo: string
   valorCentavos: number
   data: string
-  recorrente: boolean
-  diaRecorrencia: number | null
-  recorrenciaAtiva: boolean
-  templateId: string | null
-  totalParcelas: number | null
   ehPagamentoFatura: boolean
 }
 
@@ -62,11 +57,6 @@ export type Saida = {
   titulo: string
   valorTotalCentavos: number
   data: string
-  recorrente: boolean
-  diaRecorrencia: number | null
-  recorrenciaAtiva: boolean
-  templateId: string | null
-  totalParcelas: number | null
   ehPagamentoFatura: boolean
   splits: SaidaSplit[]
 }
@@ -89,27 +79,41 @@ export type ResultadoCriarSaida = {
   } | null
 }
 
-export type RecorrenciaPendente = {
-  tipo: 'entrada' | 'saida' | 'fatura_cartao'
-  templateId: string
+export type Recorrencia = {
+  id: string
   titulo: string
-  valorSugeridoCentavos: number
-  diaRecorrencia: number | null
-  fonteId: string | null
+  valorPrevistoCentavos: number
+  dia: number
   categoriaId: string | null
+  /** YYYY-MM */
+  mesInicio: string
   totalParcelas: number | null
-  parcelasLancadas: number
+  ativa: boolean
 }
 
-export type RecorrenciaTemplate = {
-  tipo: 'entrada' | 'saida'
-  templateId: string
+export type StatusRecorrencia = 'paga' | 'pendente' | 'atrasada'
+
+export type RecorrenciaDoMes = {
+  recorrenciaId: string
   titulo: string
-  valorCentavos: number
-  diaRecorrencia: number | null
-  recorrenciaAtiva: boolean
-  totalParcelas: number | null
-  parcelasLancadas: number
-  fonteId: string | null
+  valorPrevistoCentavos: number
+  dia: number
   categoriaId: string | null
+  categoriaNome: string | null
+  totalParcelas: number | null
+  ativa: boolean
+  /** YYYY-MM */
+  competencia: string
+  parcela: number
+  pagamentoId: string | null
+  pagoEm: string | null
+  saidaId: string | null
+  valorPagoCentavos: number | null
+}
+
+export type FaturaPendente = {
+  fonteId: string
+  nome: string
+  valorSugeridoCentavos: number
+  diaFatura: number
 }
