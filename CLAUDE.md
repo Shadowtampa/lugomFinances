@@ -52,3 +52,17 @@ Branch convention: each milestone starts on its own branch off the base branch, 
 ## Commands
 
 None yet — no `package.json` exists. Once M1 is scaffolded (Vite + React + TS template), the standard `npm run dev` / `npm run build` / `npm run lint` / `vitest` commands apply per `.specs/01-setup-fundacao.md`. Update this section once the project is scaffolded.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `Shadowtampa/lugomFinances`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context (root `CONTEXT.md` + `docs/adr/`; glossary currently lives in `.specs/00-VISAO-GERAL.md`). See `docs/agents/domain.md`.
