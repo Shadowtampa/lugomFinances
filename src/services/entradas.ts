@@ -1,6 +1,6 @@
 import { primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/date'
 import { unwrap } from '../lib/erros'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/api'
 import type { EntradaRow } from '../types/api'
 import type { Entrada } from '../types/domain'
 import { deEntrada, paraEntrada } from './mappers'
@@ -12,7 +12,7 @@ export async function listarEntradas(filtro?: {
   pagina?: number
   porPagina?: number
 }): Promise<Entrada[]> {
-  let query = supabase.from('entradas').select('*').order('data', { ascending: false })
+  let query = db.from('entradas').select('*').order('data', { ascending: false })
 
   if (filtro?.mes) {
     query = query.gte('data', primeiroDiaDoMes(filtro.mes)).lte('data', ultimoDiaDoMes(filtro.mes))
@@ -33,7 +33,7 @@ export async function listarEntradas(filtro?: {
 }
 
 export async function contarEntradas(filtro?: { mes?: string; fonteId?: string }): Promise<number> {
-  let query = supabase.from('entradas').select('*', { count: 'exact', head: true })
+  let query = db.from('entradas').select('*', { count: 'exact', head: true })
 
   if (filtro?.mes) {
     query = query.gte('data', primeiroDiaDoMes(filtro.mes)).lte('data', ultimoDiaDoMes(filtro.mes))
@@ -47,7 +47,7 @@ export async function contarEntradas(filtro?: { mes?: string; fonteId?: string }
 }
 
 export async function somarEntradasMes(mes: string, fonteId?: string): Promise<number> {
-  let query = supabase
+  let query = db
     .from('entradas')
     .select('valor_centavos')
     .gte('data', primeiroDiaDoMes(mes))
@@ -62,26 +62,26 @@ export async function somarEntradasMes(mes: string, fonteId?: string): Promise<n
 }
 
 export async function obterEntrada(id: string): Promise<Entrada> {
-  const row = unwrap<EntradaRow>(await supabase.from('entradas').select('*').eq('id', id).single())
+  const row = unwrap<EntradaRow>(await db.from('entradas').select('*').eq('id', id).single())
   return paraEntrada(row)
 }
 
 export async function criarEntrada(dados: Omit<Entrada, 'id'>): Promise<Entrada> {
   const row = unwrap<EntradaRow>(
-    await supabase.from('entradas').insert(deEntrada(dados)).select().single(),
+    await db.from('entradas').insert(deEntrada(dados)).select().single(),
   )
   return paraEntrada(row)
 }
 
 export async function atualizarEntrada(id: string, dados: Partial<Entrada>): Promise<Entrada> {
   const row = unwrap<EntradaRow>(
-    await supabase.from('entradas').update(deEntrada(dados)).eq('id', id).select().single(),
+    await db.from('entradas').update(deEntrada(dados)).eq('id', id).select().single(),
   )
   return paraEntrada(row)
 }
 
 export async function excluirEntrada(id: string): Promise<void> {
-  unwrap(await supabase.from('entradas').delete().eq('id', id))
+  unwrap(await db.from('entradas').delete().eq('id', id))
 }
 
 export async function excluirTemplateRecorrente(
@@ -89,7 +89,7 @@ export async function excluirTemplateRecorrente(
   excluirLancados: boolean,
 ): Promise<void> {
   if (excluirLancados) {
-    unwrap(await supabase.from('entradas').delete().eq('template_id', id))
+    unwrap(await db.from('entradas').delete().eq('template_id', id))
   }
-  unwrap(await supabase.from('entradas').delete().eq('id', id))
+  unwrap(await db.from('entradas').delete().eq('id', id))
 }

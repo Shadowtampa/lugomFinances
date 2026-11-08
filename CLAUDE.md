@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-No application code exists yet — this repo currently contains only `.specs/`, a full spec set for a project that has not been scaffolded. Before doing anything else, check whether `src/`, `package.json`, etc. exist; if not, you are starting at M1 (`.specs/01-setup-fundacao.md`).
+M1–M17 are built. The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
 
 Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossary, the business rules (RN-01 through RN-11), the stack decisions, and code conventions. They are mandatory and are not repeated in full here.
 
@@ -18,11 +18,11 @@ Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonym
 
 - Money is always `BIGINT` in cents (`_centavos` fields). Never `float`, never `numeric`.
 - A balance (saldo) is never stored — always derived by SQL view (`v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`, `v_recorrencias_pendentes`).
-- A Saída (money out) is never inserted directly via `POST /rest/v1/saidas`. It always goes through the `criar_saida` RPC, which enforces the blocking rules transactionally.
+- A Saída (money out) is never inserted directly via `POST /saidas`. It always goes through the `criar_saida` RPC, which enforces the blocking rules transactionally.
 - A Saída must have ≥1 split and `Σ splits = valor_total` exactly.
 - A Saída can never drive a Fonte's balance negative (RN-02) — blocking. A restricted Fonte only accepts Saídas whose Categoria is on its allowlist (RN-03) — blocking. Exceeding a Categoria's monthly limit does **not** block (RN-06), it's cosmetic only (red balance).
 - Database is `snake_case`; frontend is `camelCase`. Translation happens exactly once, in `src/services/mappers.ts` — no React component ever touches a `snake_case` or `_centavos` field directly (those only appear in `types/api.ts` and `services/`).
-- No React component imports the `supabase-js` client directly — only `lib/supabase.ts`, `contexts/AuthContext.tsx`, and the service layer (`src/services/*.ts`) may. Components call service functions, never `supabase.from()`/`.rpc()` directly. There is no separate HTTP client — one `supabase-js` client handles auth and all data (PostgREST + RPC).
+- No React component imports the data client directly — only `lib/api.ts`, `lib/auth.ts`, `contexts/AuthContext.tsx`, and the service layer (`src/services/*.ts`) may. Components call service functions, never `db.from()`/`.rpc()` directly.
 - RLS is mandatory on every table; every row is scoped to `auth.uid()`.
 - RPC errors from Postgres carry a `SCREAMING_SNAKE_CASE` code prefix before `:` (e.g. `SALDO_INSUFICIENTE`, `CATEGORIA_NAO_PERMITIDA_NA_FONTE`). The frontend parses that prefix for messaging and must never show the raw Postgres error text to the user.
 - Dates are `YYYY-MM-DD` strings on the wire and in the db — never a serialized `Date`.
@@ -31,7 +31,7 @@ Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonym
 
 ## Stack
 
-Vite + React 19 + TypeScript, Tailwind CSS v4, React Router v7 (declarative/SPA mode), `@supabase/supabase-js` (single client — auth/session/refresh **and** all data access via `.from()`/`.rpc()` against PostgREST), Supabase (Postgres + PostgREST + Auth + RLS), deployed on Vercel. No global state library — React Router loaders + local `useState` + `AuthContext`.
+Vite + React 19 + TypeScript, Tailwind CSS v4, React Router v7 (declarative/SPA mode). **No Supabase since M17** (`.specs/17-backend-local.md`): local Postgres + PostgREST + RLS; data via `@supabase/postgrest-js` (`src/lib/api.ts`, PostgREST client only); auth via the `login` RPC that signs a JWT in the database (`db/migrations/00000_auth_local.sql`) and `src/lib/auth.ts`. Runs on the homelab Kubernetes (`deploy/k8s/`, port 10070). No global state library — React Router loaders + local `useState` + `AuthContext`.
 
 ## Working a milestone
 
@@ -59,4 +59,4 @@ permission — wait to be told.
 
 ## Commands
 
-None yet — no `package.json` exists. Once M1 is scaffolded (Vite + React + TS template), the standard `npm run dev` / `npm run build` / `npm run lint` / `vitest` commands apply per `.specs/01-setup-fundacao.md`. Update this section once the project is scaffolded.
+`npm run dev` (Vite; `/api` is proxied to `API_PROXY_TARGET`, default `http://localhost:3000`), `npm run build`, `npm run lint`, `npm test`. Deploy: `deploy/k8s/subir.sh`. See README.

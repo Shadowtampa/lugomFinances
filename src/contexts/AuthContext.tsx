@@ -1,4 +1,3 @@
-import type { Session, User } from '@supabase/supabase-js'
 import {
   createContext,
   useContext,
@@ -8,11 +7,12 @@ import {
   type ReactNode,
 } from 'react'
 import { useToast } from '../components/ui/Toast'
-import { supabase } from '../lib/supabase'
+import * as auth from '../lib/auth'
+import type { Sessao, Usuario } from '../lib/auth'
 
 interface AuthContextValue {
-  user: User | null
-  session: Session | null
+  user: Usuario | null
+  session: Sessao | null
   isLoading: boolean
   entrar(email: string, senha: string): Promise<void>
   sair(): Promise<void>
@@ -21,52 +21,44 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 function traduzirErroLogin(error: unknown): string {
-  if (error instanceof Error) {
-    if (error.message === 'Invalid login credentials') {
-      return 'E-mail ou senha incorretos.'
-    }
-    if (error.message === 'Failed to fetch') {
-      return 'Não foi possível conectar. Verifique sua internet.'
-    }
+  if (error instanceof auth.ErroLogin && error.message === 'INVALID_CREDENTIALS') {
+    return 'E-mail ou senha incorretos.'
+  }
+  if (error instanceof TypeError) {
+    return 'Não foi possível conectar. Verifique sua conexão.'
   }
   return 'Não foi possível entrar. Tente novamente.'
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState<Sessao | null>(() => auth.sessaoAtual())
+  const isLoading = false
   const saindoRef = useRef(false)
   const { showToast } = useToast()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setIsLoading(false)
-    })
-
-    const { data: subscription } = supabase.auth.onAuthStateChange((event, novaSessao) => {
+    return auth.aoMudarSessao((evento, novaSessao) => {
       setSession(novaSessao)
 
-      if (event === 'SIGNED_OUT' && !saindoRef.current) {
+      if (evento === 'SIGNED_OUT' && !saindoRef.current) {
         showToast('Sua sessão expirou. Entre novamente.', 'error')
       }
 
       saindoRef.current = false
     })
-
-    return () => subscription.subscription.unsubscribe()
   }, [showToast])
 
   async function entrar(email: string, senha: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
-    if (error) {
+    try {
+      await auth.entrar(email, senha)
+    } catch (error) {
       throw new Error(traduzirErroLogin(error))
     }
   }
 
   async function sair() {
     saindoRef.current = true
-    await supabase.auth.signOut()
+    auth.sair()
   }
 
   return (

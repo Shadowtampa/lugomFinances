@@ -1,13 +1,5 @@
-function required(name: string, value: string | undefined): string {
-  if (!value) {
-    throw new Error(
-      `Variável de ambiente ${name} não definida. Copie .env.example para .env.local e preencha os valores do Supabase.`,
-    )
-  }
-  return value
-}
-
 export const env = {
-  supabaseUrl: required('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL),
-  supabaseAnonKey: required('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY),
+  // Endereço do PostgREST. Padrão '/api': o nginx (produção) e o Vite (dev) repassam
+  // para o PostgREST na mesma origem, sem CORS.
+  apiUrl: (import.meta.env.VITE_API_URL as string | undefined) || '/api',
 }

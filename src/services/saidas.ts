@@ -1,6 +1,6 @@
 import { primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/date'
 import { unwrap } from '../lib/erros'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/api'
 import type { ResultadoCriarSaidaRow, SaidaRow } from '../types/api'
 import type { ResultadoCriarSaida, Saida } from '../types/domain'
 import { paraResultadoCriarSaida, paraSaida } from './mappers'
@@ -14,8 +14,8 @@ export async function listarSaidas(filtro?: {
   porPagina?: number
 }): Promise<Saida[]> {
   let query = filtro?.fonteId
-    ? supabase.from('saidas').select('*, saida_splits!inner(fonte_id,valor_centavos)')
-    : supabase.from('saidas').select('*, saida_splits(fonte_id,valor_centavos)')
+    ? db.from('saidas').select('*, saida_splits!inner(fonte_id,valor_centavos)')
+    : db.from('saidas').select('*, saida_splits(fonte_id,valor_centavos)')
   query = query.order('data', { ascending: false })
 
   if (filtro?.mes) {
@@ -45,8 +45,8 @@ export async function contarSaidas(filtro?: {
   fonteId?: string
 }): Promise<number> {
   let query = filtro?.fonteId
-    ? supabase.from('saidas').select('*, saida_splits!inner(fonte_id)', { count: 'exact', head: true })
-    : supabase.from('saidas').select('*', { count: 'exact', head: true })
+    ? db.from('saidas').select('*, saida_splits!inner(fonte_id)', { count: 'exact', head: true })
+    : db.from('saidas').select('*', { count: 'exact', head: true })
 
   if (filtro?.mes) {
     query = query.gte('data', primeiroDiaDoMes(filtro.mes)).lte('data', ultimoDiaDoMes(filtro.mes))
@@ -67,8 +67,8 @@ export async function somarSaidasMes(
   filtro?: { categoriaId?: string; fonteId?: string },
 ): Promise<number> {
   let query = filtro?.fonteId
-    ? supabase.from('saidas').select('valor_total_centavos, saida_splits!inner(fonte_id)')
-    : supabase.from('saidas').select('valor_total_centavos')
+    ? db.from('saidas').select('valor_total_centavos, saida_splits!inner(fonte_id)')
+    : db.from('saidas').select('valor_total_centavos')
 
   query = query.gte('data', primeiroDiaDoMes(mes)).lte('data', ultimoDiaDoMes(mes))
   if (filtro?.categoriaId) {
@@ -84,7 +84,7 @@ export async function somarSaidasMes(
 
 export async function obterSaida(id: string): Promise<Saida> {
   const row = unwrap<SaidaRow>(
-    await supabase
+    await db
       .from('saidas')
       .select('*, saida_splits(fonte_id,valor_centavos)')
       .eq('id', id)
@@ -94,7 +94,7 @@ export async function obterSaida(id: string): Promise<Saida> {
 }
 
 export async function definirRecorrenciaAtivaSaida(id: string, ativa: boolean): Promise<void> {
-  unwrap(await supabase.from('saidas').update({ recorrencia_ativa: ativa }).eq('id', id))
+  unwrap(await db.from('saidas').update({ recorrencia_ativa: ativa }).eq('id', id))
 }
 
 function paraSplitsRpc(splits: Saida['splits']) {
@@ -103,7 +103,7 @@ function paraSplitsRpc(splits: Saida['splits']) {
 
 export async function criarSaida(dados: Omit<Saida, 'id'>): Promise<ResultadoCriarSaida> {
   const row = unwrap<ResultadoCriarSaidaRow>(
-    await supabase.rpc('criar_saida', {
+    await db.rpc('criar_saida', {
       p_titulo: dados.titulo,
       p_valor_total_centavos: dados.valorTotalCentavos,
       p_categoria_id: dados.categoriaId,
@@ -123,7 +123,7 @@ export async function atualizarSaida(
   dados: Omit<Saida, 'id'>,
 ): Promise<ResultadoCriarSaida> {
   const row = unwrap<ResultadoCriarSaidaRow>(
-    await supabase.rpc('atualizar_saida', {
+    await db.rpc('atualizar_saida', {
       p_saida_id: id,
       p_titulo: dados.titulo,
       p_valor_total_centavos: dados.valorTotalCentavos,
@@ -140,5 +140,5 @@ export async function atualizarSaida(
 }
 
 export async function excluirSaida(id: string): Promise<void> {
-  unwrap(await supabase.rpc('excluir_saida', { p_saida_id: id }))
+  unwrap(await db.rpc('excluir_saida', { p_saida_id: id }))
 }

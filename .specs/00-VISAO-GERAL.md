@@ -132,11 +132,18 @@ só que a comparação de data já muda de resultado.
 | UI | React 19 | |
 | Estilo | Tailwind CSS v4 | |
 | Rotas | **React Router v7** | ~12M downloads/semana, contra 1.2M do TanStack Router. Modo `declarative` (SPA), sem framework mode |
-| Dados + Auth | `@supabase/supabase-js` | cliente único — sessão/refresh token **e** todo acesso a dados (PostgREST + RPC via `.from()`/`.rpc()`) |
-| Backend | Supabase (Postgres + PostgREST + Auth + RLS) | |
-| Deploy | Vercel | |
+| Dados | `@supabase/postgrest-js` | só o cliente PostgREST (`.from()`/`.rpc()`), em `src/lib/api.ts` (M17) |
+| Auth | `src/lib/auth.ts` + RPC `login` | JWT HS256 emitido pelo próprio banco, sessão no `localStorage` (M17) |
+| Backend | Postgres + PostgREST + RLS, local | sem Supabase desde o M17 (`db/migrations/00000_auth_local.sql`) |
+| Deploy | Kubernetes do homelab | `deploy/k8s/`, porta 10070 (M17) |
 
-### Sobre o cliente único supabase-js
+### Sobre o cliente de dados
+
+> **M17:** o Supabase saiu. O texto abaixo descreve a decisão original; hoje o cliente é
+> o `PostgrestClient` de `src/lib/api.ts` e a sessão vive em `src/lib/auth.ts`. A regra
+> continua: componentes não importam o cliente, só `lib/`, `AuthContext` e `services/`.
+
+#### Decisão original (até o M16)
 
 Só nos importamos com Supabase, então não faz sentido carregar uma lib HTTP à parte
 para reimplementar o que o `supabase-js` já resolve — ele já injeta o JWT da sessão e
@@ -148,7 +155,7 @@ importam diretamente — só a camada de serviços (`src/services/*.ts`) e o
 ## 6. Modelo de dados (resumo)
 
 ```
-auth.users (Supabase)
+auth.users (local, M17)
    │
    ├── fontes ──────────────┐
    │     id, user_id, nome, tipo, cor, arquivada,
@@ -232,7 +239,9 @@ src/
   App.tsx
   routes.tsx
   lib/
-    supabase.ts        # cliente supabase-js único (auth + dados)
+    api.ts             # cliente PostgREST único (dados) — M17
+    auth.ts            # sessão/login (RPC login) — M17
+    env.ts             # VITE_API_URL (padrão /api)
     erros.ts           # normalização de erro (ApiError, mensagemDoErro)
     money.ts           # formatBRL / parseBRL
     date.ts            # helpers de mês/competência

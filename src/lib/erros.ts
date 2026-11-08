@@ -1,5 +1,5 @@
-import type { PostgrestError } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import type { PostgrestError } from '@supabase/postgrest-js'
+import { sair } from './auth'
 
 export type ApiError = {
   codigo: string // 'SALDO_INSUFICIENTE' | 'NETWORK' | 'UNAUTHORIZED' | 'UNKNOWN' ...
@@ -38,21 +38,20 @@ function ehErroDeRede(error: unknown): boolean {
   if (!(error instanceof Error)) return false
   return (
     error.message.includes('Failed to fetch') ||
-    error.name === 'TypeError' ||
-    error.name === 'AuthRetryableFetchError'
+    error.name === 'TypeError'
   )
 }
 
 function normalizar(error: PostgrestError | Error, status?: number): ApiError {
   if (status === 401 || status === 403 || error.message === 'AUTH_REQUIRED') {
-    void supabase.auth.signOut()
+    sair()
     return { codigo: 'UNAUTHORIZED', mensagem: MENSAGENS.UNAUTHORIZED, detalhe: error.message, status }
   }
 
   const code = 'code' in error ? error.code : undefined
 
   if (code === 'PGRST301') {
-    void supabase.auth.signOut()
+    sair()
     return { codigo: 'UNAUTHORIZED', mensagem: MENSAGENS.UNAUTHORIZED, detalhe: error.message, status }
   }
 

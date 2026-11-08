@@ -1,5 +1,5 @@
 import { unwrap } from '../lib/erros'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/api'
 import type {
   EntradaRow,
   RecorrenciaPendenteRow,
@@ -19,14 +19,14 @@ import { definirRecorrenciaAtivaSaida } from './saidas'
 
 export async function listarPendentes(): Promise<RecorrenciaPendente[]> {
   const rows = unwrap<RecorrenciaPendenteRow[]>(
-    await supabase.from('v_recorrencias_pendentes').select('*'),
+    await db.from('v_recorrencias_pendentes').select('*'),
   )
   return rows.map(paraRecorrenciaPendente)
 }
 
 export async function listarTemplates(): Promise<RecorrenciaTemplate[]> {
   const rows = unwrap<RecorrenciaTemplateRow[]>(
-    await supabase.from('v_recorrencias_templates').select('*'),
+    await db.from('v_recorrencias_templates').select('*'),
   )
   return rows.map(paraRecorrenciaTemplate)
 }
@@ -41,11 +41,11 @@ export async function confirmarEntradaRecorrente(
   data: string,
 ): Promise<Entrada> {
   const template = unwrap<EntradaRow>(
-    await supabase.from('entradas').select('*').eq('id', pendencia.templateId).single(),
+    await db.from('entradas').select('*').eq('id', pendencia.templateId).single(),
   )
 
   const row = unwrap<EntradaRow>(
-    await supabase
+    await db
       .from('entradas')
       .insert(
         deEntrada({
@@ -75,11 +75,11 @@ export async function confirmarSaidaRecorrente(
   splits: SaidaSplit[],
 ): Promise<ResultadoCriarSaida> {
   const template = unwrap<{ titulo: string; categoria_id: string }>(
-    await supabase.from('saidas').select('titulo,categoria_id').eq('id', pendencia.templateId).single(),
+    await db.from('saidas').select('titulo,categoria_id').eq('id', pendencia.templateId).single(),
   )
 
   const row = unwrap<ResultadoCriarSaidaRow>(
-    await supabase.rpc('criar_saida', {
+    await db.rpc('criar_saida', {
       p_titulo: template.titulo,
       p_valor_total_centavos: valorCentavos,
       p_categoria_id: template.categoria_id,
@@ -109,7 +109,7 @@ export async function confirmarFaturaCartao(
   data: string,
 ): Promise<ResultadoCriarSaida> {
   const row = unwrap<ResultadoCriarSaidaRow>(
-    await supabase.rpc('confirmar_fatura_cartao', {
+    await db.rpc('confirmar_fatura_cartao', {
       p_cartao_fonte_id: cartaoFonteId,
       p_fonte_pagadora_id: fontePagadoraId,
       p_valor_centavos: valorCentavos,
@@ -125,7 +125,7 @@ export async function ignorarPendencia(
   competencia: string,
 ): Promise<void> {
   unwrap(
-    await supabase
+    await db
       .from('recorrencias_ignoradas')
       .insert({ template_id: templateId, tipo_lancamento: tipo, competencia }),
   )
@@ -137,7 +137,7 @@ export async function desfazerIgnorar(
   competencia: string,
 ): Promise<void> {
   unwrap(
-    await supabase
+    await db
       .from('recorrencias_ignoradas')
       .delete()
       .eq('template_id', templateId)

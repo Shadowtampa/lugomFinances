@@ -26,3 +26,5 @@ dist-ssr
 
 # pasta do playwright
 .playwright-mcp/*
+# deploy local
+.segredos
