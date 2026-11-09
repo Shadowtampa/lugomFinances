@@ -4,7 +4,6 @@ import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import MoneyInput from '../../components/ui/MoneyInput'
 import { useToast } from '../../components/ui/Toast'
-import { mesAtual, primeiroDiaDoMes } from '../../lib/date'
 import type { ApiError } from '../../lib/erros'
 import { mensagemDoErro } from '../../lib/erros'
 import { atualizarCategoria, criarCategoria } from '../../services/categorias'
@@ -25,7 +24,6 @@ function CategoriaFormModal({ aberto, categoria, onFechar, onSalvo }: CategoriaF
   const [definirLimite, setDefinirLimite] = useState(categoria?.limiteMensalCentavos !== undefined && categoria.limiteMensalCentavos !== null)
   const [limiteMensalCentavos, setLimiteMensalCentavos] = useState(categoria?.limiteMensalCentavos ?? 0)
   const [cor, setCor] = useState(categoria?.cor ?? corAleatoria())
-  const [vigenciaInicio, setVigenciaInicio] = useState(categoria?.vigenciaInicio.slice(0, 7) ?? mesAtual())
   const [enviando, setEnviando] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -43,7 +41,6 @@ function CategoriaFormModal({ aberto, categoria, onFechar, onSalvo }: CategoriaF
     const dados = {
       nome: nomeAparado,
       limiteMensalCentavos: definirLimite ? limiteMensalCentavos : null,
-      vigenciaInicio: primeiroDiaDoMes(vigenciaInicio),
       cor,
     }
 
@@ -124,29 +121,10 @@ function CategoriaFormModal({ aberto, categoria, onFechar, onSalvo }: CategoriaF
 
         {categoria && (
           <p className="text-xs text-ink-soft">
-            Alterar o limite recalcula o saldo acumulado desde o início da vigência.
+            O limite vale para o mês corrente e zera todo dia 1º; não acumula de um mês para o outro.
           </p>
         )}
 
-        <details className="text-sm">
-          <summary className="cursor-pointer text-ink-soft">Opções avançadas</summary>
-          <div className="mt-2 flex flex-col gap-1">
-            <label className="text-sm font-medium text-ink" htmlFor="vigencia-inicio">
-              Início da vigência
-            </label>
-            <input
-              id="vigencia-inicio"
-              type="month"
-              value={vigenciaInicio}
-              onChange={(event) => setVigenciaInicio(event.target.value)}
-              className="rounded border border-line px-3 py-2 text-base text-ink outline-none focus:ring-2 focus:ring-livre"
-            />
-            <p className="text-xs text-ink-soft">
-              O limite acumula a partir deste mês. Se você define R$ 300 com início em
-              julho e estamos em setembro, você tem R$ 900 acumulados.
-            </p>
-          </div>
-        </details>
 
         <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="secondary" onClick={onFechar}>

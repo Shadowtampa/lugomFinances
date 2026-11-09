@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-M1–M17 and M19–M24 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
+M1–M17 and M19–M25 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
 
 Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossary, the business rules (RN-01 through RN-11), the stack decisions, and code conventions. They are mandatory and are not repeated in full here.
 
@@ -12,7 +12,7 @@ Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossar
 
 Lugom Financial Manager — a single-user personal finance app built on **envelope budgeting**. The core idea: money is not fungible. R$500 of meal-voucher money cannot pay for an Uber, even if the account's total balance covers it. The whole system exists to enforce that separation between *where money came from* (Fonte) and *what it was spent on* (Categoria).
 
-Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonyms): **Fonte** (envelope/wallet, `livre` or `restrita`), **Entrada** (money in), **Saída** (money out, always split across ≥1 Fonte), **Split** (a Saída's portion assigned to one Fonte), **Categoria** (spending nature, optional accumulating monthly limit). **Recorrência** (since M19) is a bill tracked month by month (paid / pending / overdue) in its own tables (`recorrencias`, `recorrencias_pagamentos`) — it is **not** a lançamento and never affects any balance. Entradas/Saídas have no recurrence fields anymore.
+Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonyms): **Fonte** (envelope/wallet, `livre` or `restrita`), **Entrada** (money in), **Saída** (money out, always split across ≥1 Fonte), **Split** (a Saída's portion assigned to one Fonte), **Categoria** (spending nature, optional monthly limit that resets every month — no accumulation since M25). **Recorrência** (since M19) is a bill tracked month by month (paid / pending / overdue) in its own tables (`recorrencias`, `recorrencias_pagamentos`) — it is **not** a lançamento and never affects any balance. Entradas/Saídas have no recurrence fields anymore.
 
 ## Rules that must never be broken
 

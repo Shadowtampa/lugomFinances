@@ -3,8 +3,8 @@ import { avaliarFonte, type FonteComSaldo } from './elegibilidade'
 import type { Categoria } from '../../types/domain'
 
 const categorias: Categoria[] = [
-  { id: 'cat-transporte', nome: 'Transporte', limiteMensalCentavos: null, vigenciaInicio: '2026-01-01', cor: '#000', arquivada: false },
-  { id: 'cat-alimentacao', nome: 'Alimentação', limiteMensalCentavos: null, vigenciaInicio: '2026-01-01', cor: '#000', arquivada: false },
+  { id: 'cat-transporte', nome: 'Transporte', limiteMensalCentavos: null, cor: '#000', arquivada: false },
+  { id: 'cat-alimentacao', nome: 'Alimentação', limiteMensalCentavos: null, cor: '#000', arquivada: false },
 ]
 
 const fonteLivre: FonteComSaldo = {

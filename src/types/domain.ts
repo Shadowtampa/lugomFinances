@@ -27,15 +27,12 @@ export type Categoria = {
   id: string
   nome: string
   limiteMensalCentavos: number | null
-  vigenciaInicio: string
   cor: string
   arquivada: boolean
 }
 
 export type SaldoCategoria = Categoria & {
-  mesesAtivos: number | null
-  limiteAcumuladoCentavos: number | null
-  totalGastoCentavos: number
+  /** Gasto do mês corrente (sem lançamentos futuros). RN-05: o limite não acumula. */
   gastoMesAtualCentavos: number
   saldoDisponivelCentavos: number | null
 }

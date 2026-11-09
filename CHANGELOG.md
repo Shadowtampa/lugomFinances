@@ -2,6 +2,14 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.5.0 — 2026-11-09
+
+**M25: Limite de Categoria sem acúmulo** ([#5](https://github.com/Shadowtampa/lugomFinances/issues/5), `.specs/25-categoria-sem-acumulo.md`)
+
+- O saldo de Categoria passa a ser limite mensal − gasto do mês corrente, zerando todo dia 1º. Antes o limite se multiplicava pelos meses de vigência, e os valores apareciam triplicados.
+- O campo "Início da vigência" saiu do formulário de Categoria.
+- Categorias e Dashboard mostram o gasto do mês.
+
 ## 2.4.0 — 2026-11-09
 
 **M24: Notas** ([#4](https://github.com/Shadowtampa/lugomFinances/issues/4), `.specs/24-notas.md`)

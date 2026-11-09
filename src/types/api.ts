@@ -8,7 +8,6 @@ export interface CategoriaRow {
   user_id: string
   nome: string
   limite_mensal_centavos: number | null
-  vigencia_inicio: string
   cor: string
   arquivada: boolean
   created_at: string
@@ -105,9 +104,6 @@ export interface SaldoCategoriaRow {
   cor: string
   arquivada: boolean
   limite_mensal_centavos: number | null
-  meses_ativos: number | null
-  limite_acumulado_centavos: number | null
-  total_gasto_centavos: number
   gasto_mes_atual_centavos: number
   saldo_disponivel_centavos: number | null
 }

@@ -142,8 +142,8 @@ function DashboardPage() {
     const base = (categorias.data ?? []).filter((c) => c.limiteMensalCentavos !== null)
     return [...base].sort(
       (a, b) =>
-        calcularPercentual(b.totalGastoCentavos, b.limiteAcumuladoCentavos ?? 0) -
-        calcularPercentual(a.totalGastoCentavos, a.limiteAcumuladoCentavos ?? 0),
+        calcularPercentual(b.gastoMesAtualCentavos, b.limiteMensalCentavos ?? 0) -
+        calcularPercentual(a.gastoMesAtualCentavos, a.limiteMensalCentavos ?? 0),
     )
   }, [categorias.data])
 
@@ -293,8 +293,7 @@ function DashboardPage() {
                     <div key={categoria.id}>
                       <p className="text-sm text-ink">{categoria.nome}</p>
                       <BarraLimite
-                        totalGastoCentavos={categoria.totalGastoCentavos}
-                        limiteAcumuladoCentavos={categoria.limiteAcumuladoCentavos}
+                        limiteMensalCentavos={categoria.limiteMensalCentavos}
                         gastoMesAtualCentavos={categoria.gastoMesAtualCentavos}
                       />
                     </div>

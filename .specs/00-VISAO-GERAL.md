@@ -43,7 +43,7 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
 - **Split** — a parcela de uma Saída atribuída a uma Fonte específica. A soma dos
   splits sempre é igual ao valor total da Saída.
 - **Categoria** — a natureza do gasto. Ex: `Transporte`, `Alimentação`, `Moradia`.
-  Tem um limite mensal opcional que acumula.
+  Tem um limite mensal opcional, que vale só para o mês corrente (M25: não acumula).
 - **Importada** (M20) — uma transação que veio da Pluggy (Open Finance) e espera revisão na
   caixa de entrada (`transacoes_importadas`). Só vira Entrada ou Saída quando o usuário
   confirma (escolhendo a Categoria, se for saída). Também pode ser ignorada.
@@ -98,10 +98,11 @@ Uber de sair do VR.)*
 **RN-04** — Saldo de Fonte acumula indefinidamente:
 `saldo = Σ entradas da fonte − Σ splits da fonte`. Não existe "fechamento de mês".
 
-**RN-05** — Limite de Categoria também acumula:
-`limite_acumulado = limite_mensal × meses_ativos`, onde `meses_ativos` é a contagem
-de meses (inclusiva) entre `vigencia_inicio` e o mês corrente.
-`saldo_categoria = limite_acumulado − Σ saídas da categoria`.
+**RN-05** (revista no M25) — Limite de Categoria **não acumula**:
+`saldo_categoria = limite_mensal − Σ saídas da categoria no mês corrente` (até hoje;
+lançamentos futuros não contam). Zera todo dia 1º: nem sobra nem estouro passam para o mês
+seguinte. Até o M24 o limite acumulava (`limite × meses_ativos` desde `vigencia_inicio`),
+o que inflava os valores; a regra foi removida até haver uma definição melhor.
 
 **RN-06** — Estourar o limite de uma Categoria **não bloqueia** a saída. Gera apenas
 um aviso visual (saldo negativo em vermelho). Só a RN-02 e a RN-03 bloqueiam.
@@ -198,7 +199,7 @@ auth.users (local, M17)
    │                  fonte_categorias  (N:N, só p/ fontes restritas)
    │                        │
    ├── categorias ──────────┘
-   │     id, user_id, nome, limite_mensal_centavos, vigencia_inicio, cor, arquivada
+   │     id, user_id, nome, limite_mensal_centavos, cor, arquivada
    │
    ├── entradas
    │     id, user_id, fonte_id, titulo, valor_centavos, data, eh_pagamento_fatura
@@ -254,6 +255,7 @@ anterior está pronto e funcionando.
 | M22 | `22-apelidos-estabelecimento.md` | Apelido de estabelecimento aplicado na leitura a importadas e lançamentos da Pluggy |
 | M23 | `23-filtro-recorrencias.md` | Filtro Todas / A pagar / Pagas na lista de recorrências do mês |
 | M24 | `24-notas.md` | Nota opcional em Saídas, Entradas e Recorrências |
+| M25 | `25-categoria-sem-acumulo.md` | Limite de Categoria vale só no mês corrente (fim do acúmulo) |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

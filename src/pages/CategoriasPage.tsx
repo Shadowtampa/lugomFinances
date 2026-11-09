@@ -8,7 +8,6 @@ import { useToast } from '../components/ui/Toast'
 import BarraLimite from '../features/categorias/BarraLimite'
 import CategoriaFormModal from '../features/categorias/CategoriaFormModal'
 import { CORES_CATEGORIA } from '../features/categorias/cores'
-import { mesAtual, primeiroDiaDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
 import { useAsync } from '../hooks/useAsync'
 import {
@@ -107,7 +106,6 @@ function CategoriasPage() {
         await criarCategoria({
           nome,
           limiteMensalCentavos: null,
-          vigenciaInicio: primeiroDiaDoMes(mesAtual()),
           cor: CORES_CATEGORIA[indice % CORES_CATEGORIA.length],
         })
       }
@@ -168,8 +166,7 @@ function CategoriasPage() {
                 <div className="flex-1">
                   <p className="font-medium text-ink">{categoria.nome}</p>
                   <BarraLimite
-                    totalGastoCentavos={categoria.totalGastoCentavos}
-                    limiteAcumuladoCentavos={categoria.limiteAcumuladoCentavos}
+                    limiteMensalCentavos={categoria.limiteMensalCentavos}
                     gastoMesAtualCentavos={categoria.gastoMesAtualCentavos}
                   />
                 </div>

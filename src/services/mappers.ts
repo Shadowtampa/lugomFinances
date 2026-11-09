@@ -78,7 +78,6 @@ export function paraCategoria(row: CategoriaRow): Categoria {
     id: row.id,
     nome: row.nome,
     limiteMensalCentavos: row.limite_mensal_centavos,
-    vigenciaInicio: row.vigencia_inicio,
     cor: row.cor,
     arquivada: row.arquivada,
   }
@@ -89,12 +88,8 @@ export function paraSaldoCategoria(row: SaldoCategoriaRow): SaldoCategoria {
     id: row.categoria_id,
     nome: row.nome,
     limiteMensalCentavos: row.limite_mensal_centavos,
-    vigenciaInicio: '', // v_saldo_categorias não expõe vigencia_inicio (M2)
     cor: row.cor,
     arquivada: row.arquivada,
-    mesesAtivos: row.meses_ativos,
-    limiteAcumuladoCentavos: row.limite_acumulado_centavos,
-    totalGastoCentavos: row.total_gasto_centavos,
     gastoMesAtualCentavos: row.gasto_mes_atual_centavos,
     saldoDisponivelCentavos: row.saldo_disponivel_centavos,
   }
@@ -318,7 +313,6 @@ export function deCategoria(dados: Partial<Omit<Categoria, 'id'>>) {
     ...(dados.limiteMensalCentavos !== undefined && {
       limite_mensal_centavos: dados.limiteMensalCentavos,
     }),
-    ...(dados.vigenciaInicio !== undefined && { vigencia_inicio: dados.vigenciaInicio }),
     ...(dados.cor !== undefined && { cor: dados.cor }),
     ...(dados.arquivada !== undefined && { arquivada: dados.arquivada }),
   }
