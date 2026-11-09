@@ -10,7 +10,11 @@ export interface TransacaoPluggy {
   type: 'DEBIT' | 'CREDIT'
   status: 'PENDING' | 'POSTED'
   category?: string | null
-  creditCardMetadata?: { installmentNumber?: number; totalInstallments?: number } | null
+  creditCardMetadata?: {
+    installmentNumber?: number
+    totalInstallments?: number
+    purchaseDate?: string | null
+  } | null
 }
 
 export interface TransacaoNormalizada {
@@ -23,6 +27,8 @@ export interface TransacaoNormalizada {
   categoriaPluggy: string | null
   parcela: number | null
   totalParcelas: number | null
+  /** Data da compra original (YYYY-MM-DD, SP), só quando é parcela. */
+  dataCompra: string | null
 }
 
 const FUSO = 'America/Sao_Paulo'
@@ -76,6 +82,7 @@ export function normalizarTransacao(
         : 'entrada'
 
   const meta = t.creditCardMetadata ?? null
+  const parcela = meta?.installmentNumber ?? null
   return {
     pluggyTransactionId: t.id,
     data,
@@ -84,8 +91,9 @@ export function normalizarTransacao(
     direcao,
     statusPluggy: t.status,
     categoriaPluggy: t.category ?? null,
-    parcela: meta?.installmentNumber ?? null,
+    parcela,
     totalParcelas: meta?.totalInstallments ?? null,
+    dataCompra: parcela !== null && meta?.purchaseDate ? dataLocal(meta.purchaseDate) : null,
   }
 }
 

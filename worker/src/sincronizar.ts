@@ -83,17 +83,18 @@ export async function sincronizar(
           const r = await db.query(
             `insert into transacoes_importadas
                (user_id, pluggy_transaction_id, pluggy_account_id, data, descricao, valor_centavos,
-                direcao, status_pluggy, categoria_pluggy, parcela, total_parcelas)
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                direcao, status_pluggy, categoria_pluggy, parcela, total_parcelas, data_compra)
+             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
              on conflict (pluggy_transaction_id) do update set
                data = excluded.data, descricao = excluded.descricao, valor_centavos = excluded.valor_centavos,
                direcao = excluded.direcao, status_pluggy = excluded.status_pluggy,
-               categoria_pluggy = excluded.categoria_pluggy, updated_at = now()
+               categoria_pluggy = excluded.categoria_pluggy, data_compra = excluded.data_compra,
+               updated_at = now()
              where transacoes_importadas.estado = 'pendente'
              returning (xmax = 0) as nova`,
             [
               item.user_id, n.pluggyTransactionId, conta.id, n.data, n.descricao, n.valorCentavos,
-              n.direcao, n.statusPluggy, n.categoriaPluggy, n.parcela, n.totalParcelas,
+              n.direcao, n.statusPluggy, n.categoriaPluggy, n.parcela, n.totalParcelas, n.dataCompra,
             ],
           )
           if (r.rows[0]?.nova) importadas++

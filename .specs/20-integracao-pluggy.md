@@ -4,7 +4,7 @@
 
 **Pré-requisitos:** M19 em produção (Recorrência fora do saldo). O M18 é reaproveitado no aviso de integração (20.8).
 
-**Sequência:** M19 → **M20** → M21 Conciliação (pagamento de fatura + transferência entre contas próprias).
+**Sequência:** M19 → **M20** → M21 (importação retroativa + pagamento de fatura; ver `21-importacao-retroativa.md`). Transferência entre contas próprias continua fora.
 
 ---
 

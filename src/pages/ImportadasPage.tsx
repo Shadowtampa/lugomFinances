@@ -15,6 +15,8 @@ import { listarCategorias } from '../services/categorias'
 import { listarFontes } from '../services/fontes'
 import {
   confirmarImportada,
+  confirmarPagamentoFatura,
+  listarParesPagamentoFatura,
   desfazerIgnorarImportada,
   ignorarImportada,
   listarImportadas,
@@ -22,17 +24,31 @@ import {
   obterStatusIntegracao,
   sincronizarAgora,
 } from '../services/integracao'
-import type { TransacaoImportada } from '../types/domain'
+import type { ParPagamentoFatura, TransacaoImportada } from '../types/domain'
 
 async function carregarDados() {
-  const [importadas, sugestoes, categorias, fontes, status] = await Promise.all([
+  const [importadas, sugestoes, categorias, fontes, status, paresCandidatos] = await Promise.all([
     listarImportadas(),
     listarSugestoesRecorrencia(),
     listarCategorias(),
     listarFontes({ incluirArquivadas: true }),
     obterStatusIntegracao(),
+    listarParesPagamentoFatura(),
   ])
-  return { importadas, sugestoes, categorias, fontes, status }
+  return { importadas, sugestoes, categorias, fontes, status, pares: escolherPares(paresCandidatos) }
+}
+
+/** Cada importada entra em no máximo um par; na dúvida, o de data mais próxima vem primeiro (já ordenado). */
+function escolherPares(candidatos: ParPagamentoFatura[]): ParPagamentoFatura[] {
+  const usados = new Set<string>()
+  const pares: ParPagamentoFatura[] = []
+  for (const p of candidatos) {
+    if (usados.has(p.bancoId) || usados.has(p.cartaoId)) continue
+    usados.add(p.bancoId)
+    usados.add(p.cartaoId)
+    pares.push(p)
+  }
+  return pares
 }
 
 /** Escolhas do usuário por linha (categoria e recorrência); default = sugestões. */
@@ -47,10 +63,13 @@ function ImportadasPage() {
   const [sincronizando, setSincronizando] = useState(false)
   const [mostrarDivergentes, setMostrarDivergentes] = useState(false)
 
-  const pendentes = useMemo(
-    () => ordenarParaConfirmacao((dados.data?.importadas ?? []).filter((t) => t.estado === 'pendente')),
-    [dados.data],
-  )
+  const pares = useMemo(() => dados.data?.pares ?? [], [dados.data])
+  const pendentes = useMemo(() => {
+    const emPar = new Set(pares.flatMap((p) => [p.bancoId, p.cartaoId]))
+    return ordenarParaConfirmacao(
+      (dados.data?.importadas ?? []).filter((t) => t.estado === 'pendente' && !emPar.has(t.id)),
+    )
+  }, [dados.data, pares])
   const divergentes = (dados.data?.importadas ?? []).filter((t) => t.estado === 'divergente')
   const nomeFonte = useMemo(
     () => new Map((dados.data?.fontes ?? []).map((f) => [f.id, f.nome])),
@@ -112,7 +131,22 @@ function ImportadasPage() {
     }
   }
 
-  const prontas = pendentes.filter((t) => t.direcao === 'entrada' || escolhaDe(t).categoriaId)
+  async function confirmarPar(par: ParPagamentoFatura) {
+    setOcupadoId(par.bancoId)
+    try {
+      await confirmarPagamentoFatura(par)
+      showToast(`Pagamento de fatura de ${formatBRL(par.valorCentavos)} conciliado.`, 'success')
+      dados.recarregar()
+    } catch (e) {
+      showToast(mensagemDoErro(e), 'error')
+    } finally {
+      setOcupadoId(null)
+    }
+  }
+
+  const prontas = pendentes.filter(
+    (t) => !t.sugerirIgnorarParcela && (t.direcao === 'entrada' || escolhaDe(t).categoriaId),
+  )
 
   async function confirmarTodas() {
     setEmLote(true)
@@ -175,7 +209,34 @@ function ImportadasPage() {
         />
       )}
 
-      {dados.data && status !== null && pendentes.length === 0 && (
+      {pares.length > 0 && (
+        <section className="mb-6">
+          <h2 className="mb-2 text-sm font-medium text-ink-soft">Pagamentos de fatura</h2>
+          <ul className="flex flex-col">
+            {pares.map((par) => (
+              <li key={par.bancoId} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-3">
+                <span className="w-20 shrink-0 text-sm text-ink-soft">{formatarData(par.data)}</span>
+                <span className="min-w-0 flex-1 text-sm text-ink">
+                  {nomeFonte.get(par.fontePagadoraId) ?? '—'} → fatura {nomeFonte.get(par.cartaoFonteId) ?? '—'}
+                  <span className="block text-xs text-ink-soft">
+                    Débito na conta + crédito no cartão. Não conta como gasto.
+                  </span>
+                </span>
+                <span className="font-money w-28 shrink-0 text-right text-sm text-ink">{formatBRL(par.valorCentavos)}</span>
+                <Button
+                  disabled={ocupadoId !== null || emLote}
+                  loading={ocupadoId === par.bancoId}
+                  onClick={() => confirmarPar(par)}
+                >
+                  Conciliar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {dados.data && status !== null && pendentes.length === 0 && pares.length === 0 && (
         <EmptyState
           titulo="Nada para revisar"
           texto={ultima ? `Última sincronização: ${ultima}.` : 'Nenhuma sincronização ainda.'}
@@ -207,6 +268,11 @@ function ImportadasPage() {
                       {t.totalParcelas && (
                         <span className="ml-1 text-xs text-ink-soft">
                           {t.parcela}/{t.totalParcelas}
+                        </span>
+                      )}
+                      {t.sugerirIgnorarParcela && (
+                        <span className="ml-2 rounded bg-aviso/10 px-1.5 py-0.5 text-xs text-aviso">
+                          compra anterior ao corte: já contada no saldo inicial
                         </span>
                       )}
                       {t.statusPluggy === 'PENDING' && (
@@ -254,10 +320,15 @@ function ImportadasPage() {
                       </div>
                     )}
                     <div className="ml-auto flex gap-2">
-                      <Button variant="ghost" disabled={ocupado} onClick={() => ignorar(t)}>
+                      <Button
+                        variant={t.sugerirIgnorarParcela ? 'primary' : 'ghost'}
+                        disabled={ocupado}
+                        onClick={() => ignorar(t)}
+                      >
                         Ignorar
                       </Button>
                       <Button
+                        variant={t.sugerirIgnorarParcela ? 'ghost' : 'primary'}
                         disabled={ocupado || (t.direcao === 'saida' && !escolha.categoriaId)}
                         loading={ocupadoId === t.id}
                         onClick={() => confirmarUma(t)}

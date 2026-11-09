@@ -28,6 +28,9 @@ const CODIGOS_RPC_CONHECIDOS = new Set([
   'RECORRENCIA_JA_PAGA',
   'SINCRONIZACAO_EM_ANDAMENTO',
   'SINCRONIZACAO_INDISPONIVEL',
+  'CORTE_INVALIDO',
+  'CORTE_COM_CONFIRMADAS',
+  'PAR_INVALIDO',
 ])
 
 const MENSAGENS: Record<string, string> = {
@@ -52,6 +55,9 @@ const MENSAGENS: Record<string, string> = {
   RECORRENCIA_JA_PAGA: 'Essa recorrência já está paga neste mês.',
   SINCRONIZACAO_EM_ANDAMENTO: 'Sincronização em andamento. Aguarde terminar.',
   SINCRONIZACAO_INDISPONIVEL: 'O serviço de sincronização não respondeu.',
+  CORTE_INVALIDO: 'A data de início não pode estar no futuro.',
+  CORTE_COM_CONFIRMADAS: 'Já há transações confirmadas antes dessa data. Escolha uma data de início igual ou anterior à mais antiga delas.',
+  PAR_INVALIDO: 'Esse pagamento de fatura já foi revisado.',
   ITEM_ID_INVALIDO: 'Item ID inválido: deve ser um UUID (ex.: 1a2b3c4d-…).',
   DUPLICADO: 'Já existe um registro com esse nome.',
   UNKNOWN: 'Algo deu errado. Tente novamente.',

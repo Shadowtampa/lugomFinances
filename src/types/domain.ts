@@ -133,6 +133,7 @@ export type PluggyConta = {
   limiteCentavos: number | null
   diaFatura: number | null
   dataCorte: string | null
+  saldoInicialPendente: boolean
 }
 
 export type TransacaoImportada = {
@@ -150,6 +151,30 @@ export type TransacaoImportada = {
   entradaId: string | null
   saidaId: string | null
   categoriaSugeridaId: string | null
+  /** Parcela de compra anterior ao corte: já contada no saldo inicial (M21). */
+  sugerirIgnorarParcela: boolean
+}
+
+/** Débito na conta + crédito no cartão com o mesmo valor: pagamento de fatura (M21). */
+export type ParPagamentoFatura = {
+  bancoId: string
+  cartaoId: string
+  fontePagadoraId: string
+  cartaoFonteId: string
+  valorCentavos: number
+  data: string
+}
+
+/** Saldo do app × saldo Pluggy de uma conta vinculada (M21). */
+export type ConciliacaoConta = {
+  pluggyAccountId: string
+  fonteId: string
+  saldoAppCentavos: number
+  pendentesCentavos: number
+  saldoPluggyCentavos: number
+  /** pluggy − (app + pendentes); 0 = bate. */
+  diferencaCentavos: number
+  saldoInicialPendente: boolean
 }
 
 export type SugestaoRecorrencia = {

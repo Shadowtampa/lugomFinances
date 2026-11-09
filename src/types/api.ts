@@ -161,6 +161,7 @@ export interface PluggyContaRow {
   limite_centavos: number | null
   dia_fatura: number | null
   data_corte: string | null
+  saldo_inicial_pendente_desde: string | null
   updated_at: string
 }
 
@@ -182,6 +183,29 @@ export interface ImportadaPendenteRow {
   entrada_id: string | null
   saida_id: string | null
   categoria_sugerida_id: string | null
+  data_compra: string | null
+  sugerir_ignorar_parcela: boolean
+}
+
+export interface ParPagamentoFaturaRow {
+  user_id: string
+  banco_id: string
+  cartao_id: string
+  fonte_pagadora_id: string
+  cartao_fonte_id: string
+  valor_centavos: number
+  data: string
+  data_cartao: string
+}
+
+export interface ConciliacaoContaRow {
+  user_id: string
+  pluggy_account_id: string
+  fonte_id: string
+  saldo_app_centavos: number
+  pendentes_centavos: number
+  saldo_pluggy_centavos: number
+  saldo_inicial_pendente: boolean
 }
 
 export interface SugestaoRecorrenciaRow {

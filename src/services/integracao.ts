@@ -2,13 +2,17 @@ import { sessaoAtual } from '../lib/auth'
 import { db } from '../lib/api'
 import { erroDeCodigo, unwrap } from '../lib/erros'
 import type {
+  ConciliacaoContaRow,
   ImportadaPendenteRow,
+  ParPagamentoFaturaRow,
   PluggyContaRow,
   PluggyItemRow,
   StatusIntegracaoRow,
   SugestaoRecorrenciaRow,
 } from '../types/api'
 import type {
+  ConciliacaoConta,
+  ParPagamentoFatura,
   PluggyConta,
   PluggyItem,
   StatusIntegracao,
@@ -16,6 +20,8 @@ import type {
   TransacaoImportada,
 } from '../types/domain'
 import {
+  paraConciliacaoConta,
+  paraParPagamentoFatura,
   paraPluggyConta,
   paraPluggyItem,
   paraStatusIntegracao,
@@ -52,10 +58,14 @@ export async function listarContasPluggy(): Promise<PluggyConta[]> {
 
 export type NovaFonteVinculo = { nome: string; limiteCentavos?: number; diaFatura?: number }
 
-/** Liga a conta a uma Fonte existente (fonteId) ou cria uma nova; gera o saldo inicial. */
+/**
+ * Liga a conta a uma Fonte existente (fonteId) ou cria uma nova, importando desde dataInicio
+ * (YYYY-MM-DD). O saldo inicial é lançado depois da próxima sincronização (M21).
+ */
 export async function vincularConta(
   pluggyAccountId: string,
   destino: { fonteId: string } | { novaFonte: NovaFonteVinculo },
+  dataInicio: string,
 ): Promise<string> {
   return unwrap<string>(
     await db.rpc('vincular_conta_pluggy', {
@@ -69,8 +79,37 @@ export async function vincularConta(
               dia_fatura: destino.novaFonte.diaFatura ?? null,
             }
           : null,
+      p_data_inicio: dataInicio,
     }),
   )
+}
+
+/** Muda o "importar desde" de uma conta vinculada; o saldo inicial é refeito na próxima sincronização. */
+export async function alterarCorteConta(pluggyAccountId: string, dataInicio: string): Promise<void> {
+  unwrap(
+    await db.rpc('alterar_corte_conta', { p_pluggy_account_id: pluggyAccountId, p_data_inicio: dataInicio }),
+  )
+}
+
+/** Lança os saldos iniciais que esperavam uma sincronização. Devolve quantos lançou. */
+export async function aplicarSaldosIniciaisPendentes(): Promise<number> {
+  return unwrap<number>(await db.rpc('aplicar_saldos_iniciais_pendentes'))
+}
+
+export async function listarParesPagamentoFatura(): Promise<ParPagamentoFatura[]> {
+  const rows = unwrap<ParPagamentoFaturaRow[]>(
+    await db.from('v_pares_pagamento_fatura').select('*').order('data'),
+  )
+  return rows.map(paraParPagamentoFatura)
+}
+
+export async function confirmarPagamentoFatura(par: ParPagamentoFatura): Promise<void> {
+  unwrap(await db.rpc('confirmar_pagamento_fatura', { p_banco_id: par.bancoId, p_cartao_id: par.cartaoId }))
+}
+
+export async function listarConciliacao(): Promise<ConciliacaoConta[]> {
+  const rows = unwrap<ConciliacaoContaRow[]>(await db.from('v_conciliacao_contas').select('*'))
+  return rows.map(paraConciliacaoConta)
 }
 
 export async function listarImportadas(): Promise<TransacaoImportada[]> {
@@ -135,7 +174,11 @@ export async function sincronizarAgora(): Promise<ResumoSincronizacao> {
   } catch {
     throw erroDeCodigo('NETWORK')
   }
-  if (resp.ok) return (await resp.json()) as ResumoSincronizacao
+  if (resp.ok) {
+    const resumo = (await resp.json()) as ResumoSincronizacao
+    if (resumo.sucesso) await aplicarSaldosIniciaisPendentes()
+    return resumo
+  }
   let codigo = 'SINCRONIZACAO_INDISPONIVEL'
   try {
     codigo = ((await resp.json()) as { code?: string }).code ?? codigo

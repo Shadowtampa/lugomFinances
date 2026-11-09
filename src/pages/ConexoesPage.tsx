@@ -8,12 +8,15 @@ import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import { useAsync } from '../hooks/useAsync'
-import { formatarData, haQuantoTempo, hojeISO } from '../lib/date'
+import { formatarData, haQuantoTempo, hojeISO, mesAtual, primeiroDiaDoMes, somarDias } from '../lib/date'
 import { mensagemDoErro, mensagemErroSincronizacao } from '../lib/erros'
 import { formatBRL } from '../lib/money'
 import { listarFontes } from '../services/fontes'
 import {
+  alterarCorteConta,
+  aplicarSaldosIniciaisPendentes,
   cadastrarItem,
+  listarConciliacao,
   listarContasPluggy,
   listarItens,
   obterStatusIntegracao,
@@ -21,16 +24,19 @@ import {
   sincronizarAgora,
   vincularConta,
 } from '../services/integracao'
-import type { Fonte, PluggyConta, PluggyItem } from '../types/domain'
+import type { ConciliacaoConta, Fonte, PluggyConta, PluggyItem } from '../types/domain'
 
 async function carregarDados() {
-  const [itens, contas, fontes, status] = await Promise.all([
+  // Uma sincronização do timer pode ter liberado saldos iniciais pendentes (M21).
+  await aplicarSaldosIniciaisPendentes()
+  const [itens, contas, fontes, status, conciliacao] = await Promise.all([
     listarItens(),
     listarContasPluggy(),
     listarFontes(),
     obterStatusIntegracao(),
+    listarConciliacao(),
   ])
-  return { itens, contas, fontes, status }
+  return { itens, contas, fontes, status, conciliacao }
 }
 
 function badgeStatus(status: string | null): { rotulo: string; classe: string } {
@@ -42,6 +48,25 @@ function badgeStatus(status: string | null): { rotulo: string; classe: string } 
   return { rotulo: 'Aguardando sincronização', classe: 'bg-base text-ink-soft' }
 }
 
+/** Valor no padrão do app (cartão = −dívida) como o usuário lê. */
+function formatarSaldo(conta: PluggyConta, centavos: number): string {
+  return conta.tipo === 'CREDIT' ? `fatura ${formatBRL(-centavos)}` : formatBRL(centavos)
+}
+
+function LinhaConciliacao({ conta, c }: { conta: PluggyConta; c: ConciliacaoConta | undefined }) {
+  if (!c) return null
+  if (c.saldoInicialPendente)
+    return <p className="w-full text-xs text-ink-soft">Saldo inicial aguardando a próxima sincronização.</p>
+  if (c.diferencaCentavos === 0) return null
+  return (
+    <p className="w-full text-xs text-aviso">
+      Saldo não bate: app {formatarSaldo(conta, c.saldoAppCentavos)}
+      {c.pendentesCentavos !== 0 && ` (${formatarSaldo(conta, c.saldoAppCentavos + c.pendentesCentavos)} depois de revisar Importadas)`}
+      {' '}× Pluggy {formatarSaldo(conta, c.saldoPluggyCentavos)}.
+    </p>
+  )
+}
+
 function ConexoesPage() {
   const { showToast } = useToast()
   const dados = useAsync(carregarDados, [])
@@ -50,6 +75,7 @@ function ConexoesPage() {
   const [sincronizando, setSincronizando] = useState(false)
   const [removendo, setRemovendo] = useState<PluggyItem | null>(null)
   const [vinculando, setVinculando] = useState<PluggyConta | null>(null)
+  const [alterandoCorte, setAlterandoCorte] = useState<PluggyConta | null>(null)
 
   async function adicionar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -146,10 +172,21 @@ function ConexoesPage() {
                             {conta.tipo === 'CREDIT' ? `fatura ${formatBRL(conta.saldoCentavos)}` : formatBRL(conta.saldoCentavos)}
                           </span>
                           {fonte ? (
-                            <span className="w-full text-xs text-ink-soft sm:w-auto">
-                              → {fonte.nome}
-                              {conta.dataCorte && ` · desde ${formatarData(conta.dataCorte)}`}
-                            </span>
+                            <>
+                              <span className="text-xs text-ink-soft">
+                                → {fonte.nome}
+                                {conta.dataCorte && ` · desde ${formatarData(somarDias(conta.dataCorte, 1))}`}
+                              </span>
+                              {conta.dataCorte && (
+                                <Button variant="ghost" onClick={() => setAlterandoCorte(conta)}>
+                                  Alterar
+                                </Button>
+                              )}
+                              <LinhaConciliacao
+                                conta={conta}
+                                c={dados.data!.conciliacao.find((c) => c.pluggyAccountId === conta.pluggyAccountId)}
+                              />
+                            </>
                           ) : (
                             <Button variant="secondary" onClick={() => setVinculando(conta)}>
                               Vincular
@@ -219,8 +256,20 @@ function ConexoesPage() {
           onFechar={() => setVinculando(null)}
           onSalvo={() => {
             setVinculando(null)
-            showToast('Conta vinculada. Saldo inicial lançado.', 'success')
-            dados.recarregar()
+            showToast('Conta vinculada. Sincronizando para lançar o saldo inicial…', 'success')
+            void sincronizar()
+          }}
+        />
+      )}
+
+      {alterandoCorte && (
+        <AlterarCorteModal
+          conta={alterandoCorte}
+          onFechar={() => setAlterandoCorte(null)}
+          onSalvo={() => {
+            setAlterandoCorte(null)
+            showToast('Data alterada. Sincronizando…', 'success')
+            void sincronizar()
           }}
         />
       )}
@@ -247,20 +296,18 @@ function VincularModal({
   const [nome, setNome] = useState(conta.nome)
   const [limite, setLimite] = useState(conta.limiteCentavos ?? 0)
   const [diaFatura, setDiaFatura] = useState<number | ''>(conta.diaFatura ?? '')
+  const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes(mesAtual()))
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const textoSaldo = ehCartao
-    ? conta.saldoCentavos > 0
-      ? `Será lançada a fatura em aberto de ${formatBRL(conta.saldoCentavos)} como saldo inicial.`
-      : 'Sem fatura em aberto: nenhum saldo inicial será lançado.'
-    : conta.saldoCentavos > 0
-      ? `Será lançado um saldo inicial de ${formatBRL(conta.saldoCentavos)}.`
-      : 'Saldo zero ou negativo: nenhum saldo inicial será lançado.'
+  const textoSaldo = `Depois da sincronização, o app lança como saldo inicial (em ${formatarData(
+    somarDias(dataInicio || hojeISO(), -1),
+  )}) o saldo de hoje na Pluggy (${ehCartao ? `fatura ${formatBRL(conta.saldoCentavos)}` : formatBRL(conta.saldoCentavos)}) descontadas as transações importadas desde então.`
 
   async function salvar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErro(null)
+    if (!dataInicio || dataInicio > hojeISO()) return setErro('Escolha uma data de início até hoje.')
     if (modo === 'existente' && !fonteId) return setErro('Escolha uma fonte.')
     if (modo === 'nova') {
       if (!nome.trim()) return setErro('Informe o nome da fonte.')
@@ -279,6 +326,7 @@ function VincularModal({
                 ...(ehCartao ? { limiteCentavos: limite, diaFatura: diaFatura as number } : {}),
               },
             },
+        dataInicio,
       )
       onSalvo()
     } catch (e) {
@@ -323,9 +371,14 @@ function VincularModal({
             )}
           </>
         )}
-        <p className="rounded bg-base p-3 text-xs text-ink-soft">
-          {textoSaldo} Só transações depois de hoje ({formatarData(hojeISO())}) serão importadas.
-        </p>
+        <Input
+          label="Importar desde"
+          type="date"
+          max={hojeISO()}
+          value={dataInicio}
+          onChange={(e) => setDataInicio(e.target.value)}
+        />
+        <p className="rounded bg-base p-3 text-xs text-ink-soft">{textoSaldo}</p>
         {erro && <p className="text-sm text-alerta">{erro}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onFechar}>
@@ -333,6 +386,64 @@ function VincularModal({
           </Button>
           <Button type="submit" loading={enviando} disabled={enviando}>
             Vincular
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function AlterarCorteModal({
+  conta,
+  onFechar,
+  onSalvo,
+}: {
+  conta: PluggyConta
+  onFechar(): void
+  onSalvo(): void
+}) {
+  const atual = conta.dataCorte ? somarDias(conta.dataCorte, 1) : primeiroDiaDoMes(mesAtual())
+  const [dataInicio, setDataInicio] = useState(atual)
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  async function salvar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setErro(null)
+    if (!dataInicio || dataInicio > hojeISO()) return setErro('Escolha uma data de início até hoje.')
+    setEnviando(true)
+    try {
+      await alterarCorteConta(conta.pluggyAccountId, dataInicio)
+      onSalvo()
+    } catch (e) {
+      setErro(mensagemDoErro(e))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <Modal open onClose={onFechar} title={`Importar ${conta.nome} desde…`}>
+      <form onSubmit={salvar} className="flex flex-col gap-4">
+        <Input
+          label="Importar desde"
+          type="date"
+          max={hojeISO()}
+          value={dataInicio}
+          onChange={(e) => setDataInicio(e.target.value)}
+        />
+        <p className="rounded bg-base p-3 text-xs text-ink-soft">
+          O saldo inicial atual é apagado e refeito depois da sincronização, com o saldo da Pluggy
+          descontadas as transações desde essa data. Transações ainda não revisadas de antes dessa
+          data saem de Importadas.
+        </p>
+        {erro && <p className="text-sm text-alerta">{erro}</p>}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onFechar}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={enviando} disabled={enviando || dataInicio === atual}>
+            Salvar e sincronizar
           </Button>
         </div>
       </form>

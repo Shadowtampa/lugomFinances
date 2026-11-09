@@ -42,6 +42,13 @@ export function deslocarMes(ym: string, delta: number): string {
   return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** Soma dias a uma data YYYY-MM-DD (sem fuso). */
+export function somarDias(iso: string, dias: number): string {
+  const d = new Date(`${iso}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
 export function hojeISO(): string {
   const hoje = new Date()
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`

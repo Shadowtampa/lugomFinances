@@ -114,10 +114,18 @@ Para cada competência em que está vigente (`mes_inicio` ≤ mês, dentro de
 vencimento resolvido no mês) ou **Pendente**. Marcar como paga não cria Saída
 nem mexe em saldo.
 
-**RN-15** (M20) — Nada que vem da Pluggy vira lançamento sem confirmação do usuário. Cada
-conta vinculada tem uma **data de corte** (o dia do vínculo, quando o saldo inicial é
-lançado); só transações com data posterior são importadas. Confirmar uma Saída importada
-passa pela `criar_saida` (RN-02/RN-03 continuam valendo).
+**RN-15** (M20/M21) — Nada que vem da Pluggy vira lançamento sem confirmação do usuário.
+Cada conta vinculada tem um **"importar desde"** (= `data_corte + 1`, padrão: dia 1º do mês
+do vínculo, editável); só transações a partir dele são importadas. O saldo inicial é lançado
+em `data_corte` depois da sincronização: saldo Pluggy − efeito das importadas da janela.
+Confirmar uma Saída importada passa pela `criar_saida` (RN-02/RN-03 continuam valendo).
+
+**RN-16** (M21) — Uma Saída importada numa conta e uma Entrada importada num cartão com o
+mesmo valor (±3 dias) são o **pagamento da fatura**: conciliadas juntas por
+`confirmar_pagamento_fatura` (via `confirmar_fatura_cartao`), sem gasto em Categoria. Uma
+parcela de compra anterior ao corte já está no saldo inicial e é sugerida para ignorar. A
+conciliação (`v_conciliacao_contas`) avisa quando saldo do app + importadas pendentes ≠ saldo
+Pluggy; nunca ajusta sozinha.
 
 **RN-09** — Saldo nunca é armazenado. É sempre derivado por view SQL a partir dos
 lançamentos. Isso elimina dessincronização.
@@ -203,7 +211,8 @@ auth.users (local, M17)
 
 **Views:** `v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`,
 `v_recorrencias_mes` (M19), `v_faturas_pendentes` (M13/M19), `v_importadas_pendentes`,
-`v_sugestoes_recorrencia`, `v_status_integracao` (M20). Tabelas do M20: `pluggy_itens`,
+`v_sugestoes_recorrencia`, `v_status_integracao` (M20), `v_pares_pagamento_fatura`,
+`v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
@@ -232,6 +241,7 @@ anterior está pronto e funcionando.
 | M14 | `14-lancamentos-futuros.md` | Entrada/Saída com data futura: não conta no saldo até o dia chegar |
 | M19 | `19-recorrencias-acompanhamento.md` | Recorrência vira acompanhamento de contas a pagar (paga/pendente/atrasada), fora do saldo |
 | M20 | `20-integracao-pluggy.md` | Transações via Pluggy numa caixa de entrada (Importadas), worker de sincronização, Conexões |
+| M21 | `21-importacao-retroativa.md` | "Importar desde" editável, pagamento de fatura conciliado, conciliação app × Pluggy |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

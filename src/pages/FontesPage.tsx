@@ -12,15 +12,18 @@ import { mensagemDoErro } from '../lib/erros'
 import { useAsync } from '../hooks/useAsync'
 import { listarCategorias } from '../services/categorias'
 import { atualizarFonte, listarFontes, listarSaldosFontes } from '../services/fontes'
+import { listarConciliacao } from '../services/integracao'
+import { formatBRL } from '../lib/money'
 import type { Fonte, SaldoFonte } from '../types/domain'
 
 async function carregarDados() {
-  const [saldos, fontes, categorias] = await Promise.all([
+  const [saldos, fontes, categorias, conciliacao] = await Promise.all([
     listarSaldosFontes(),
     listarFontes({ incluirArquivadas: true }),
     listarCategorias({ incluirArquivadas: true }),
+    listarConciliacao(),
   ])
-  return { saldos, fontes, categorias }
+  return { saldos, fontes, categorias, conciliacao }
 }
 
 function nomesCategorias(ids: string[] | undefined, mapaNomes: Map<string, string>): string {
@@ -191,6 +194,20 @@ function FontesPage() {
                       {zerado && <p className="text-xs text-ink-soft">sem saldo disponível</p>}
                     </div>
                   )}
+
+                  {(() => {
+                    const c = dados.data?.conciliacao.find((x) => x.fonteId === fonte.id)
+                    if (!c || c.saldoInicialPendente || c.diferencaCentavos === 0) return null
+                    const pluggy = fonte.ehCartao
+                      ? `fatura ${formatBRL(-c.saldoPluggyCentavos)}`
+                      : formatBRL(c.saldoPluggyCentavos)
+                    return (
+                      <p className="text-xs text-aviso">
+                        Pluggy: {pluggy}
+                        {c.pendentesCentavos !== 0 && ' · há transações a revisar em Importadas'}
+                      </p>
+                    )
+                  })()}
 
                   <p className="text-xs text-ink-soft">
                     {fonte.ehCartao

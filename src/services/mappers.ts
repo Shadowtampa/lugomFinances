@@ -3,7 +3,9 @@ import type {
   EntradaRow,
   FonteRow,
   FaturaPendenteRow,
+  ConciliacaoContaRow,
   ImportadaPendenteRow,
+  ParPagamentoFaturaRow,
   PluggyContaRow,
   PluggyItemRow,
   StatusIntegracaoRow,
@@ -21,6 +23,8 @@ import type {
   Entrada,
   Fonte,
   FaturaPendente,
+  ConciliacaoConta,
+  ParPagamentoFatura,
   PluggyConta,
   PluggyItem,
   StatusIntegracao,
@@ -182,6 +186,7 @@ export function paraPluggyConta(row: PluggyContaRow): PluggyConta {
     limiteCentavos: row.limite_centavos,
     diaFatura: row.dia_fatura,
     dataCorte: row.data_corte,
+    saldoInicialPendente: row.saldo_inicial_pendente_desde !== null,
   }
 }
 
@@ -201,6 +206,30 @@ export function paraTransacaoImportada(row: ImportadaPendenteRow): TransacaoImpo
     entradaId: row.entrada_id,
     saidaId: row.saida_id,
     categoriaSugeridaId: row.categoria_sugerida_id,
+    sugerirIgnorarParcela: row.sugerir_ignorar_parcela,
+  }
+}
+
+export function paraParPagamentoFatura(row: ParPagamentoFaturaRow): ParPagamentoFatura {
+  return {
+    bancoId: row.banco_id,
+    cartaoId: row.cartao_id,
+    fontePagadoraId: row.fonte_pagadora_id,
+    cartaoFonteId: row.cartao_fonte_id,
+    valorCentavos: row.valor_centavos,
+    data: row.data,
+  }
+}
+
+export function paraConciliacaoConta(row: ConciliacaoContaRow): ConciliacaoConta {
+  return {
+    pluggyAccountId: row.pluggy_account_id,
+    fonteId: row.fonte_id,
+    saldoAppCentavos: row.saldo_app_centavos,
+    pendentesCentavos: row.pendentes_centavos,
+    saldoPluggyCentavos: row.saldo_pluggy_centavos,
+    diferencaCentavos: row.saldo_pluggy_centavos - row.saldo_app_centavos - row.pendentes_centavos,
+    saldoInicialPendente: row.saldo_inicial_pendente,
   }
 }
 

@@ -56,6 +56,14 @@ describe('normalizarTransacao — cartão', () => {
   it('parcela futura não entra', () => {
     expect(normalizarTransacao(parcelaFutura, 'CREDIT', CORTE, HOJE)).toBeNull()
   })
+  it('parcela traz a data da compra original (fuso de SP); compra à vista não', () => {
+    const parcela: TransacaoPluggy = {
+      ...compraPendente,
+      creditCardMetadata: { installmentNumber: 3, totalInstallments: 3, purchaseDate: '2026-09-12T01:56:12.000Z' },
+    }
+    expect(normalizarTransacao(parcela, 'CREDIT', CORTE, HOJE)?.dataCompra).toBe('2026-09-11')
+    expect(normalizarTransacao(pagamento, 'CREDIT', CORTE, HOJE)?.dataCompra).toBeNull()
+  })
   it('arredonda para centavos inteiros', () => {
     expect(normalizarTransacao(arredondamento, 'CREDIT', CORTE, HOJE)?.valorCentavos).toBe(1999)
   })
