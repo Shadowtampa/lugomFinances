@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resumoDoMes, statusDaRecorrencia } from './recorrencias'
+import { filtrarRecorrencias, lerFiltroRecorrencia, resumoDoMes, statusDaRecorrencia } from './recorrencias'
 import type { RecorrenciaDoMes } from '../types/domain'
 
 function item(parcial: Partial<RecorrenciaDoMes>): RecorrenciaDoMes {
@@ -53,5 +53,33 @@ describe('resumoDoMes', () => {
       item({ valorPrevistoCentavos: 2000 }),
     ])
     expect(r).toEqual({ previstoCentavos: 17000, pagoCentavos: 15500, faltaCentavos: 2000 })
+  })
+})
+
+describe('lerFiltroRecorrencia', () => {
+  it('aceita os três valores', () => {
+    expect(lerFiltroRecorrencia('todas')).toBe('todas')
+    expect(lerFiltroRecorrencia('pagas')).toBe('pagas')
+    expect(lerFiltroRecorrencia('a-pagar')).toBe('a-pagar')
+  })
+  it('sem parâmetro ou inválido vale a-pagar', () => {
+    expect(lerFiltroRecorrencia(null)).toBe('a-pagar')
+    expect(lerFiltroRecorrencia('xyz')).toBe('a-pagar')
+  })
+})
+
+describe('filtrarRecorrencias', () => {
+  const paga = item({ recorrenciaId: 'paga', pagamentoId: 'p1' })
+  const aberta = item({ recorrenciaId: 'aberta' })
+  const itens = [paga, aberta]
+
+  it('a-pagar mantém só as sem pagamento (pendentes e atrasadas)', () => {
+    expect(filtrarRecorrencias(itens, 'a-pagar')).toEqual([aberta])
+  })
+  it('pagas mantém só as com pagamento', () => {
+    expect(filtrarRecorrencias(itens, 'pagas')).toEqual([paga])
+  })
+  it('todas não filtra', () => {
+    expect(filtrarRecorrencias(itens, 'todas')).toEqual(itens)
   })
 })

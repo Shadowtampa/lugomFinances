@@ -252,6 +252,7 @@ anterior está pronto e funcionando.
 | M20 | `20-integracao-pluggy.md` | Transações via Pluggy numa caixa de entrada (Importadas), worker de sincronização, Conexões |
 | M21 | `21-importacao-retroativa.md` | "Importar desde" editável, pagamento de fatura conciliado, conciliação app × Pluggy |
 | M22 | `22-apelidos-estabelecimento.md` | Apelido de estabelecimento aplicado na leitura a importadas e lançamentos da Pluggy |
+| M23 | `23-filtro-recorrencias.md` | Filtro Todas / A pagar / Pagas na lista de recorrências do mês |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

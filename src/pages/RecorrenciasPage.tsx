@@ -15,7 +15,14 @@ import { useAsync } from '../hooks/useAsync'
 import { deslocarMes, formatarData, hojeISO, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
 import { formatBRL } from '../lib/money'
-import { resumoDoMes, statusDaRecorrencia, valorEfetivo } from '../lib/recorrencias'
+import {
+  filtrarRecorrencias,
+  lerFiltroRecorrencia,
+  resumoDoMes,
+  statusDaRecorrencia,
+  valorEfetivo,
+  type FiltroRecorrencia,
+} from '../lib/recorrencias'
 import { listarCategorias } from '../services/categorias'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
 import {
@@ -45,6 +52,12 @@ async function carregarDados(mes: string) {
   return { itens, faturas, categorias: categorias.filter((c) => !c.arquivada), fontes }
 }
 
+const OPCOES_FILTRO: { valor: FiltroRecorrencia; rotulo: string }[] = [
+  { valor: 'todas', rotulo: 'Todas' },
+  { valor: 'a-pagar', rotulo: 'A pagar' },
+  { valor: 'pagas', rotulo: 'Pagas' },
+]
+
 const ESTILO_STATUS: Record<StatusRecorrencia, { rotulo: string; classe: string }> = {
   paga: { rotulo: 'Paga', classe: 'bg-livre/10 text-livre' },
   pendente: { rotulo: 'Pendente', classe: 'bg-base text-ink-soft' },
@@ -69,12 +82,21 @@ function RecorrenciasPage() {
 
   const itens = useMemo(() => dados.data?.itens ?? [], [dados.data])
   const resumo = useMemo(() => resumoDoMes(itens), [itens])
+  const filtro = lerFiltroRecorrencia(params.get('status'))
+  const visiveis = useMemo(() => filtrarRecorrencias(itens, filtro), [itens, filtro])
   const mapaFontes = useMemo(
     () => new Map((dados.data?.fontes ?? []).map((f) => [f.id, f])),
     [dados.data],
   )
   const fontesPagadoras = (dados.data?.fontes ?? []).filter((f) => !f.ehCartao)
   const estaNoMesCorrente = mes === mesAtual()
+
+  function mudarFiltro(novo: FiltroRecorrencia) {
+    setParams((p) => {
+      p.set('status', novo)
+      return p
+    })
+  }
 
   function irParaMes(novo: string) {
     setParams((p) => {
@@ -197,8 +219,30 @@ function RecorrenciasPage() {
                 Falta <span className="font-money">{formatBRL(resumo.faltaCentavos)}</span>
               </p>
 
+              <div role="group" aria-label="Filtrar por status" className="mb-3 flex gap-1">
+                {OPCOES_FILTRO.map((opcao) => (
+                  <button
+                    key={opcao.valor}
+                    type="button"
+                    aria-pressed={filtro === opcao.valor}
+                    onClick={() => mudarFiltro(opcao.valor)}
+                    className={`rounded-full px-3 py-1 text-sm ${
+                      filtro === opcao.valor ? 'bg-ink text-surface' : 'text-ink-soft hover:bg-base'
+                    }`}
+                  >
+                    {opcao.rotulo}
+                  </button>
+                ))}
+              </div>
+
+              {visiveis.length === 0 && (
+                <p className="py-4 text-sm text-ink-soft">
+                  {filtro === 'pagas' ? `Nada pago em ${nomeDoMes(mes)} ainda.` : `Tudo pago em ${nomeDoMes(mes)}.`}
+                </p>
+              )}
+
               <ul className="flex flex-col">
-                {itens.map((item) => {
+                {visiveis.map((item) => {
                   const status = statusDaRecorrencia(item, hoje)
                   const estilo = ESTILO_STATUS[status]
                   const valorReal = item.valorPagoCentavos
