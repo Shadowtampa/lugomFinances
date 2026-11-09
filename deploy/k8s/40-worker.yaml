@@ -1,0 +1,61 @@
+# M20 — worker da Pluggy: timer de 6h + POST /sync (botão "Sincronizar agora").
+# Roda o código de worker/ direto do repositório (hostPath), como o web serve o dist/.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: lugom-financas
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: {app: worker}
+  template:
+    metadata:
+      labels: {app: worker}
+    spec:
+      # O DNS do cluster não resolve nomes externos (CoreDNS repassa ao resolv.conf do host,
+      # cujo 1º servidor é um IPv6 link-local inútil dentro do pod). O worker só precisa de
+      # api.pluggy.ai lá fora; o Postgres é acessado pelo IP do Service (POSTGRES_SERVICE_HOST,
+      # injetado pelo k8s), então usa resolvers públicos sem depender do DNS do cluster.
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [1.1.1.1, 8.8.8.8]
+      containers:
+        - name: worker
+          image: node:22-alpine
+          workingDir: /app
+          command: ["node", "--experimental-strip-types", "--disable-warning=ExperimentalWarning", "src/main.ts"]
+          env:
+            - name: PLUGGY_WORKER_PASSWORD
+              valueFrom: {secretKeyRef: {name: lugom-financas, key: pluggy-worker-password}}
+            - {name: DATABASE_URL, value: "postgres://pluggy_worker:$(PLUGGY_WORKER_PASSWORD)@$(POSTGRES_SERVICE_HOST):5432/lugom"}
+            - name: PLUGGY_CLIENT_ID
+              valueFrom: {secretKeyRef: {name: lugom-financas, key: pluggy-client-id}}
+            - name: PLUGGY_CLIENT_SECRET
+              valueFrom: {secretKeyRef: {name: lugom-financas, key: pluggy-client-secret}}
+            - name: JWT_SECRET
+              valueFrom: {secretKeyRef: {name: lugom-financas, key: jwt-secret}}
+            - {name: INTERVALO_HORAS, value: "6"}
+            - {name: PORT, value: "8080"}
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            periodSeconds: 10
+          volumeMounts:
+            - {name: codigo, mountPath: /app, readOnly: true}
+      volumes:
+        - name: codigo
+          hostPath: {path: /home/luisgomes/dev/homelab/lugom/lugomFinances/worker, type: Directory}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker
+  namespace: lugom-financas
+spec:
+  selector: {app: worker}
+  ports:
+    - port: 8080

@@ -4,28 +4,33 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useAsync } from '../../hooks/useAsync'
 import { hojeISO, mesAtual } from '../../lib/date'
 import { statusDaRecorrencia } from '../../lib/recorrencias'
+import { contarImportadasPendentes } from '../../services/integracao'
 import { listarFaturasPendentes, listarRecorrenciasDoMes } from '../../services/recorrencias'
 
 async function carregarPendencias() {
-  const [doMes, faturas] = await Promise.all([
+  const [doMes, faturas, importadas] = await Promise.all([
     listarRecorrenciasDoMes(mesAtual()),
     listarFaturasPendentes(),
+    contarImportadasPendentes(),
   ])
   const hoje = hojeISO()
   const status = doMes.map((r) => statusDaRecorrencia(r, hoje)).filter((s) => s !== 'paga')
   return {
     contagem: status.length + faturas.length,
     atrasado: faturas.length > 0 || status.includes('atrasada'),
+    importadas,
   }
 }
 
 const NAV_ITEMS = [
   { to: '/', label: 'Painel', end: true },
+  { to: '/importadas', label: 'Importadas' },
   { to: '/entradas', label: 'Entradas' },
   { to: '/saidas', label: 'Saídas' },
   { to: '/fontes', label: 'Fontes' },
   { to: '/categorias', label: 'Categorias' },
   { to: '/recorrencias', label: 'Recorrências' },
+  { to: '/conexoes', label: 'Conexões' },
 ]
 
 const APP_VERSION = '1.16'
@@ -70,6 +75,9 @@ function AppShell({ children }: { children: ReactNode }) {
               {item.label}
               {item.to === '/recorrencias' && (
                 <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
+              )}
+              {item.to === '/importadas' && (
+                <BadgePendencias count={pendencias.data?.importadas ?? 0} atrasado={false} />
               )}
             </NavLink>
           ))}
@@ -121,6 +129,9 @@ function AppShell({ children }: { children: ReactNode }) {
                 {item.label}
                 {item.to === '/recorrencias' && (
                   <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
+                )}
+                {item.to === '/importadas' && (
+                  <BadgePendencias count={pendencias.data?.importadas ?? 0} atrasado={false} />
                 )}
               </NavLink>
             ))}

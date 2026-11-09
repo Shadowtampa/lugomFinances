@@ -26,6 +26,27 @@ EOF
   kubectl -n "$NS" create secret generic lugom-financas --from-env-file=.segredos
 fi
 
+# M20: segredos da Pluggy + senha do role do worker (pedidos uma vez; nunca vão para o git).
+if ! kubectl -n "$NS" get secret lugom-financas -o jsonpath='{.data.pluggy-client-id}' | grep -q .; then
+  echo "== Credenciais da Pluggy (Dashboard → Applications)"
+  read -r -p "PLUGGY_CLIENT_ID: " PLUGGY_CLIENT_ID
+  read -r -s -p "PLUGGY_CLIENT_SECRET: " PLUGGY_CLIENT_SECRET; echo
+  SENHA_WORKER=$(openssl rand -hex 24)
+  kubectl -n "$NS" patch secret lugom-financas --type merge -p "$(printf '{"stringData":{"pluggy-client-id":"%s","pluggy-client-secret":"%s","pluggy-worker-password":"%s"}}' \
+    "$PLUGGY_CLIENT_ID" "$PLUGGY_CLIENT_SECRET" "$SENHA_WORKER")"
+  (umask 077; printf 'pluggy-client-id=%s\npluggy-client-secret=%s\npluggy-worker-password=%s\n' \
+    "$PLUGGY_CLIENT_ID" "$PLUGGY_CLIENT_SECRET" "$SENHA_WORKER" >> .segredos)
+  unset PLUGGY_CLIENT_SECRET
+  # Banco já existente: a senha do role não vem do init, aplica aqui (o role nasce na migration 00012).
+  POD=$(kubectl -n "$NS" get pod -l app=postgres -o name 2>/dev/null | head -1)
+  if [ -n "$POD" ]; then
+    # psql não interpola :'var' em -c; precisa vir pelo stdin.
+    printf "alter role pluggy_worker with password :'senha';\n" \
+      | kubectl -n "$NS" exec -i "$POD" -- psql -v ON_ERROR_STOP=1 -U postgres -d lugom -v senha="$SENHA_WORKER" >/dev/null 2>&1 \
+      || echo "   (role pluggy_worker ainda não existe: aplique a 00012 e rode de novo o alter role — ver README)"
+  fi
+fi
+
 echo "== ConfigMaps"
 kubectl -n "$NS" create configmap db-init \
   --from-file="$RAIZ/db/migrations" --from-file="$RAIZ/db/zz_settings.sh" \
@@ -35,13 +56,17 @@ kubectl -n "$NS" create configmap web-nginx --from-file=default.conf=nginx.conf 
 
 echo "== Build do front"
 (cd "$RAIZ" && npm ci --silent && npm run build)
+echo "== Dependências do worker"
+(cd "$RAIZ/worker" && npm ci --silent --omit=dev)
 
 echo "== Manifests"
-kubectl apply -f 10-postgres.yaml -f 20-postgrest.yaml -f 30-web.yaml
-kubectl -n "$NS" rollout restart deployment/web   # pega nginx.conf novo
+kubectl apply -f 10-postgres.yaml -f 20-postgrest.yaml -f 30-web.yaml -f 40-worker.yaml
+kubectl -n "$NS" rollout restart deployment/web     # pega nginx.conf novo
+kubectl -n "$NS" rollout restart deployment/worker  # pega código novo do worker/
 kubectl -n "$NS" rollout status deployment/postgres --timeout=180s
 kubectl -n "$NS" rollout status deployment/postgrest --timeout=120s
 kubectl -n "$NS" rollout status deployment/web --timeout=120s
+kubectl -n "$NS" rollout status deployment/worker --timeout=120s
 
 echo
 echo "Pronto: http://localhost:10070"

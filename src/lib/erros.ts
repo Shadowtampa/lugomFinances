@@ -17,6 +17,17 @@ const CODIGOS_RPC_CONHECIDOS = new Set([
   'CATEGORIA_NAO_PERMITIDA_NA_FONTE',
   'SALDO_INSUFICIENTE',
   'SAIDA_INVALIDA',
+  'LIMITE_CARTAO_EXCEDIDO',
+  'CONTA_INVALIDA',
+  'CONTA_JA_VINCULADA',
+  'FONTE_JA_VINCULADA',
+  'IMPORTADA_NAO_PENDENTE',
+  'IMPORTADA_NAO_IGNORADA',
+  'CONTA_NAO_VINCULADA',
+  'CATEGORIA_OBRIGATORIA',
+  'RECORRENCIA_JA_PAGA',
+  'SINCRONIZACAO_EM_ANDAMENTO',
+  'SINCRONIZACAO_INDISPONIVEL',
 ])
 
 const MENSAGENS: Record<string, string> = {
@@ -30,6 +41,18 @@ const MENSAGENS: Record<string, string> = {
   CATEGORIA_NAO_PERMITIDA_NA_FONTE: 'Essa fonte não aceita saídas dessa categoria.',
   SALDO_INSUFICIENTE: 'Saldo insuficiente nessa fonte.',
   SAIDA_INVALIDA: 'Saída não encontrada.',
+  LIMITE_CARTAO_EXCEDIDO: 'Limite do cartão excedido.',
+  CONTA_INVALIDA: 'Conta da Pluggy não encontrada.',
+  CONTA_JA_VINCULADA: 'Essa conta já está vinculada a uma fonte.',
+  FONTE_JA_VINCULADA: 'Essa fonte já está vinculada a outra conta.',
+  IMPORTADA_NAO_PENDENTE: 'Essa transação já foi revisada.',
+  IMPORTADA_NAO_IGNORADA: 'Essa transação não está ignorada.',
+  CONTA_NAO_VINCULADA: 'Vincule a conta a uma fonte em Conexões antes de confirmar.',
+  CATEGORIA_OBRIGATORIA: 'Escolha uma categoria.',
+  RECORRENCIA_JA_PAGA: 'Essa recorrência já está paga neste mês.',
+  SINCRONIZACAO_EM_ANDAMENTO: 'Sincronização em andamento. Aguarde terminar.',
+  SINCRONIZACAO_INDISPONIVEL: 'O serviço de sincronização não respondeu.',
+  ITEM_ID_INVALIDO: 'Item ID inválido: deve ser um UUID (ex.: 1a2b3c4d-…).',
   DUPLICADO: 'Já existe um registro com esse nome.',
   UNKNOWN: 'Algo deu errado. Tente novamente.',
 }
@@ -69,6 +92,31 @@ function normalizar(error: PostgrestError | Error, status?: number): ApiError {
   }
 
   return { codigo: 'UNKNOWN', mensagem: MENSAGENS.UNKNOWN, detalhe: error.message, status }
+}
+
+const MENSAGENS_SYNC: Record<string, string> = {
+  PLUGGY_AUTH_FALHOU: 'credenciais da Pluggy recusadas',
+  PLUGGY_INDISPONIVEL: 'Pluggy indisponível',
+  PLUGGY_NAO_ENCONTRADO: 'recurso não encontrado na Pluggy',
+  PLUGGY_REQUISICAO_INVALIDA: 'a Pluggy recusou a requisição (confira o Item ID)',
+  ITEM_NAO_ENCONTRADO: 'conexão não encontrada na Pluggy (confira o Item ID)',
+  ERRO_INTERNO: 'erro interno do sincronizador',
+}
+
+/** Texto do erro gravado em sincronizacoes.erro ("CODIGO: detalhe; ...") pronto para o usuário. */
+export function mensagemErroSincronizacao(erro: string | null): string {
+  if (!erro) return MENSAGENS_SYNC.ERRO_INTERNO
+  const textos = erro.split(';').map((parte) => {
+    const codigo = parte.split(':')[0]?.trim() ?? ''
+    return MENSAGENS_SYNC[codigo] ?? MENSAGENS_SYNC.ERRO_INTERNO
+  })
+  return [...new Set(textos)].join(', ')
+}
+
+/** Erro de uma chamada que não passa pelo PostgREST (ex.: /sync do worker). */
+export function erroDeCodigo(codigo: string, status?: number): ApiError {
+  if (status === 401) return { codigo: 'UNAUTHORIZED', mensagem: MENSAGENS.UNAUTHORIZED, status }
+  return { codigo, mensagem: MENSAGENS[codigo] ?? MENSAGENS.UNKNOWN, status }
 }
 
 export function unwrap<T>(resultado: {

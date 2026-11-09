@@ -1,9 +1,11 @@
 import { createBrowserRouter } from 'react-router'
 import ProtectedLayout from './components/layout/ProtectedLayout'
 import CategoriasPage from './pages/CategoriasPage'
+import ConexoesPage from './pages/ConexoesPage'
 import DashboardPage from './pages/DashboardPage'
 import EntradasPage from './pages/EntradasPage'
 import FontesPage from './pages/FontesPage'
+import ImportadasPage from './pages/ImportadasPage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import RecorrenciasPage from './pages/RecorrenciasPage'
@@ -21,6 +23,8 @@ export const router = createBrowserRouter([
       { path: 'fontes', Component: FontesPage },
       { path: 'categorias', Component: CategoriasPage },
       { path: 'recorrencias', Component: RecorrenciasPage },
+      { path: 'importadas', Component: ImportadasPage },
+      { path: 'conexoes', Component: ConexoesPage },
     ],
   },
   { path: '*', Component: NotFoundPage },

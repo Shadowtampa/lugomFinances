@@ -24,6 +24,8 @@ export interface FonteRow {
   eh_cartao: boolean
   limite_centavos: number | null
   dia_fatura: number | null
+  origem: 'manual' | 'pluggy'
+  pluggy_account_id: string | null
   created_at: string
 }
 
@@ -135,6 +137,70 @@ export interface FaturaPendenteRow {
   nome: string
   valor_sugerido_centavos: number
   dia_fatura: number
+}
+
+export interface PluggyItemRow {
+  id: string
+  user_id: string
+  item_id: string
+  nome: string | null
+  status: string | null
+  execution_status: string | null
+  atualizado_na_pluggy_em: string | null
+  created_at: string
+}
+
+export interface PluggyContaRow {
+  pluggy_account_id: string
+  user_id: string
+  item_id: string
+  nome: string
+  tipo: 'BANK' | 'CREDIT'
+  numero: string | null
+  saldo_centavos: number
+  limite_centavos: number | null
+  dia_fatura: number | null
+  data_corte: string | null
+  updated_at: string
+}
+
+export interface ImportadaPendenteRow {
+  id: string
+  user_id: string
+  pluggy_transaction_id: string
+  pluggy_account_id: string
+  fonte_id: string | null
+  data: string
+  descricao: string
+  valor_centavos: number
+  direcao: 'entrada' | 'saida'
+  status_pluggy: 'PENDING' | 'POSTED'
+  categoria_pluggy: string | null
+  parcela: number | null
+  total_parcelas: number | null
+  estado: 'pendente' | 'divergente'
+  entrada_id: string | null
+  saida_id: string | null
+  categoria_sugerida_id: string | null
+}
+
+export interface SugestaoRecorrenciaRow {
+  transacao_id: string
+  user_id: string
+  recorrencia_id: string
+  titulo: string
+  competencia: string
+}
+
+export interface StatusIntegracaoRow {
+  user_id: string
+  total_itens: number
+  ultima_sincronizacao_em: string | null
+  ultima_sincronizacao_sucesso: boolean | null
+  ultima_sincronizacao_erro: string | null
+  ultima_sincronizacao_importadas: number | null
+  ultima_sincronizacao_ok_em: string | null
+  itens_com_problema: { item_id: string; nome: string | null; status: string }[]
 }
 
 // Retorno de criar_saida / atualizar_saida (RPC)

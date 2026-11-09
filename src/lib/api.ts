@@ -9,7 +9,8 @@ function fetchComToken(entrada: RequestInfo | URL, init?: RequestInit) {
   const headers = new Headers(init?.headers)
   const sessao = sessaoAtual()
   if (sessao) headers.set('Authorization', `Bearer ${sessao.accessToken}`)
-  return fetch(entrada, { ...init, headers })
+  // no-store: nunca reaproveitar GET do cache do navegador (dado velho após mutação).
+  return fetch(entrada, { ...init, headers, cache: 'no-store' })
 }
 
 // URL absoluta: o PostgrestClient monta URLs com `new URL(...)`, que exige origem.

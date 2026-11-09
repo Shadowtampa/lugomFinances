@@ -1,0 +1,6 @@
+[
+  { "id": "k1", "date": "2026-11-15T18:00:00.000Z", "description": "UBER *TRIP", "amount": 25, "type": "DEBIT", "status": "PENDING", "creditCardMetadata": { "installmentNumber": 1, "totalInstallments": 3 } },
+  { "id": "k2", "date": "2026-11-16T12:00:00.000Z", "description": "PAGAMENTO FATURA", "amount": -300, "type": "CREDIT", "status": "POSTED" },
+  { "id": "k3", "date": "2026-12-15T12:00:00.000Z", "description": "UBER *TRIP", "amount": 25, "type": "DEBIT", "status": "PENDING", "creditCardMetadata": { "installmentNumber": 2, "totalInstallments": 3 } },
+  { "id": "k4", "date": "2026-11-17T12:00:00.000Z", "description": "STEAM", "amount": 19.989999, "type": "DEBIT", "status": "POSTED" }
+]

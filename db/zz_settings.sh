@@ -11,3 +11,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
 alter database :"db" set app.jwt_secret = :'jwt';
 alter role authenticator with password :'senha';
 SQL
+
+# M20: senha do role do worker da Pluggy (opcional: só se o Secret tiver a chave).
+if [ -n "${PLUGGY_WORKER_PASSWORD:-}" ]; then
+  psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+    -v senha="$PLUGGY_WORKER_PASSWORD" <<'SQL'
+alter role pluggy_worker with password :'senha';
+SQL
+fi

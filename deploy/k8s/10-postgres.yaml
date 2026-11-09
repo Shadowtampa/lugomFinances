@@ -26,6 +26,8 @@ spec:
               valueFrom: {secretKeyRef: {name: lugom-financas, key: jwt-secret}}
             - name: AUTHENTICATOR_PASSWORD
               valueFrom: {secretKeyRef: {name: lugom-financas, key: authenticator-password}}
+            - name: PLUGGY_WORKER_PASSWORD
+              valueFrom: {secretKeyRef: {name: lugom-financas, key: pluggy-worker-password, optional: true}}
           ports:
             - containerPort: 5432
           readinessProbe:

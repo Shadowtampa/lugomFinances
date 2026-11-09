@@ -50,3 +50,25 @@ export function hojeISO(): string {
 export function ehFuturo(data: string): boolean {
   return data > hojeISO()
 }
+
+/** Dias de calendário (fuso local) entre o timestamp e agora: mesmo dia = 0, ontem = 1. (M18/M20) */
+export function diasDesde(isoTimestamp: string, agora: Date = new Date()): number {
+  const d = new Date(isoTimestamp)
+  const inicio = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+  const fim = Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate())
+  return Math.round((fim - inicio) / 86_400_000)
+}
+
+/** "hoje", "ontem", "há N dias" */
+export function haQuantoTempo(isoTimestamp: string, agora: Date = new Date()): string {
+  const dias = diasDesde(isoTimestamp, agora)
+  if (dias <= 0) return 'hoje'
+  if (dias === 1) return 'ontem'
+  return `há ${dias} dias`
+}
+
+/** YYYY-MM-DD do timestamp no fuso local (para exibir datas de timestamptz). */
+export function dataLocalISO(isoTimestamp: string): string {
+  const d = new Date(isoTimestamp)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}

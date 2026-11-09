@@ -44,6 +44,12 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   splits sempre é igual ao valor total da Saída.
 - **Categoria** — a natureza do gasto. Ex: `Transporte`, `Alimentação`, `Moradia`.
   Tem um limite mensal opcional que acumula.
+- **Importada** (M20) — uma transação que veio da Pluggy (Open Finance) e espera revisão na
+  caixa de entrada (`transacoes_importadas`). Só vira Entrada ou Saída quando o usuário
+  confirma (escolhendo a Categoria, se for saída). Também pode ser ignorada.
+- **Conexão** (M20) — um *item* da Pluggy (um banco conectado no Meu Pluggy). Cada conta do
+  item é vinculada a uma Fonte (`fontes.pluggy_account_id`, `origem = 'pluggy'`); Fontes sem
+  vínculo (ex.: VR Flash) são `origem = 'manual'`.
 - **Recorrência** (M19) — uma conta a pagar acompanhada mês a mês (internet, plano
   de saúde, parcelas), com valor previsto e dia de vencimento. **Não é um
   lançamento e nunca afeta saldo**: é um checklist de "paga / não paga" por
@@ -107,6 +113,11 @@ Para cada competência em que está vigente (`mes_inicio` ≤ mês, dentro de
 `recorrencias_pagamentos`), **Atrasada** (sem pagamento e hoje passou do dia de
 vencimento resolvido no mês) ou **Pendente**. Marcar como paga não cria Saída
 nem mexe em saldo.
+
+**RN-15** (M20) — Nada que vem da Pluggy vira lançamento sem confirmação do usuário. Cada
+conta vinculada tem uma **data de corte** (o dia do vínculo, quando o saldo inicial é
+lançado); só transações com data posterior são importadas. Confirmar uma Saída importada
+passa pela `criar_saida` (RN-02/RN-03 continuam valendo).
 
 **RN-09** — Saldo nunca é armazenado. É sempre derivado por view SQL a partir dos
 lançamentos. Isso elimina dessincronização.
@@ -191,7 +202,9 @@ auth.users (local, M17)
 ```
 
 **Views:** `v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`,
-`v_recorrencias_mes` (M19), `v_faturas_pendentes` (M13/M19).
+`v_recorrencias_mes` (M19), `v_faturas_pendentes` (M13/M19), `v_importadas_pendentes`,
+`v_sugestoes_recorrencia`, `v_status_integracao` (M20). Tabelas do M20: `pluggy_itens`,
+`pluggy_contas`, `transacoes_importadas`, `sincronizacoes`.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.
@@ -218,6 +231,7 @@ anterior está pronto e funcionando.
 | M13 | `13-cartao-credito.md` | Cartão de crédito: Fonte com limite, bloqueio por limite, fatura assistida |
 | M14 | `14-lancamentos-futuros.md` | Entrada/Saída com data futura: não conta no saldo até o dia chegar |
 | M19 | `19-recorrencias-acompanhamento.md` | Recorrência vira acompanhamento de contas a pagar (paga/pendente/atrasada), fora do saldo |
+| M20 | `20-integracao-pluggy.md` | Transações via Pluggy numa caixa de entrada (Importadas), worker de sincronização, Conexões |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

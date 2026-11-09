@@ -3,6 +3,11 @@ import type {
   EntradaRow,
   FonteRow,
   FaturaPendenteRow,
+  ImportadaPendenteRow,
+  PluggyContaRow,
+  PluggyItemRow,
+  StatusIntegracaoRow,
+  SugestaoRecorrenciaRow,
   RecorrenciaMesRow,
   RecorrenciaRow,
   ResultadoCriarSaidaRow,
@@ -16,6 +21,11 @@ import type {
   Entrada,
   Fonte,
   FaturaPendente,
+  PluggyConta,
+  PluggyItem,
+  StatusIntegracao,
+  SugestaoRecorrencia,
+  TransacaoImportada,
   Recorrencia,
   RecorrenciaDoMes,
   ResultadoCriarSaida,
@@ -35,6 +45,8 @@ export function paraFonte(row: FonteRow, categoriasPermitidas?: string[]): Fonte
     ehCartao: row.eh_cartao,
     limiteCentavos: row.limite_centavos,
     diaFatura: row.dia_fatura,
+    origem: row.origem,
+    pluggyAccountId: row.pluggy_account_id,
     ...(categoriasPermitidas ? { categoriasPermitidas } : {}),
   }
 }
@@ -145,6 +157,75 @@ export function paraRecorrenciaDoMes(row: RecorrenciaMesRow): RecorrenciaDoMes {
     pagoEm: row.pago_em,
     saidaId: row.saida_id,
     valorPagoCentavos: row.valor_pago_centavos,
+  }
+}
+
+export function paraPluggyItem(row: PluggyItemRow): PluggyItem {
+  return {
+    id: row.id,
+    itemId: row.item_id,
+    nome: row.nome,
+    status: row.status,
+    executionStatus: row.execution_status,
+    atualizadoNaPluggyEm: row.atualizado_na_pluggy_em,
+  }
+}
+
+export function paraPluggyConta(row: PluggyContaRow): PluggyConta {
+  return {
+    pluggyAccountId: row.pluggy_account_id,
+    itemId: row.item_id,
+    nome: row.nome,
+    tipo: row.tipo,
+    numero: row.numero,
+    saldoCentavos: row.saldo_centavos,
+    limiteCentavos: row.limite_centavos,
+    diaFatura: row.dia_fatura,
+    dataCorte: row.data_corte,
+  }
+}
+
+export function paraTransacaoImportada(row: ImportadaPendenteRow): TransacaoImportada {
+  return {
+    id: row.id,
+    pluggyAccountId: row.pluggy_account_id,
+    fonteId: row.fonte_id,
+    data: row.data,
+    descricao: row.descricao,
+    valorCentavos: row.valor_centavos,
+    direcao: row.direcao,
+    statusPluggy: row.status_pluggy,
+    parcela: row.parcela,
+    totalParcelas: row.total_parcelas,
+    estado: row.estado,
+    entradaId: row.entrada_id,
+    saidaId: row.saida_id,
+    categoriaSugeridaId: row.categoria_sugerida_id,
+  }
+}
+
+export function paraSugestaoRecorrencia(row: SugestaoRecorrenciaRow): SugestaoRecorrencia {
+  return {
+    transacaoId: row.transacao_id,
+    recorrenciaId: row.recorrencia_id,
+    titulo: row.titulo,
+    competencia: row.competencia.slice(0, 7),
+  }
+}
+
+export function paraStatusIntegracao(row: StatusIntegracaoRow): StatusIntegracao {
+  return {
+    totalItens: row.total_itens,
+    ultimaSincronizacaoEm: row.ultima_sincronizacao_em,
+    ultimaSincronizacaoSucesso: row.ultima_sincronizacao_sucesso,
+    ultimaSincronizacaoErro: row.ultima_sincronizacao_erro,
+    ultimaSincronizacaoImportadas: row.ultima_sincronizacao_importadas,
+    ultimaSincronizacaoOkEm: row.ultima_sincronizacao_ok_em,
+    itensComProblema: row.itens_com_problema.map((i) => ({
+      itemId: i.item_id,
+      nome: i.nome,
+      status: i.status,
+    })),
   }
 }
 

@@ -11,6 +11,8 @@ export default defineConfig({
         target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
         rewrite: (caminho) => caminho.replace(/^\/api/, ''),
       },
+      // M20: "Sincronizar agora" vai para o worker da Pluggy.
+      '/sync': { target: process.env.WORKER_PROXY_TARGET ?? 'http://localhost:8080' },
     },
   },
   test: {

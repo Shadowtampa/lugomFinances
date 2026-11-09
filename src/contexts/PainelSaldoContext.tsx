@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import PainelSaldo, { type PainelSaldoProps } from '../components/ui/PainelSaldo'
+import { idLocal } from '../lib/id'
 
 type DadosPainelSaldo = Omit<PainelSaldoProps, 'onFechar'>
 
@@ -17,7 +18,7 @@ export function PainelSaldoProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const mostrarPainelSaldo = useCallback((dados: DadosPainelSaldo) => {
-    setPainel({ ...dados, id: crypto.randomUUID() })
+    setPainel({ ...dados, id: idLocal() })
   }, [])
 
   return (

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-M1–M17 and M19 are built (M18 pending merge). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
+M1–M17, M19 and M20 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
 
 Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossary, the business rules (RN-01 through RN-11), the stack decisions, and code conventions. They are mandatory and are not repeated in full here.
 
@@ -31,7 +31,7 @@ Domain vocabulary (Portuguese, mandatory in code/db/UI — do not invent synonym
 
 ## Stack
 
-Vite + React 19 + TypeScript, Tailwind CSS v4, React Router v7 (declarative/SPA mode). **No Supabase since M17** (`.specs/17-backend-local.md`): local Postgres + PostgREST + RLS; data via `@supabase/postgrest-js` (`src/lib/api.ts`, PostgREST client only); auth via the `login` RPC that signs a JWT in the database (`db/migrations/00000_auth_local.sql`) and `src/lib/auth.ts`. Runs on the homelab Kubernetes (`deploy/k8s/`, port 10070). No global state library — React Router loaders + local `useState` + `AuthContext`.
+Vite + React 19 + TypeScript, Tailwind CSS v4, React Router v7 (declarative/SPA mode). **No Supabase since M17** (`.specs/17-backend-local.md`): local Postgres + PostgREST + RLS; data via `@supabase/postgrest-js` (`src/lib/api.ts`, PostgREST client only); auth via the `login` RPC that signs a JWT in the database (`db/migrations/00000_auth_local.sql`) and `src/lib/auth.ts`. Runs on the homelab Kubernetes (`deploy/k8s/`, port 10070). **Pluggy worker (M20):** `worker/` (Node 22, TS via `--experimental-strip-types`, deps: `pg`) is the only server code outside PostgREST — it pulls Pluggy transactions into `transacoes_importadas` as DB role `pluggy_worker`, every 6h and on `POST /sync` (nginx → worker, validates the login JWT). Pluggy credentials live only in the k8s Secret; never in the db, front or git. `src/services/integracao.ts` (`sincronizarAgora`) is the only service call that doesn't go through PostgREST. No global state library — React Router loaders + local `useState` + `AuthContext`.
 
 ## Working a milestone
 

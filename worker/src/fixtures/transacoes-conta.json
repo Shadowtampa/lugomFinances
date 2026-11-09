@@ -1,0 +1,6 @@
+[
+  { "id": "c1", "date": "2026-11-10T15:00:00.000Z", "description": "INTERNET VIVO", "amount": -99.9, "type": "DEBIT", "status": "POSTED" },
+  { "id": "c2", "date": "2026-11-11T12:00:00.000Z", "description": "PIX RECEBIDO FULANO", "amount": 50, "type": "CREDIT", "status": "POSTED" },
+  { "id": "c3", "date": "2026-11-12T12:00:00.000Z", "description": "AGENDAMENTO BOLETO", "amount": -200, "type": "DEBIT", "status": "PENDING" },
+  { "id": "c4", "date": "2026-11-08T20:00:00.000Z", "description": "MERCADO", "amount": -35, "type": "DEBIT", "status": "POSTED" }
+]

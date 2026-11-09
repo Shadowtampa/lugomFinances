@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
+import AvisoIntegracao from '../features/dashboard/AvisoIntegracao'
 import BarraLimite, { calcularPercentual } from '../features/categorias/BarraLimite'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
 import BarraCartao from '../features/fontes/BarraCartao'
@@ -15,6 +16,7 @@ import { formatBRL } from '../lib/money'
 import { listarSaldosCategorias } from '../services/categorias'
 import { listarEntradas } from '../services/entradas'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
+import { obterStatusIntegracao, sincronizarAgora } from '../services/integracao'
 import { listarRecorrenciasDoMes } from '../services/recorrencias'
 import { obterResumoGeral } from '../services/resumo'
 import { listarSaidas } from '../services/saidas'
@@ -103,6 +105,7 @@ function DashboardPage() {
   const categorias = useAsync(listarSaldosCategorias, [])
   const lancamentos = useAsync(carregarLancamentos, [])
   const recorrencias = useAsync(carregarRecorrenciasDoMes, [])
+  const integracao = useAsync(obterStatusIntegracao, [])
 
   const [formSaidaAberto, setFormSaidaAberto] = useState(false)
   const [formEntradaAberto, setFormEntradaAberto] = useState(false)
@@ -167,6 +170,15 @@ function DashboardPage() {
             <Button onClick={abrirSaida}>Registrar saída</Button>
           </div>
         }
+      />
+
+      <AvisoIntegracao
+        status={integracao.data}
+        onSincronizar={async () => {
+          const r = await sincronizarAgora()
+          integracao.recarregar()
+          if (r.importadas > 0) showToast(`${r.importadas} transações importadas. Revise em Importadas.`, 'success')
+        }}
       />
 
       {semFontesECategorias ? (

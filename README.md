@@ -31,6 +31,30 @@ kubectl -n lugom-financas exec -i $POD -- psql -v ON_ERROR_STOP=1 -U postgres -d
 kubectl -n lugom-financas rollout restart deployment/postgrest   # recarrega o schema
 ```
 
+## Integração Pluggy (M20)
+
+As transações do Inter / Mercado Pago chegam pelo worker (`worker/`, Deployment `worker`),
+que busca na Pluggy a cada 6h ou quando você clica em **Sincronizar agora**.
+
+1. **Credenciais.** No [Dashboard da Pluggy](https://dashboard.pluggy.ai): *Applications* →
+   criar uma aplicação → anotar Client ID e Client Secret. O `subir.sh` pede os dois na
+   primeira vez e grava no Secret `lugom-financas` (e em `deploy/k8s/.segredos`, fora do git).
+2. **Conexões.** Em [meu.pluggy.ai](https://meu.pluggy.ai), conectar os bancos (Open Finance).
+   Novas conexões só funcionam com o trial da pluggy.ai ativo; as já feitas continuam.
+3. **Item IDs.** No Dashboard: sua Application → *Ir para Demo* → menu ⋮ → *Copiar Item ID*.
+   Colar em **Conexões** no app, sincronizar e **Vincular** cada conta a uma Fonte (isso lança o
+   saldo inicial e define a data de corte — só transações depois dela são importadas).
+
+Recomeço do zero (uma vez, destrutivo — apaga todos os lançamentos e Fontes menos a VR Flash):
+
+```bash
+POD=$(kubectl -n lugom-financas get pod -l app=postgres -o name)
+kubectl -n lugom-financas exec $POD -- pg_dump -U postgres -d lugom > ~/backups/lugom/antes-do-recomeco.sql
+kubectl -n lugom-financas exec -i $POD -- psql -v ON_ERROR_STOP=1 -U postgres -d lugom < deploy/recomecar-do-zero.sql
+```
+
+Logs do worker: `kubectl -n lugom-financas logs deploy/worker -f`.
+
 ## Desenvolvimento
 
 ```bash

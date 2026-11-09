@@ -11,6 +11,9 @@ export type Fonte = {
   ehCartao: boolean
   limiteCentavos: number | null
   diaFatura: number | null
+  /** M20 — só vem de `fontes` (não de v_saldo_fontes) */
+  origem?: 'manual' | 'pluggy'
+  pluggyAccountId?: string | null
   categoriasPermitidas?: string[] // ids, só quando tipo === 'restrita'
 }
 
@@ -109,6 +112,62 @@ export type RecorrenciaDoMes = {
   pagoEm: string | null
   saidaId: string | null
   valorPagoCentavos: number | null
+}
+
+export type PluggyItem = {
+  id: string
+  itemId: string
+  nome: string | null
+  status: string | null
+  executionStatus: string | null
+  atualizadoNaPluggyEm: string | null
+}
+
+export type PluggyConta = {
+  pluggyAccountId: string
+  itemId: string
+  nome: string
+  tipo: 'BANK' | 'CREDIT'
+  numero: string | null
+  saldoCentavos: number
+  limiteCentavos: number | null
+  diaFatura: number | null
+  dataCorte: string | null
+}
+
+export type TransacaoImportada = {
+  id: string
+  pluggyAccountId: string
+  fonteId: string | null
+  data: string
+  descricao: string
+  valorCentavos: number
+  direcao: 'entrada' | 'saida'
+  statusPluggy: 'PENDING' | 'POSTED'
+  parcela: number | null
+  totalParcelas: number | null
+  estado: 'pendente' | 'divergente'
+  entradaId: string | null
+  saidaId: string | null
+  categoriaSugeridaId: string | null
+}
+
+export type SugestaoRecorrencia = {
+  transacaoId: string
+  recorrenciaId: string
+  titulo: string
+  /** YYYY-MM */
+  competencia: string
+}
+
+export type StatusIntegracao = {
+  totalItens: number
+  ultimaSincronizacaoEm: string | null
+  ultimaSincronizacaoSucesso: boolean | null
+  ultimaSincronizacaoErro: string | null
+  ultimaSincronizacaoImportadas: number | null
+  ultimaSincronizacaoOkEm: string | null
+  itensComProblema: { itemId: string; nome: string | null; status: string }[]
 }
 
 export type FaturaPendente = {

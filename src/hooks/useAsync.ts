@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { type ApiError, mensagemDoErro } from '../lib/erros'
 
 function paraApiError(e: unknown): ApiError {
@@ -22,11 +22,26 @@ export function useAsync<T>(
   const [erro, setErro] = useState<ApiError | null>(null)
   const [versao, setVersao] = useState(0)
 
+  // Recarga silenciosa (aba voltou ao foco) não pisca o estado de carregamento.
+  const silencioso = useRef(false)
   const recarregar = useCallback(() => setVersao((v) => v + 1), [])
+
+  // Dado pode mudar fora desta tela (worker da Pluggy, outra aba, celular):
+  // ao voltar para a aba, busca de novo.
+  useEffect(() => {
+    function aoVoltar() {
+      if (document.visibilityState !== 'visible') return
+      silencioso.current = true
+      setVersao((v) => v + 1)
+    }
+    document.addEventListener('visibilitychange', aoVoltar)
+    return () => document.removeEventListener('visibilitychange', aoVoltar)
+  }, [])
 
   useEffect(() => {
     let cancelado = false
-    setIsLoading(true)
+    if (!silencioso.current) setIsLoading(true)
+    silencioso.current = false
     setErro(null)
 
     fn()
