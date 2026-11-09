@@ -49,7 +49,7 @@ function SaidaFormModal({
   aberto,
   saida,
   duplicarDe,
-  fontes,
+  fontes: fontesAtuais,
   categorias,
   saldosCategorias,
   onFechar,
@@ -59,6 +59,18 @@ function SaidaFormModal({
   const tituloRef = useRef<HTMLInputElement>(null)
 
   const origem = saida ?? duplicarDe
+
+  // Na edição, o saldo atual de cada Fonte já tem os splits desta Saída descontados. O banco
+  // (atualizar_saida) exclui a Saída antes de recriar, então a validação local precisa
+  // devolver esses valores — senão a Saída "concorre com ela mesma" e acusa saldo insuficiente.
+  const fontes = useMemo(() => {
+    if (!saida) return fontesAtuais
+    const devolvido = new Map<string, number>()
+    for (const s of saida.splits) devolvido.set(s.fonteId, (devolvido.get(s.fonteId) ?? 0) + s.valorCentavos)
+    return fontesAtuais.map((f) =>
+      devolvido.has(f.id) ? { ...f, saldoCentavos: f.saldoCentavos + devolvido.get(f.id)! } : f,
+    )
+  }, [saida, fontesAtuais])
 
   const splitsIniciais: LinhaSplit[] = origem
     ? origem.splits.map((s) => ({ fonteId: s.fonteId, valorCentavos: s.valorCentavos }))

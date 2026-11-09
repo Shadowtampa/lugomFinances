@@ -2,6 +2,12 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.7.4 — 2026-11-09
+
+**Editar Saída não acusa mais saldo insuficiente** (ajuste sem spec)
+
+- Ao editar uma Saída (ex.: trocar a Categoria), o formulário comparava o valor com o saldo atual da Fonte, que já tinha essa mesma Saída descontada — a Saída "concorria com ela mesma" e era bloqueada por saldo insuficiente. Agora, na edição, cada Fonte conta com o valor do split original devolvido, igual ao que o banco já fazia em `atualizar_saida`.
+
 ## 2.7.3 — 2026-11-09
 
 **Clique na Saída edita** (ajuste sem spec)
