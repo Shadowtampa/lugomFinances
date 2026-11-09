@@ -1,9 +1,16 @@
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vitest/config'
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  version: string
+}
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Versão exibida no menu; a fonte é o package.json (ver CHANGELOG.md).
+  define: { __APP_VERSION__: JSON.stringify(version) },
   server: {
     // Em dev, /api vai para um PostgREST local (ver README).
     proxy: {

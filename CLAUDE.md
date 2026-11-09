@@ -55,6 +55,10 @@ Branch convention: each milestone starts on its own branch off the base branch, 
 
 Work items live as GitHub issues on `Shadowtampa/lugomFinances` (use `gh`). Each new milestone/feature gets an issue titled `M<n>: <título>`; the issue holds the decisions and acceptance criteria, and the `.specs/NN-*.md` file is still written before code and linked from the issue. Every issue carries one category label (`bug` / `enhancement`) and one triage state label: `needs-triage` (not grilled yet), `needs-info`, `ready-for-agent` (fully specified), `ready-for-human`, `wontfix`. Reference the issue in the milestone commit (`Closes #<n>`).
 
+## Versioning
+
+Every milestone bumps the **minor** version in `package.json` (`npm install --package-lock-only` to sync the lock) and adds an entry at the top of `CHANGELOG.md` in the same commit; a fix without a spec bumps the patch. The menu shows the version via `__APP_VERSION__` (injected in `vite.config.ts`). The repo's GitHub default branch is not `main`, so `Closes #n` doesn't auto-close: close the issue with `gh issue close` after pushing.
+
 ## Git actions
 
 Never `git commit`, `push`, or merge a branch unless the user explicitly asks for
