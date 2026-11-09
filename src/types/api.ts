@@ -127,6 +127,8 @@ export interface RecorrenciaRow {
   ativa: boolean
   nota: string | null
   created_at: string
+  /** Embed de recorrencias_fontes (M27), quando pedido no select. */
+  recorrencias_fontes?: { fonte_id: string }[]
 }
 
 export interface RecorrenciaMesRow {
@@ -146,6 +148,7 @@ export interface RecorrenciaMesRow {
   saida_id: string | null
   valor_pago_centavos: number | null
   nota: string | null
+  fontes_previstas: string[]
 }
 
 export interface FaturaPendenteRow {

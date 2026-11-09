@@ -41,3 +41,32 @@ export function filtrarRecorrencias<T extends Pick<RecorrenciaDoMes, 'pagamentoI
   if (filtro === 'todas') return itens
   return itens.filter((i) => (filtro === 'pagas') === Boolean(i.pagamentoId))
 }
+
+/** Rótulo do meio de pagamento previsto (M27): "Inter", "Inter + VR", "3 fontes". */
+export function rotuloFontesPrevistas(
+  ids: string[],
+  fontes: Map<string, { nome: string; arquivada: boolean }>,
+): string {
+  if (ids.length === 0) return ''
+  if (ids.length >= 3) return `${ids.length} fontes`
+  return ids
+    .map((id) => {
+      const f = fontes.get(id)
+      if (!f) return '—'
+      return f.arquivada ? `${f.nome} (arquivada)` : f.nome
+    })
+    .join(' + ')
+}
+
+/** Fonte restrita prevista que não aceita a Categoria da recorrência (RN-03): só aviso. */
+export function avisosFontesPrevistas(
+  ids: string[],
+  fontes: { id: string; nome: string; tipo: 'livre' | 'restrita'; categoriasPermitidas?: string[] }[],
+  categoriaId: string | null,
+  categoriaNome: string | null,
+): string[] {
+  if (!categoriaId) return []
+  return fontes
+    .filter((f) => ids.includes(f.id) && f.tipo === 'restrita' && !f.categoriasPermitidas?.includes(categoriaId))
+    .map((f) => `${f.nome} não aceita ${categoriaNome ?? 'essa categoria'}; o pagamento por ela vai ser recusado.`)
+}

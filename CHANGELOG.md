@@ -2,6 +2,14 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.7.0 — 2026-11-09
+
+**M27: Meio de pagamento previsto na recorrência** ([#8](https://github.com/Shadowtampa/lugomFinances/issues/8), `.specs/27-meio-pagamento-recorrencia.md`)
+
+- Cada recorrência pode indicar de qual Fonte (ou combinação de Fontes) vai ser paga. É só controle: não lança nada nem reserva saldo.
+- Os nomes aparecem na linha da recorrência e no "Marcar como paga".
+- Aviso quando uma Fonte restrita não aceita a Categoria da recorrência.
+
 ## 2.6.0 — 2026-11-09
 
 **M26: Sidebar fixa** ([#6](https://github.com/Shadowtampa/lugomFinances/issues/6), `.specs/26-sidebar-fixa.md`)

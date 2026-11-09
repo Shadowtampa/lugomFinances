@@ -33,6 +33,7 @@ const CODIGOS_RPC_CONHECIDOS = new Set([
   'PAR_INVALIDO',
   'APELIDO_INVALIDO',
   'NOTA_INVALIDA',
+  'RECORRENCIA_INVALIDA',
 ])
 
 const MENSAGENS: Record<string, string> = {
@@ -62,6 +63,7 @@ const MENSAGENS: Record<string, string> = {
   PAR_INVALIDO: 'Esse pagamento de fatura já foi revisado.',
   APELIDO_INVALIDO: 'Apelido inválido: use até 60 caracteres.',
   NOTA_INVALIDA: 'A nota pode ter no máximo 500 caracteres.',
+  RECORRENCIA_INVALIDA: 'Recorrência não encontrada.',
   ITEM_ID_INVALIDO: 'Item ID inválido: deve ser um UUID (ex.: 1a2b3c4d-…).',
   DUPLICADO: 'Já existe um registro com esse nome.',
   UNKNOWN: 'Algo deu errado. Tente novamente.',

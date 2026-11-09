@@ -28,7 +28,7 @@ export async function listarRecorrencias(): Promise<Recorrencia[]> {
 }
 
 export async function obterRecorrencia(id: string): Promise<Recorrencia> {
-  const row = unwrap<RecorrenciaRow>(await db.from('recorrencias').select('*').eq('id', id).single())
+  const row = unwrap<RecorrenciaRow>(await db.from('recorrencias').select('*, recorrencias_fontes(fonte_id)').eq('id', id).single())
   return paraRecorrencia(row)
 }
 
@@ -109,4 +109,9 @@ export async function confirmarFaturaCartao(
     }),
   )
   return paraResultadoCriarSaida(row)
+}
+
+/** Troca o meio de pagamento previsto (M27). Lista vazia remove. Não afeta saldo. */
+export async function definirFontesRecorrencia(recorrenciaId: string, fonteIds: string[]): Promise<void> {
+  unwrap(await db.rpc('definir_fontes_recorrencia', { p_recorrencia_id: recorrenciaId, p_fonte_ids: fonteIds }))
 }

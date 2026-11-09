@@ -223,7 +223,7 @@ auth.users (local, M17)
 `v_sugestoes_recorrencia`, `v_status_integracao` (M20), `v_pares_pagamento_fatura`,
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
-`apelidos_estabelecimento`.
+`apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.
@@ -257,6 +257,7 @@ anterior está pronto e funcionando.
 | M24 | `24-notas.md` | Nota opcional em Saídas, Entradas e Recorrências |
 | M25 | `25-categoria-sem-acumulo.md` | Limite de Categoria vale só no mês corrente (fim do acúmulo) |
 | M26 | `26-sidebar-fixa.md` | Sidebar fixa no desktop, conteúdo rolável |
+| M27 | `27-meio-pagamento-recorrencia.md` | Meio de pagamento previsto (uma ou mais Fontes) na recorrência |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

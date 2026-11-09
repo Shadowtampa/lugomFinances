@@ -21,6 +21,7 @@ import {
   lerFiltroRecorrencia,
   resumoDoMes,
   statusDaRecorrencia,
+  rotuloFontesPrevistas,
   valorEfetivo,
   type FiltroRecorrencia,
 } from '../lib/recorrencias'
@@ -42,7 +43,7 @@ async function carregarDados(mes: string) {
     listarRecorrenciasDoMes(mes),
     listarFaturasPendentes(),
     listarCategorias(),
-    listarFontes({ incluirArquivadas: false }),
+    listarFontes({ incluirArquivadas: true }),
     listarSaldosFontes(),
   ])
   const mapaSaldos = new Map(saldosFontes.map((s) => [s.id, s.saldoCentavos]))
@@ -89,7 +90,7 @@ function RecorrenciasPage() {
     () => new Map((dados.data?.fontes ?? []).map((f) => [f.id, f])),
     [dados.data],
   )
-  const fontesPagadoras = (dados.data?.fontes ?? []).filter((f) => !f.ehCartao)
+  const fontesPagadoras = (dados.data?.fontes ?? []).filter((f) => !f.ehCartao && !f.arquivada)
   const estaNoMesCorrente = mes === mesAtual()
 
   function mudarFiltro(novo: FiltroRecorrencia) {
@@ -265,6 +266,14 @@ function RecorrenciasPage() {
                         )}
                       </span>
                       <IndicadorNota nota={item.nota} />
+                      {item.fontesPrevistas.length > 0 && (
+                        <span
+                          className="hidden max-w-[10rem] shrink-0 truncate text-xs text-ink-soft sm:inline"
+                          title={`Previsto: ${item.fontesPrevistas.map((id) => mapaFontes.get(id)?.nome ?? '—').join(' + ')}`}
+                        >
+                          {rotuloFontesPrevistas(item.fontesPrevistas, mapaFontes)}
+                        </span>
+                      )}
                       <span className="font-money w-24 shrink-0 text-right text-sm text-ink">
                         {formatBRL(item.pagamentoId ? valorEfetivo(item) : item.valorPrevistoCentavos)}
                         {valorReal !== null && valorReal !== item.valorPrevistoCentavos && (
@@ -337,6 +346,7 @@ function RecorrenciasPage() {
           aberto
           recorrencia={formAberto.recorrencia}
           categorias={dados.data?.categorias ?? []}
+          fontes={dados.data?.fontes ?? []}
           onFechar={() => setFormAberto(null)}
           onSalvo={() => {
             setFormAberto(null)
@@ -360,6 +370,11 @@ function RecorrenciasPage() {
           <p className="text-sm text-ink">
             {pagando?.titulo} — {nomeDoMes(pagando?.competencia ?? mes)}
           </p>
+          {pagando && pagando.fontesPrevistas.length > 0 && (
+            <p className="text-sm text-ink-soft">
+              Previsto: {pagando.fontesPrevistas.map((id) => mapaFontes.get(id)?.nome ?? '—').join(' + ')}
+            </p>
+          )}
           <Input label="Pago em" type="date" value={pagoEm} onChange={(e) => setPagoEm(e.target.value)} required />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setPagando(null)}>

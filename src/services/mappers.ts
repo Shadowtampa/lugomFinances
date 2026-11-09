@@ -158,6 +158,7 @@ export function paraRecorrencia(row: RecorrenciaRow): Recorrencia {
     totalParcelas: row.total_parcelas,
     ativa: row.ativa,
     nota: row.nota ?? null,
+    fontesPrevistas: row.recorrencias_fontes?.map((rf) => rf.fonte_id) ?? [],
   }
 }
 
@@ -178,6 +179,7 @@ export function paraRecorrenciaDoMes(row: RecorrenciaMesRow): RecorrenciaDoMes {
     saidaId: row.saida_id,
     valorPagoCentavos: row.valor_pago_centavos,
     nota: row.nota ?? null,
+    fontesPrevistas: row.fontes_previstas ?? [],
   }
 }
 

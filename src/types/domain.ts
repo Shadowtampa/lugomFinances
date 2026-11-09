@@ -109,6 +109,8 @@ export type Recorrencia = {
   totalParcelas: number | null
   ativa: boolean
   nota?: string | null
+  /** Meio de pagamento previsto (M27): ids de Fonte, só autocontrole. */
+  fontesPrevistas?: string[]
 }
 
 export type StatusRecorrencia = 'paga' | 'pendente' | 'atrasada'
@@ -130,6 +132,7 @@ export type RecorrenciaDoMes = {
   saidaId: string | null
   valorPagoCentavos: number | null
   nota: string | null
+  fontesPrevistas: string[]
 }
 
 export type PluggyItem = {

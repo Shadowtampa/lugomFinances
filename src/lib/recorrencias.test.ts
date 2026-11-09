@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { filtrarRecorrencias, lerFiltroRecorrencia, resumoDoMes, statusDaRecorrencia } from './recorrencias'
+import {
+  avisosFontesPrevistas,
+  filtrarRecorrencias,
+  lerFiltroRecorrencia,
+  resumoDoMes,
+  rotuloFontesPrevistas,
+  statusDaRecorrencia,
+} from './recorrencias'
 import type { RecorrenciaDoMes } from '../types/domain'
 
 function item(parcial: Partial<RecorrenciaDoMes>): RecorrenciaDoMes {
@@ -19,6 +26,7 @@ function item(parcial: Partial<RecorrenciaDoMes>): RecorrenciaDoMes {
     saidaId: null,
     valorPagoCentavos: null,
     nota: null,
+    fontesPrevistas: [],
     ...parcial,
   }
 }
@@ -82,5 +90,39 @@ describe('filtrarRecorrencias', () => {
   })
   it('todas não filtra', () => {
     expect(filtrarRecorrencias(itens, 'todas')).toEqual(itens)
+  })
+})
+
+describe('rotuloFontesPrevistas', () => {
+  const fontes = new Map([
+    ['inter', { nome: 'Inter', arquivada: false }],
+    ['vr', { nome: 'VR Flash', arquivada: false }],
+    ['mp', { nome: 'Mercado Pago', arquivada: true }],
+  ])
+  it('vazio quando não há fonte prevista', () => {
+    expect(rotuloFontesPrevistas([], fontes)).toBe('')
+  })
+  it('uma ou duas fontes pelo nome; arquivada marcada', () => {
+    expect(rotuloFontesPrevistas(['inter'], fontes)).toBe('Inter')
+    expect(rotuloFontesPrevistas(['inter', 'mp'], fontes)).toBe('Inter + Mercado Pago (arquivada)')
+  })
+  it('três ou mais viram contagem', () => {
+    expect(rotuloFontesPrevistas(['inter', 'vr', 'mp'], fontes)).toBe('3 fontes')
+  })
+})
+
+describe('avisosFontesPrevistas', () => {
+  const fontes = [
+    { id: 'inter', nome: 'Inter', tipo: 'livre' as const },
+    { id: 'vr', nome: 'VR Flash', tipo: 'restrita' as const, categoriasPermitidas: ['alimentacao'] },
+  ]
+  it('avisa fonte restrita que não aceita a categoria', () => {
+    expect(avisosFontesPrevistas(['inter', 'vr'], fontes, 'contas', 'Contas')).toEqual([
+      'VR Flash não aceita Contas; o pagamento por ela vai ser recusado.',
+    ])
+  })
+  it('não avisa quando a categoria é permitida ou não há categoria', () => {
+    expect(avisosFontesPrevistas(['vr'], fontes, 'alimentacao', 'Alimentação')).toEqual([])
+    expect(avisosFontesPrevistas(['vr'], fontes, null, null)).toEqual([])
   })
 })

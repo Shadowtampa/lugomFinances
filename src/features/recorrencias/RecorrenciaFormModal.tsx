@@ -6,14 +6,18 @@ import MoneyInput from '../../components/ui/MoneyInput'
 import Select from '../../components/ui/Select'
 import { mesAtual } from '../../lib/date'
 import { mensagemDoErro } from '../../lib/erros'
-import { atualizarRecorrencia, criarRecorrencia } from '../../services/recorrencias'
+import { avisosFontesPrevistas } from '../../lib/recorrencias'
+import { atualizarRecorrencia, criarRecorrencia, definirFontesRecorrencia } from '../../services/recorrencias'
 import CampoNota from '../notas/CampoNota'
-import type { Categoria, Recorrencia } from '../../types/domain'
+import type { Categoria, Fonte, Recorrencia } from '../../types/domain'
+import FontesPrevistasSelect from './FontesPrevistasSelect'
 
 interface RecorrenciaFormModalProps {
   aberto: boolean
   recorrencia?: Recorrencia
   categorias: Pick<Categoria, 'id' | 'nome'>[]
+  /** Todas as Fontes (inclusive arquivadas, para mostrar vínculos antigos). */
+  fontes: Fonte[]
   onFechar(): void
   onSalvo(): void
 }
@@ -22,6 +26,7 @@ function RecorrenciaFormModal({
   aberto,
   recorrencia,
   categorias,
+  fontes,
   onFechar,
   onSalvo,
 }: RecorrenciaFormModalProps) {
@@ -32,6 +37,14 @@ function RecorrenciaFormModal({
   const [totalParcelas, setTotalParcelas] = useState<number | ''>(recorrencia?.totalParcelas ?? '')
   const [mesInicio, setMesInicio] = useState(recorrencia?.mesInicio ?? mesAtual())
   const [notaTexto, setNotaTexto] = useState(recorrencia?.nota ?? '')
+  const fontesIniciais = recorrencia?.fontesPrevistas ?? []
+  const [fontesPrevistas, setFontesPrevistas] = useState<string[]>(fontesIniciais)
+  const avisosFontes = avisosFontesPrevistas(
+    fontesPrevistas,
+    fontes,
+    categoriaId || null,
+    categorias.find((c) => c.id === categoriaId)?.nome ?? null,
+  )
   const [erros, setErros] = useState<Record<string, string>>({})
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -64,11 +77,12 @@ function RecorrenciaFormModal({
     setEnviando(true)
     setErroGeral(null)
     try {
-      if (recorrencia) {
-        await atualizarRecorrencia(recorrencia.id, dados)
-      } else {
-        await criarRecorrencia({ ...dados, ativa: true })
-      }
+      const id = recorrencia
+        ? (await atualizarRecorrencia(recorrencia.id, dados)).id
+        : (await criarRecorrencia({ ...dados, ativa: true })).id
+      const mudou =
+        fontesPrevistas.length !== fontesIniciais.length || fontesPrevistas.some((f) => !fontesIniciais.includes(f))
+      if (mudou) await definirFontesRecorrencia(id, fontesPrevistas)
       onSalvo()
     } catch (e) {
       setErroGeral(mensagemDoErro(e))
@@ -136,6 +150,13 @@ function RecorrenciaFormModal({
           error={erros.mesInicio}
           hint={totalParcelas !== '' ? 'Mês da 1ª parcela.' : undefined}
           required
+        />
+
+        <FontesPrevistasSelect
+          fontes={fontes}
+          selecionadas={fontesPrevistas}
+          onChange={setFontesPrevistas}
+          avisos={avisosFontes}
         />
 
         <CampoNota value={notaTexto} onChange={setNotaTexto} />

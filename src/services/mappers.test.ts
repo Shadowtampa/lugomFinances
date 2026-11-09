@@ -94,6 +94,7 @@ describe('paraRecorrenciaDoMes', () => {
       saida_id: null,
       valor_pago_centavos: null,
       nota: null,
+      fontes_previstas: [],
     }
     expect(paraRecorrenciaDoMes(row)).toEqual({
       recorrenciaId: 'r1',
@@ -109,6 +110,7 @@ describe('paraRecorrenciaDoMes', () => {
       pagamentoId: 'p1',
       pagoEm: '2026-11-07',
       nota: null,
+      fontesPrevistas: [],
       saidaId: null,
       valorPagoCentavos: null,
     })
