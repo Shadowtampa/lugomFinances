@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../components/layout/AppShell'
+import SeloFonte from '../components/ui/SeloFonte'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Modal from '../components/ui/Modal'
@@ -168,7 +169,10 @@ function FontesPage() {
                   }`}
                   style={{ borderLeft: `3px solid ${corFaixa}` }}
                 >
-                  <p className="font-medium text-ink">{fonte.nome}</p>
+                  <p className="flex items-center gap-2 font-medium text-ink">
+                    <SeloFonte fonteId={fonte.id} />
+                    {fonte.nome}
+                  </p>
 
                   {fonte.ehCartao ? (
                     <BarraCartao

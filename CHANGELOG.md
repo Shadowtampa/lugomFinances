@@ -2,6 +2,12 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.7.1 — 2026-11-09
+
+**Identidade visual das Fontes** (ajuste sem spec)
+
+- Inter, Cartão Inter, Mercado Pago e Flash aparecem com nome, cor da marca e um selo nos cards de Fontes e no Dashboard. A identidade fica fixa no código (`src/lib/identidadeFontes.ts`).
+
 ## 2.7.0 — 2026-11-09
 
 **M27: Meio de pagamento previsto na recorrência** ([#8](https://github.com/Shadowtampa/lugomFinances/issues/8), `.specs/27-meio-pagamento-recorrencia.md`)

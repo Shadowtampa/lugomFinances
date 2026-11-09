@@ -40,13 +40,23 @@ import type {
   SaldoCategoria,
   SaldoFonte,
 } from '../types/domain'
+import { identidadeDaFonte } from '../lib/identidadeFontes'
+
+/** Nome e cor da marca, quando a Fonte tem identidade fixa (identidadeFontes.ts). */
+function nomeDaFonte(fonteId: string, nome: string): string {
+  return identidadeDaFonte(fonteId)?.nome ?? nome
+}
+
+function corDaFonte(fonteId: string, cor: string): string {
+  return identidadeDaFonte(fonteId)?.cor ?? cor
+}
 
 export function paraFonte(row: FonteRow, categoriasPermitidas?: string[]): Fonte {
   return {
     id: row.id,
-    nome: row.nome,
+    nome: nomeDaFonte(row.id, row.nome),
     tipo: row.tipo,
-    cor: row.cor,
+    cor: corDaFonte(row.id, row.cor),
     arquivada: row.arquivada,
     ehCartao: row.eh_cartao,
     limiteCentavos: row.limite_centavos,
@@ -60,9 +70,9 @@ export function paraFonte(row: FonteRow, categoriasPermitidas?: string[]): Fonte
 export function paraSaldoFonte(row: SaldoFonteRow): SaldoFonte {
   return {
     id: row.fonte_id,
-    nome: row.nome,
+    nome: nomeDaFonte(row.fonte_id, row.nome),
     tipo: row.tipo,
-    cor: row.cor,
+    cor: corDaFonte(row.fonte_id, row.cor),
     arquivada: row.arquivada,
     ehCartao: row.eh_cartao,
     limiteCentavos: row.limite_centavos,
@@ -282,7 +292,7 @@ export function paraStatusIntegracao(row: StatusIntegracaoRow): StatusIntegracao
 export function paraFaturaPendente(row: FaturaPendenteRow): FaturaPendente {
   return {
     fonteId: row.fonte_id,
-    nome: row.nome,
+    nome: nomeDaFonte(row.fonte_id, row.nome),
     valorSugeridoCentavos: row.valor_sugerido_centavos,
     diaFatura: row.dia_fatura,
   }
@@ -293,7 +303,7 @@ export function paraResultadoCriarSaida(row: ResultadoCriarSaidaRow): ResultadoC
     saidaId: row.saida_id,
     fontes: row.fontes.map((fonte) => ({
       fonteId: fonte.fonte_id,
-      nome: fonte.nome,
+      nome: nomeDaFonte(fonte.fonte_id, fonte.nome),
       tipo: fonte.tipo,
       saldoCentavos: fonte.saldo_centavos,
     })),

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
+import SeloFonte from '../components/ui/SeloFonte'
 import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 import AvisoIntegracao from '../features/dashboard/AvisoIntegracao'
@@ -229,7 +230,10 @@ function DashboardPage() {
                         className="flex flex-col gap-1 rounded bg-surface p-3 text-left shadow-sm"
                         style={{ borderLeft: `3px solid ${cor}` }}
                       >
-                        <span className="text-sm text-ink">{fonte.nome}</span>
+                        <span className="flex items-center gap-2 text-sm text-ink">
+                          <SeloFonte fonteId={fonte.id} />
+                          {fonte.nome}
+                        </span>
                         <span className="font-money text-lg font-semibold text-ink">
                           {formatBRL(fonte.saldoCentavos)}
                         </span>
