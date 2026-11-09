@@ -7,10 +7,12 @@ import MoneyInput from '../components/ui/MoneyInput'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
+import ApelidoModal, { type AlvoApelido } from '../features/apelidos/ApelidoModal'
 import { useAsync } from '../hooks/useAsync'
 import { formatarData, haQuantoTempo, hojeISO, mesAtual, primeiroDiaDoMes, somarDias } from '../lib/date'
 import { mensagemDoErro, mensagemErroSincronizacao } from '../lib/erros'
 import { formatBRL } from '../lib/money'
+import { listarApelidos } from '../services/apelidos'
 import { listarFontes } from '../services/fontes'
 import {
   alterarCorteConta,
@@ -29,14 +31,15 @@ import type { ConciliacaoConta, Fonte, PluggyConta, PluggyItem } from '../types/
 async function carregarDados() {
   // Uma sincronização do timer pode ter liberado saldos iniciais pendentes (M21).
   await aplicarSaldosIniciaisPendentes()
-  const [itens, contas, fontes, status, conciliacao] = await Promise.all([
+  const [itens, contas, fontes, status, conciliacao, apelidos] = await Promise.all([
     listarItens(),
     listarContasPluggy(),
     listarFontes(),
     obterStatusIntegracao(),
     listarConciliacao(),
+    listarApelidos(),
   ])
-  return { itens, contas, fontes, status, conciliacao }
+  return { itens, contas, fontes, status, conciliacao, apelidos }
 }
 
 function badgeStatus(status: string | null): { rotulo: string; classe: string } {
@@ -76,6 +79,7 @@ function ConexoesPage() {
   const [removendo, setRemovendo] = useState<PluggyItem | null>(null)
   const [vinculando, setVinculando] = useState<PluggyConta | null>(null)
   const [alterandoCorte, setAlterandoCorte] = useState<PluggyConta | null>(null)
+  const [apelidoAlvo, setApelidoAlvo] = useState<AlvoApelido | null>(null)
 
   async function adicionar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -217,6 +221,33 @@ function ConexoesPage() {
               </Button>
             </form>
           </section>
+
+          <section>
+            <h2 className="mb-1 text-sm font-medium text-ink-soft">Apelidos de estabelecimento</h2>
+            {(dados.data?.apelidos ?? []).length === 0 ? (
+              <p className="text-sm text-ink-soft">
+                Nenhum apelido. Dê um apelido pelo card em Importadas ou pelo menu de uma Saída ou Entrada
+                vinda da Pluggy.
+              </p>
+            ) : (
+              <ul className="flex flex-col">
+                {(dados.data?.apelidos ?? []).map((a) => (
+                  <li key={a.chave} className="flex items-center gap-3 border-b border-line py-2">
+                    <span className="min-w-0 flex-1 text-sm text-ink">
+                      <span className="block truncate">{a.apelido}</span>
+                      <span className="block truncate text-xs text-ink-soft">{a.chave}</span>
+                    </span>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setApelidoAlvo({ chave: a.chave, apelidoAtual: a.apelido })}
+                    >
+                      Editar
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
       )}
 
@@ -258,6 +289,18 @@ function ConexoesPage() {
             setVinculando(null)
             showToast('Conta vinculada. Sincronizando para lançar o saldo inicial…', 'success')
             void sincronizar()
+          }}
+        />
+      )}
+
+      {apelidoAlvo && (
+        <ApelidoModal
+          alvo={apelidoAlvo}
+          onFechar={() => setApelidoAlvo(null)}
+          onSalvo={(mensagem) => {
+            setApelidoAlvo(null)
+            showToast(mensagem, 'success')
+            dados.recarregar()
           }}
         />
       )}

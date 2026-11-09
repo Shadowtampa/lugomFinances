@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-M1–M17, M19, M20 and M21 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
+M1–M17 and M19–M22 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
 
 Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossary, the business rules (RN-01 through RN-11), the stack decisions, and code conventions. They are mandatory and are not repeated in full here.
 
@@ -50,6 +50,10 @@ Each `NN-*.md` file has its own Escopo, Tarefas, Critérios de aceite, and Defin
 Commit convention: one commit per completed milestone, message `M<n>: <título da spec>`; break M8 (the largest, splits UI) into intermediate commits by section if needed.
 
 Branch convention: each milestone starts on its own branch off the base branch, named `m<n>-<slug>` (e.g. `m3-auth`). Don't stack multiple milestones on one branch.
+
+## Issue tracker
+
+Work items live as GitHub issues on `Shadowtampa/lugomFinances` (use `gh`). Each new milestone/feature gets an issue titled `M<n>: <título>`; the issue holds the decisions and acceptance criteria, and the `.specs/NN-*.md` file is still written before code and linked from the issue. Every issue carries one category label (`bug` / `enhancement`) and one triage state label: `needs-triage` (not grilled yet), `needs-info`, `ready-for-agent` (fully specified), `ready-for-human`, `wontfix`. Reference the issue in the milestone commit (`Closes #<n>`).
 
 ## Git actions
 

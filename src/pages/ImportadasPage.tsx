@@ -6,6 +6,7 @@ import EmptyState from '../components/ui/EmptyState'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
+import ApelidoModal, { type AlvoApelido } from '../features/apelidos/ApelidoModal'
 import { useAsync } from '../hooks/useAsync'
 import { formatarData, haQuantoTempo, nomeDoMes } from '../lib/date'
 import { mensagemDoErro, mensagemErroSincronizacao } from '../lib/erros'
@@ -62,6 +63,7 @@ function ImportadasPage() {
   const [emLote, setEmLote] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
   const [mostrarDivergentes, setMostrarDivergentes] = useState(false)
+  const [apelidoAlvo, setApelidoAlvo] = useState<AlvoApelido | null>(null)
 
   const pares = useMemo(() => dados.data?.pares ?? [], [dados.data])
   const pendentes = useMemo(() => {
@@ -264,7 +266,7 @@ function ImportadasPage() {
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="w-20 shrink-0 text-sm text-ink-soft">{formatarData(t.data)}</span>
                     <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                      {t.descricao}
+                      {t.apelido ?? t.descricao}
                       {t.totalParcelas && (
                         <span className="ml-1 text-xs text-ink-soft">
                           {t.parcela}/{t.totalParcelas}
@@ -277,6 +279,11 @@ function ImportadasPage() {
                       )}
                       {t.statusPluggy === 'PENDING' && (
                         <span className="ml-2 rounded bg-base px-1.5 py-0.5 text-xs text-ink-soft">pendente no cartão</span>
+                      )}
+                      {t.apelido && (
+                        <span className="block truncate text-xs text-ink-soft" title={t.descricao}>
+                          {t.descricao}
+                        </span>
                       )}
                     </span>
                     <span className="hidden text-xs text-ink-soft sm:inline">{nomeFonte.get(t.fonteId ?? '') ?? '—'}</span>
@@ -321,6 +328,19 @@ function ImportadasPage() {
                     )}
                     <div className="ml-auto flex gap-2">
                       <Button
+                        variant="ghost"
+                        disabled={ocupado}
+                        onClick={() =>
+                          setApelidoAlvo({
+                            chave: t.chaveEstabelecimento,
+                            apelidoAtual: t.apelido,
+                            descricao: t.descricao,
+                          })
+                        }
+                      >
+                        {t.apelido ? 'Editar apelido' : 'Dar apelido'}
+                      </Button>
+                      <Button
                         variant={t.sugerirIgnorarParcela ? 'primary' : 'ghost'}
                         disabled={ocupado}
                         onClick={() => ignorar(t)}
@@ -358,7 +378,7 @@ function ImportadasPage() {
               {divergentes.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center gap-3 border-b border-line py-2">
                   <span className="w-20 shrink-0 text-sm text-ink-soft">{formatarData(t.data)}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink">{t.descricao}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink">{t.apelido ?? t.descricao}</span>
                   <span className="font-money text-sm text-ink">{formatBRL(t.valorCentavos)}</span>
                   <Link
                     to={`${t.direcao === 'entrada' ? '/entradas' : '/saidas'}?mes=${t.data.slice(0, 7)}`}
@@ -374,6 +394,17 @@ function ImportadasPage() {
             </ul>
           )}
         </section>
+      )}
+      {apelidoAlvo && (
+        <ApelidoModal
+          alvo={apelidoAlvo}
+          onFechar={() => setApelidoAlvo(null)}
+          onSalvo={(mensagem) => {
+            setApelidoAlvo(null)
+            showToast(mensagem, 'success')
+            dados.recarregar()
+          }}
+        />
       )}
     </>
   )

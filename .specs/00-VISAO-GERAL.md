@@ -47,6 +47,9 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
 - **Importada** (M20) — uma transação que veio da Pluggy (Open Finance) e espera revisão na
   caixa de entrada (`transacoes_importadas`). Só vira Entrada ou Saída quando o usuário
   confirma (escolhendo a Categoria, se for saída). Também pode ser ignorada.
+- **Apelido de estabelecimento** (M22) — nome dado pelo usuário a um estabelecimento da
+  Pluggy (`apelidos_estabelecimento`), casado pela chave derivada da descrição
+  (`chave_estabelecimento`). É só exibição: nunca gravado no lançamento.
 - **Conexão** (M20) — um *item* da Pluggy (um banco conectado no Meu Pluggy). Cada conta do
   item é vinculada a uma Fonte (`fontes.pluggy_account_id`, `origem = 'pluggy'`); Fontes sem
   vínculo (ex.: VR Flash) são `origem = 'manual'`.
@@ -126,6 +129,11 @@ mesmo valor (±3 dias) são o **pagamento da fatura**: conciliadas juntas por
 parcela de compra anterior ao corte já está no saldo inicial e é sugerida para ignorar. A
 conciliação (`v_conciliacao_contas`) avisa quando saldo do app + importadas pendentes ≠ saldo
 Pluggy; nunca ajusta sozinha.
+
+**RN-17** (M22) — O apelido de estabelecimento é aplicado na leitura: aparece em importadas e
+em Saídas/Entradas confirmadas a partir de uma importada cuja chave casa, desde que o título
+salvo ainda seja a descrição original (título editado à mão vence). Não altera Categoria,
+Fonte, título salvo nem saldo.
 
 **RN-09** — Saldo nunca é armazenado. É sempre derivado por view SQL a partir dos
 lançamentos. Isso elimina dessincronização.
@@ -213,7 +221,8 @@ auth.users (local, M17)
 `v_recorrencias_mes` (M19), `v_faturas_pendentes` (M13/M19), `v_importadas_pendentes`,
 `v_sugestoes_recorrencia`, `v_status_integracao` (M20), `v_pares_pagamento_fatura`,
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
-`pluggy_contas`, `transacoes_importadas`, `sincronizacoes`.
+`pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
+`apelidos_estabelecimento`.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.
@@ -242,6 +251,7 @@ anterior está pronto e funcionando.
 | M19 | `19-recorrencias-acompanhamento.md` | Recorrência vira acompanhamento de contas a pagar (paga/pendente/atrasada), fora do saldo |
 | M20 | `20-integracao-pluggy.md` | Transações via Pluggy numa caixa de entrada (Importadas), worker de sincronização, Conexões |
 | M21 | `21-importacao-retroativa.md` | "Importar desde" editável, pagamento de fatura conciliado, conciliação app × Pluggy |
+| M22 | `22-apelidos-estabelecimento.md` | Apelido de estabelecimento aplicado na leitura a importadas e lançamentos da Pluggy |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

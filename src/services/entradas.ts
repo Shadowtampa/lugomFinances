@@ -3,6 +3,7 @@ import { unwrap } from '../lib/erros'
 import { db } from '../lib/api'
 import type { EntradaRow } from '../types/api'
 import type { Entrada } from '../types/domain'
+import { CAMPOS_APELIDO } from './apelidos'
 import { deEntrada, paraEntrada } from './mappers'
 
 export async function listarEntradas(filtro?: {
@@ -12,7 +13,10 @@ export async function listarEntradas(filtro?: {
   pagina?: number
   porPagina?: number
 }): Promise<Entrada[]> {
-  let query = db.from('entradas').select('*').order('data', { ascending: false })
+  let query = db
+    .from('entradas')
+    .select(`*, ${CAMPOS_APELIDO}`)
+    .order('data', { ascending: false })
 
   if (filtro?.mes) {
     query = query.gte('data', primeiroDiaDoMes(filtro.mes)).lte('data', ultimoDiaDoMes(filtro.mes))
@@ -62,7 +66,7 @@ export async function somarEntradasMes(mes: string, fonteId?: string): Promise<n
 }
 
 export async function obterEntrada(id: string): Promise<Entrada> {
-  const row = unwrap<EntradaRow>(await db.from('entradas').select('*').eq('id', id).single())
+  const row = unwrap<EntradaRow>(await db.from('entradas').select(`*, ${CAMPOS_APELIDO}`).eq('id', id).single())
   return paraEntrada(row)
 }
 

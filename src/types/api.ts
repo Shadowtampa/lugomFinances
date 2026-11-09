@@ -43,6 +43,10 @@ export interface EntradaRow {
   data: string
   eh_pagamento_fatura: boolean
   created_at: string
+  /** Campos computados (M22), presentes quando pedidos no select. */
+  chave_estabelecimento?: string | null
+  apelido_estabelecimento?: string | null
+  descricao_pluggy?: string | null
 }
 
 export interface SaidaSplitRow {
@@ -62,6 +66,19 @@ export interface SaidaRow {
   eh_pagamento_fatura: boolean
   created_at: string
   saida_splits?: Pick<SaidaSplitRow, 'fonte_id' | 'valor_centavos'>[]
+  /** Campos computados (M22), presentes quando pedidos no select. */
+  chave_estabelecimento?: string | null
+  apelido_estabelecimento?: string | null
+  descricao_pluggy?: string | null
+}
+
+export interface ApelidoEstabelecimentoRow {
+  id: string
+  user_id: string
+  chave: string
+  apelido: string
+  created_at: string
+  updated_at: string
 }
 
 export interface SaldoFonteRow {
@@ -185,6 +202,8 @@ export interface ImportadaPendenteRow {
   categoria_sugerida_id: string | null
   data_compra: string | null
   sugerir_ignorar_parcela: boolean
+  chave_estabelecimento: string
+  apelido: string | null
 }
 
 export interface ParPagamentoFaturaRow {

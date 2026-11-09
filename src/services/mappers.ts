@@ -1,4 +1,5 @@
 import type {
+  ApelidoEstabelecimentoRow,
   CategoriaRow,
   EntradaRow,
   FonteRow,
@@ -19,6 +20,7 @@ import type {
   SaldoFonteRow,
 } from '../types/api'
 import type {
+  ApelidoEstabelecimento,
   Categoria,
   Entrada,
   Fonte,
@@ -106,7 +108,22 @@ export function paraEntrada(row: EntradaRow): Entrada {
     valorCentavos: row.valor_centavos,
     data: row.data,
     ehPagamentoFatura: row.eh_pagamento_fatura,
+    ...camposApelido(row),
   }
+}
+
+/** Campos computados do M22; ausentes quando o select não os pediu. */
+function camposApelido(row: EntradaRow | SaidaRow) {
+  if (row.chave_estabelecimento === undefined) return {}
+  return {
+    chaveEstabelecimento: row.chave_estabelecimento,
+    apelido: row.apelido_estabelecimento ?? null,
+    descricaoPluggy: row.descricao_pluggy ?? null,
+  }
+}
+
+export function paraApelido(row: ApelidoEstabelecimentoRow): ApelidoEstabelecimento {
+  return { chave: row.chave, apelido: row.apelido }
 }
 
 export function paraSaida(row: SaidaRow): Saida {
@@ -121,6 +138,7 @@ export function paraSaida(row: SaidaRow): Saida {
       fonteId: split.fonte_id,
       valorCentavos: split.valor_centavos,
     })),
+    ...camposApelido(row),
   }
 }
 
@@ -207,6 +225,8 @@ export function paraTransacaoImportada(row: ImportadaPendenteRow): TransacaoImpo
     saidaId: row.saida_id,
     categoriaSugeridaId: row.categoria_sugerida_id,
     sugerirIgnorarParcela: row.sugerir_ignorar_parcela,
+    chaveEstabelecimento: row.chave_estabelecimento,
+    apelido: row.apelido,
   }
 }
 

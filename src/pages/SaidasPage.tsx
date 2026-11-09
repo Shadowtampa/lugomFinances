@@ -6,12 +6,15 @@ import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import DuplicateIcon from '../components/ui/icons/DuplicateIcon'
 import PencilIcon from '../components/ui/icons/PencilIcon'
+import TagIcon from '../components/ui/icons/TagIcon'
 import TrashIcon from '../components/ui/icons/TrashIcon'
 import Modal from '../components/ui/Modal'
 import Pagination from '../components/ui/Pagination'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
+import ApelidoModal, { type AlvoApelido } from '../features/apelidos/ApelidoModal'
+import TituloComApelido from '../features/apelidos/TituloComApelido'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
@@ -86,6 +89,7 @@ function SaidasPage() {
   const [duplicandoDe, setDuplicandoDe] = useState<Saida | undefined>()
   const [aberturaId, setAberturaId] = useState(0)
   const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null)
+  const [apelidoAlvo, setApelidoAlvo] = useState<AlvoApelido | null>(null)
   const [expandidoId, setExpandidoId] = useState<string | null>(null)
   const [saidaExcluindo, setSaidaExcluindo] = useState<Saida | null>(null)
   const [excluindo, setExcluindo] = useState(false)
@@ -320,7 +324,7 @@ function SaidasPage() {
                       {formatarData(saida.data)}
                     </span>
                     <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
-                      {saida.titulo}
+                      <TituloComApelido titulo={saida.titulo} apelido={saida.apelido} />
                     </span>
                     {ehFuturo(saida.data) && (
                       <span
@@ -370,6 +374,20 @@ function SaidasPage() {
                           icon: <DuplicateIcon className="h-4 w-4" />,
                           onClick: () => abrirDuplicar(saida),
                         },
+                        ...(saida.chaveEstabelecimento
+                          ? [
+                              {
+                                label: saida.apelido ? 'Editar apelido' : 'Dar apelido',
+                                icon: <TagIcon className="h-4 w-4" />,
+                                onClick: () =>
+                                  setApelidoAlvo({
+                                    chave: saida.chaveEstabelecimento!,
+                                    apelidoAtual: saida.apelido ?? null,
+                                    descricao: saida.descricaoPluggy,
+                                  }),
+                              },
+                            ]
+                          : []),
                         {
                           label: 'Excluir',
                           icon: <TrashIcon className="h-4 w-4" />,
@@ -430,6 +448,17 @@ function SaidasPage() {
           </Button>
         </div>
       </Modal>
+      {apelidoAlvo && (
+        <ApelidoModal
+          alvo={apelidoAlvo}
+          onFechar={() => setApelidoAlvo(null)}
+          onSalvo={(mensagem) => {
+            setApelidoAlvo(null)
+            showToast(mensagem, 'success')
+            dados.recarregar()
+          }}
+        />
+      )}
     </>
   )
 }

@@ -47,6 +47,11 @@ export type Entrada = {
   valorCentavos: number
   data: string
   ehPagamentoFatura: boolean
+  /** Só em lançamentos vindos da Pluggy (M22). */
+  chaveEstabelecimento?: string | null
+  /** Apelido do estabelecimento; null quando não há ou o título foi editado (M22). */
+  apelido?: string | null
+  descricaoPluggy?: string | null
 }
 
 export type SaidaSplit = {
@@ -62,6 +67,16 @@ export type Saida = {
   data: string
   ehPagamentoFatura: boolean
   splits: SaidaSplit[]
+  /** Só em lançamentos vindos da Pluggy (M22). */
+  chaveEstabelecimento?: string | null
+  /** Apelido do estabelecimento; null quando não há ou o título foi editado (M22). */
+  apelido?: string | null
+  descricaoPluggy?: string | null
+}
+
+export type ApelidoEstabelecimento = {
+  chave: string
+  apelido: string
 }
 
 export type ResumoGeral = {
@@ -153,6 +168,8 @@ export type TransacaoImportada = {
   categoriaSugeridaId: string | null
   /** Parcela de compra anterior ao corte: já contada no saldo inicial (M21). */
   sugerirIgnorarParcela: boolean
+  chaveEstabelecimento: string
+  apelido: string | null
 }
 
 /** Débito na conta + crédito no cartão com o mesmo valor: pagamento de fatura (M21). */

@@ -47,6 +47,28 @@ describe('paraSaida', () => {
 
     expect(paraSaida(row).splits).toEqual([])
   })
+
+  it('traduz os campos de apelido (M22) quando vieram no select', () => {
+    const row: SaidaRow = {
+      id: 's3',
+      user_id: 'u1',
+      categoria_id: 'c1',
+      titulo: 'Compra no débito - Esthneygomesguima     Santarem     Bra',
+      valor_total_centavos: 3600,
+      data: '2026-11-08',
+      eh_pagamento_fatura: false,
+      created_at: '2026-11-08T12:00:00Z',
+      chave_estabelecimento: 'esthneygomesguima',
+      apelido_estabelecimento: 'Açaí do Lester',
+      descricao_pluggy: 'Compra no débito - Esthneygomesguima     Santarem     Bra',
+    }
+
+    expect(paraSaida(row)).toMatchObject({
+      chaveEstabelecimento: 'esthneygomesguima',
+      apelido: 'Açaí do Lester',
+      descricaoPluggy: 'Compra no débito - Esthneygomesguima     Santarem     Bra',
+    })
+  })
 })
 
 describe('paraRecorrenciaDoMes', () => {

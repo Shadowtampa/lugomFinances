@@ -6,12 +6,15 @@ import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import DuplicateIcon from '../components/ui/icons/DuplicateIcon'
 import PencilIcon from '../components/ui/icons/PencilIcon'
+import TagIcon from '../components/ui/icons/TagIcon'
 import TrashIcon from '../components/ui/icons/TrashIcon'
 import Modal from '../components/ui/Modal'
 import Pagination from '../components/ui/Pagination'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
+import ApelidoModal, { type AlvoApelido } from '../features/apelidos/ApelidoModal'
+import TituloComApelido from '../features/apelidos/TituloComApelido'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
@@ -60,6 +63,7 @@ function EntradasPage() {
   const [duplicandoDe, setDuplicandoDe] = useState<Entrada | undefined>()
   const [aberturaId, setAberturaId] = useState(0)
   const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null)
+  const [apelidoAlvo, setApelidoAlvo] = useState<AlvoApelido | null>(null)
 
   const [entradaExcluindo, setEntradaExcluindo] = useState<Entrada | null>(null)
   const [bloqueioExclusao, setBloqueioExclusao] = useState<string | null>(null)
@@ -285,7 +289,7 @@ function EntradasPage() {
                     {formatarData(entrada.data)}
                   </span>
                   <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
-                    {entrada.titulo}
+                    <TituloComApelido titulo={entrada.titulo} apelido={entrada.apelido} />
                   </span>
                   {ehFuturo(entrada.data) && (
                     <span
@@ -329,6 +333,20 @@ function EntradasPage() {
                         icon: <DuplicateIcon className="h-4 w-4" />,
                         onClick: () => abrirDuplicar(entrada),
                       },
+                      ...(entrada.chaveEstabelecimento
+                        ? [
+                            {
+                              label: entrada.apelido ? 'Editar apelido' : 'Dar apelido',
+                              icon: <TagIcon className="h-4 w-4" />,
+                              onClick: () =>
+                                setApelidoAlvo({
+                                  chave: entrada.chaveEstabelecimento!,
+                                  apelidoAtual: entrada.apelido ?? null,
+                                  descricao: entrada.descricaoPluggy,
+                                }),
+                            },
+                          ]
+                        : []),
                       {
                         label: 'Excluir',
                         icon: <TrashIcon className="h-4 w-4" />,
@@ -392,6 +410,17 @@ function EntradasPage() {
           </>
         )}
       </Modal>
+      {apelidoAlvo && (
+        <ApelidoModal
+          alvo={apelidoAlvo}
+          onFechar={() => setApelidoAlvo(null)}
+          onSalvo={(mensagem) => {
+            setApelidoAlvo(null)
+            showToast(mensagem, 'success')
+            dados.recarregar()
+          }}
+        />
+      )}
     </>
   )
 }

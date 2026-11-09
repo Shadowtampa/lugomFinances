@@ -3,6 +3,7 @@ import { unwrap } from '../lib/erros'
 import { db } from '../lib/api'
 import type { ResultadoCriarSaidaRow, SaidaRow } from '../types/api'
 import type { ResultadoCriarSaida, Saida } from '../types/domain'
+import { CAMPOS_APELIDO } from './apelidos'
 import { paraResultadoCriarSaida, paraSaida } from './mappers'
 
 export async function listarSaidas(filtro?: {
@@ -14,8 +15,8 @@ export async function listarSaidas(filtro?: {
   porPagina?: number
 }): Promise<Saida[]> {
   let query = filtro?.fonteId
-    ? db.from('saidas').select('*, saida_splits!inner(fonte_id,valor_centavos)')
-    : db.from('saidas').select('*, saida_splits(fonte_id,valor_centavos)')
+    ? db.from('saidas').select(`*, ${CAMPOS_APELIDO}, saida_splits!inner(fonte_id,valor_centavos)`)
+    : db.from('saidas').select(`*, ${CAMPOS_APELIDO}, saida_splits(fonte_id,valor_centavos)`)
   query = query.order('data', { ascending: false })
 
   if (filtro?.mes) {
@@ -86,7 +87,7 @@ export async function obterSaida(id: string): Promise<Saida> {
   const row = unwrap<SaidaRow>(
     await db
       .from('saidas')
-      .select('*, saida_splits(fonte_id,valor_centavos)')
+      .select(`*, ${CAMPOS_APELIDO}, saida_splits(fonte_id,valor_centavos)`)
       .eq('id', id)
       .single(),
   )
