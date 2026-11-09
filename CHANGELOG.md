@@ -2,6 +2,12 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.7.3 — 2026-11-09
+
+**Clique na Saída edita** (ajuste sem spec)
+
+- Clicar numa Saída da lista abre a edição, como já acontecia em Entradas. A divisão entre Fontes de uma Saída com vários splits agora abre no botão ▸ ao lado das Fontes.
+
 ## 2.7.2 — 2026-11-09
 
 **Identidade das Fontes nas listas** (ajuste sem spec)

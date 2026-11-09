@@ -317,9 +317,7 @@ function SaidasPage() {
               <li key={saida.id} className="border-b border-line">
                 <div
                   className="group relative flex cursor-pointer flex-col items-start gap-1 py-3 sm:flex-row sm:items-center sm:gap-3"
-                  onClick={() =>
-                    saida.splits.length > 1 && setExpandidoId(expandido ? null : saida.id)
-                  }
+                  onClick={() => abrirEditar(saida)}
                 >
                   <div className="flex w-full items-center gap-3 pr-12 sm:contents sm:pr-0">
                     <span className="w-20 shrink-0 text-sm text-ink-soft">
@@ -358,6 +356,20 @@ function SaidasPage() {
                             ))}
                           </span>{' '}
                           {fonteLabel(saida, mapaFontes)}
+                          {saida.splits.length > 1 && (
+                            <button
+                              type="button"
+                              aria-label={expandido ? 'Esconder divisão' : 'Ver divisão entre fontes'}
+                              aria-expanded={expandido}
+                              className="ml-1 rounded px-1 text-ink-soft hover:bg-base"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setExpandidoId(expandido ? null : saida.id)
+                              }}
+                            >
+                              {expandido ? '▾' : '▸'}
+                            </button>
+                          )}
                         </span>
                       </span>
                     </span>
@@ -371,6 +383,20 @@ function SaidasPage() {
                         />
                       ))}
                       <span className="truncate">{fonteLabel(saida, mapaFontes)}</span>
+                      {saida.splits.length > 1 && (
+                        <button
+                          type="button"
+                          aria-label={expandido ? 'Esconder divisão' : 'Ver divisão entre fontes'}
+                          aria-expanded={expandido}
+                          className="shrink-0 rounded px-1 text-ink-soft hover:bg-base"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setExpandidoId(expandido ? null : saida.id)
+                          }}
+                        >
+                          {expandido ? '▾' : '▸'}
+                        </button>
+                      )}
                     </span>
                     <span className="font-money shrink-0 text-right text-sm text-ink sm:w-28">
                       {formatBRL(saida.valorTotalCentavos)}
