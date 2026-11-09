@@ -2,6 +2,13 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.7.2 — 2026-11-09
+
+**Identidade das Fontes nas listas** (ajuste sem spec)
+
+- O selo da marca aparece ao lado da Fonte em Saídas (inclusive em cada split), Entradas, Recorrências (meio previsto e "Marcar como paga") e no seletor de Fontes previstas. Fontes sem identidade continuam com a bolinha de cor.
+- Os cards da tela Fontes ganharam um fundo leve na cor da Fonte.
+
 ## 2.7.1 — 2026-11-09
 
 **Identidade visual das Fontes** (ajuste sem spec)

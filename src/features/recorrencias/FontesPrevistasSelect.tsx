@@ -1,3 +1,4 @@
+import SeloFonte from '../../components/ui/SeloFonte'
 import type { Fonte } from '../../types/domain'
 
 /**
@@ -36,7 +37,7 @@ function FontesPrevistasSelect({
               onChange={() => alternar(fonte.id)}
               className="accent-livre"
             />
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: fonte.cor }} aria-hidden="true" />
+            <SeloFonte fonteId={fonte.id} cor={fonte.cor} pequeno />
             {fonte.nome}
             {fonte.arquivada && <span className="text-xs text-ink-soft">(arquivada)</span>}
           </label>

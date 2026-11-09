@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
+import SeloFonte from '../components/ui/SeloFonte'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import DuplicateIcon from '../components/ui/icons/DuplicateIcon'
@@ -305,13 +306,7 @@ function EntradasPage() {
 
                 <div className="flex w-full items-center gap-3 pl-0 sm:contents sm:pl-0">
                   <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm text-ink-soft sm:w-40 sm:flex-none">
-                    {fonte && (
-                      <span
-                        className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: fonte.cor }}
-                        aria-hidden="true"
-                      />
-                    )}
+                    {fonte && <SeloFonte fonteId={fonte.id} cor={fonte.cor} pequeno />}
                     <span className="truncate">{fonte?.nome ?? '—'}</span>
                   </span>
                   <span className="font-money w-28 shrink-0 text-right text-sm text-livre">

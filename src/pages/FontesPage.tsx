@@ -164,10 +164,14 @@ function FontesPage() {
               return (
                 <div
                   key={fonte.id}
-                  className={`flex flex-col gap-2 rounded bg-surface p-4 pl-4 shadow-sm ${
+                  className={`flex flex-col gap-2 rounded p-4 pl-4 shadow-sm ${
                     fonte.arquivada ? 'opacity-50' : ''
                   }`}
-                  style={{ borderLeft: `3px solid ${corFaixa}` }}
+                  style={{
+                    borderLeft: `3px solid ${corFaixa}`,
+                    // Fundo bem leve na cor da Fonte (marca, quando tem identidade).
+                    backgroundColor: `color-mix(in srgb, ${fonte.cor} 7%, var(--color-surface))`,
+                  }}
                 >
                   <p className="flex items-center gap-2 font-medium text-ink">
                     <SeloFonte fonteId={fonte.id} />

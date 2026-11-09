@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
+import SeloFonte from '../components/ui/SeloFonte'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Input from '../components/ui/Input'
@@ -268,10 +269,15 @@ function RecorrenciasPage() {
                       <IndicadorNota nota={item.nota} />
                       {item.fontesPrevistas.length > 0 && (
                         <span
-                          className="hidden max-w-[10rem] shrink-0 truncate text-xs text-ink-soft sm:inline"
+                          className="flex max-w-[12rem] shrink-0 items-center gap-1 text-xs text-ink-soft"
                           title={`Previsto: ${item.fontesPrevistas.map((id) => mapaFontes.get(id)?.nome ?? '—').join(' + ')}`}
                         >
-                          {rotuloFontesPrevistas(item.fontesPrevistas, mapaFontes)}
+                          {item.fontesPrevistas.slice(0, 3).map((id) => (
+                            <SeloFonte key={id} fonteId={id} cor={mapaFontes.get(id)?.cor} pequeno />
+                          ))}
+                          <span className="hidden truncate sm:inline">
+                            {rotuloFontesPrevistas(item.fontesPrevistas, mapaFontes)}
+                          </span>
                         </span>
                       )}
                       <span className="font-money w-24 shrink-0 text-right text-sm text-ink">
@@ -372,7 +378,14 @@ function RecorrenciasPage() {
           </p>
           {pagando && pagando.fontesPrevistas.length > 0 && (
             <p className="text-sm text-ink-soft">
-              Previsto: {pagando.fontesPrevistas.map((id) => mapaFontes.get(id)?.nome ?? '—').join(' + ')}
+              Previsto:{' '}
+              {pagando.fontesPrevistas.map((id, i) => (
+                <span key={id} className="inline-flex items-center gap-1">
+                  {i > 0 && ' + '}
+                  <SeloFonte fonteId={id} cor={mapaFontes.get(id)?.cor} pequeno />
+                  {mapaFontes.get(id)?.nome ?? '—'}
+                </span>
+              ))}
             </p>
           )}
           <Input label="Pago em" type="date" value={pagoEm} onChange={(e) => setPagoEm(e.target.value)} required />

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
+import SeloFonte from '../components/ui/SeloFonte'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import DuplicateIcon from '../components/ui/icons/DuplicateIcon'
@@ -349,11 +350,27 @@ function SaidasPage() {
                       )}
                       <span className="truncate">
                         {categoria?.nome ?? '—'}
-                        <span className="sm:hidden"> · {fonteLabel(saida, mapaFontes)}</span>
+                        <span className="sm:hidden">
+                          {' · '}
+                          <span className="inline-flex translate-y-0.5 gap-0.5">
+                            {saida.splits.map((split) => (
+                              <SeloFonte key={split.fonteId} fonteId={split.fonteId} pequeno />
+                            ))}
+                          </span>{' '}
+                          {fonteLabel(saida, mapaFontes)}
+                        </span>
                       </span>
                     </span>
-                    <span className="hidden shrink-0 truncate text-sm text-ink-soft sm:block sm:w-40">
-                      {fonteLabel(saida, mapaFontes)}
+                    <span className="hidden shrink-0 items-center gap-1.5 text-sm text-ink-soft sm:flex sm:w-40">
+                      {saida.splits.slice(0, 3).map((split) => (
+                        <SeloFonte
+                          key={split.fonteId}
+                          fonteId={split.fonteId}
+                          cor={mapaFontes.get(split.fonteId)?.cor}
+                          pequeno
+                        />
+                      ))}
+                      <span className="truncate">{fonteLabel(saida, mapaFontes)}</span>
                     </span>
                     <span className="font-money shrink-0 text-right text-sm text-ink sm:w-28">
                       {formatBRL(saida.valorTotalCentavos)}
@@ -404,7 +421,8 @@ function SaidasPage() {
                 {expandido && (
                   <div className="ml-2 flex flex-col gap-1 break-words pb-3 pl-20 text-sm text-ink-soft">
                     {saida.splits.map((split) => (
-                      <span key={split.fonteId}>
+                      <span key={split.fonteId} className="flex items-center gap-1.5">
+                        <SeloFonte fonteId={split.fonteId} cor={mapaFontes.get(split.fonteId)?.cor} pequeno />
                         {mapaFontes.get(split.fonteId)?.nome ?? '—'}: {formatBRL(split.valorCentavos)}
                       </span>
                     ))}
