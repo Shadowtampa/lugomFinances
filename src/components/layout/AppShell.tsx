@@ -68,7 +68,8 @@ function AppShell({ children }: { children: ReactNode }) {
   return (
     <NavMobileContext.Provider value={() => setDrawerAberto(true)}>
       <div className="flex min-h-screen flex-col md:flex-row">
-        <nav className="hidden w-56 shrink-0 flex-col gap-1 border-r border-line bg-surface p-4 md:flex">
+        {/* M26: no desktop a sidebar fica presa na altura da tela; só o conteúdo rola (rolagem da janela). */}
+        <nav className="hidden w-56 shrink-0 flex-col gap-1 border-r border-line bg-surface p-4 md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
           <span className="mb-4 px-3 text-lg font-semibold text-ink">Lugom</span>
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
@@ -95,7 +96,7 @@ function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
 
-        <div className="flex flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
           <main className="flex-1 p-4">{children}</main>
         </div>
       </div>

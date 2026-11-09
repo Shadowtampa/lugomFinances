@@ -2,6 +2,12 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.6.0 — 2026-11-09
+
+**M26: Sidebar fixa** ([#6](https://github.com/Shadowtampa/lugomFinances/issues/6), `.specs/26-sidebar-fixa.md`)
+
+- No desktop a sidebar fica parada e só o conteúdo rola.
+
 ## 2.5.0 — 2026-11-09
 
 **M25: Limite de Categoria sem acúmulo** ([#5](https://github.com/Shadowtampa/lugomFinances/issues/5), `.specs/25-categoria-sem-acumulo.md`)

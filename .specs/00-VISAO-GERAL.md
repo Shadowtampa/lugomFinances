@@ -256,6 +256,7 @@ anterior está pronto e funcionando.
 | M23 | `23-filtro-recorrencias.md` | Filtro Todas / A pagar / Pagas na lista de recorrências do mês |
 | M24 | `24-notas.md` | Nota opcional em Saídas, Entradas e Recorrências |
 | M25 | `25-categoria-sem-acumulo.md` | Limite de Categoria vale só no mês corrente (fim do acúmulo) |
+| M26 | `26-sidebar-fixa.md` | Sidebar fixa no desktop, conteúdo rolável |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo
