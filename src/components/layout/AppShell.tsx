@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   { to: '/conexoes', label: 'Conexões' },
 ]
 
-const APP_VERSION = '1.16'
+const APP_VERSION = '2.0'
 
 const NavMobileContext = createContext<() => void>(() => {})
 
