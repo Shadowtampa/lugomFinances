@@ -108,6 +108,7 @@ export function paraEntrada(row: EntradaRow): Entrada {
     valorCentavos: row.valor_centavos,
     data: row.data,
     ehPagamentoFatura: row.eh_pagamento_fatura,
+    nota: row.nota ?? null,
     ...camposApelido(row),
   }
 }
@@ -134,6 +135,7 @@ export function paraSaida(row: SaidaRow): Saida {
     valorTotalCentavos: row.valor_total_centavos,
     data: row.data,
     ehPagamentoFatura: row.eh_pagamento_fatura,
+    nota: row.nota ?? null,
     splits: (row.saida_splits ?? []).map((split) => ({
       fonteId: split.fonte_id,
       valorCentavos: split.valor_centavos,
@@ -160,6 +162,7 @@ export function paraRecorrencia(row: RecorrenciaRow): Recorrencia {
     mesInicio: row.mes_inicio.slice(0, 7),
     totalParcelas: row.total_parcelas,
     ativa: row.ativa,
+    nota: row.nota ?? null,
   }
 }
 
@@ -179,6 +182,7 @@ export function paraRecorrenciaDoMes(row: RecorrenciaMesRow): RecorrenciaDoMes {
     pagoEm: row.pago_em,
     saidaId: row.saida_id,
     valorPagoCentavos: row.valor_pago_centavos,
+    nota: row.nota ?? null,
   }
 }
 
@@ -343,6 +347,7 @@ export function deRecorrencia(dados: Partial<Omit<Recorrencia, 'id'>>) {
     ...(dados.mesInicio !== undefined && { mes_inicio: `${dados.mesInicio}-01` }),
     ...(dados.totalParcelas !== undefined && { total_parcelas: dados.totalParcelas }),
     ...(dados.ativa !== undefined && { ativa: dados.ativa }),
+    ...(dados.nota !== undefined && { nota: dados.nota }),
   }
 }
 
@@ -352,5 +357,6 @@ export function deEntrada(dados: Partial<Omit<Entrada, 'id'>>) {
     ...(dados.titulo !== undefined && { titulo: dados.titulo }),
     ...(dados.valorCentavos !== undefined && { valor_centavos: dados.valorCentavos }),
     ...(dados.data !== undefined && { data: dados.data }),
+    ...(dados.nota !== undefined && { nota: dados.nota }),
   }
 }

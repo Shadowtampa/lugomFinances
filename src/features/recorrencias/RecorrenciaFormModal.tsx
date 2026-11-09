@@ -7,6 +7,7 @@ import Select from '../../components/ui/Select'
 import { mesAtual } from '../../lib/date'
 import { mensagemDoErro } from '../../lib/erros'
 import { atualizarRecorrencia, criarRecorrencia } from '../../services/recorrencias'
+import CampoNota from '../notas/CampoNota'
 import type { Categoria, Recorrencia } from '../../types/domain'
 
 interface RecorrenciaFormModalProps {
@@ -30,6 +31,7 @@ function RecorrenciaFormModal({
   const [categoriaId, setCategoriaId] = useState(recorrencia?.categoriaId ?? '')
   const [totalParcelas, setTotalParcelas] = useState<number | ''>(recorrencia?.totalParcelas ?? '')
   const [mesInicio, setMesInicio] = useState(recorrencia?.mesInicio ?? mesAtual())
+  const [notaTexto, setNotaTexto] = useState(recorrencia?.nota ?? '')
   const [erros, setErros] = useState<Record<string, string>>({})
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -56,6 +58,7 @@ function RecorrenciaFormModal({
       categoriaId: categoriaId || null,
       totalParcelas: totalParcelas === '' ? null : totalParcelas,
       mesInicio,
+      nota: notaTexto.trim() || null,
     }
 
     setEnviando(true)
@@ -134,6 +137,8 @@ function RecorrenciaFormModal({
           hint={totalParcelas !== '' ? 'Mês da 1ª parcela.' : undefined}
           required
         />
+
+        <CampoNota value={notaTexto} onChange={setNotaTexto} />
 
         {erroGeral && <p className="text-sm text-alerta">{erroGeral}</p>}
 

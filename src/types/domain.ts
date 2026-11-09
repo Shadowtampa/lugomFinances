@@ -47,6 +47,8 @@ export type Entrada = {
   valorCentavos: number
   data: string
   ehPagamentoFatura: boolean
+  /** Observação livre (M24). */
+  nota?: string | null
   /** Só em lançamentos vindos da Pluggy (M22). */
   chaveEstabelecimento?: string | null
   /** Apelido do estabelecimento; null quando não há ou o título foi editado (M22). */
@@ -66,6 +68,8 @@ export type Saida = {
   valorTotalCentavos: number
   data: string
   ehPagamentoFatura: boolean
+  /** Observação livre (M24). */
+  nota?: string | null
   splits: SaidaSplit[]
   /** Só em lançamentos vindos da Pluggy (M22). */
   chaveEstabelecimento?: string | null
@@ -107,6 +111,7 @@ export type Recorrencia = {
   mesInicio: string
   totalParcelas: number | null
   ativa: boolean
+  nota?: string | null
 }
 
 export type StatusRecorrencia = 'paga' | 'pendente' | 'atrasada'
@@ -127,6 +132,7 @@ export type RecorrenciaDoMes = {
   pagoEm: string | null
   saidaId: string | null
   valorPagoCentavos: number | null
+  nota: string | null
 }
 
 export type PluggyItem = {

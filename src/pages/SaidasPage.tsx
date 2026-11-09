@@ -15,6 +15,7 @@ import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import ApelidoModal, { type AlvoApelido } from '../features/apelidos/ApelidoModal'
 import TituloComApelido from '../features/apelidos/TituloComApelido'
+import IndicadorNota from '../features/notas/IndicadorNota'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
@@ -326,6 +327,7 @@ function SaidasPage() {
                     <span className="ml-2 min-w-0 flex-1 truncate text-sm text-ink sm:ml-2">
                       <TituloComApelido titulo={saida.titulo} apelido={saida.apelido} />
                     </span>
+                    <IndicadorNota nota={saida.nota} />
                     {ehFuturo(saida.data) && (
                       <span
                         className="shrink-0 text-xs text-ink-soft"

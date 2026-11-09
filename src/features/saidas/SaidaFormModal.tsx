@@ -9,7 +9,8 @@ import { usePainelSaldo } from '../../contexts/PainelSaldoContext'
 import type { ApiError } from '../../lib/erros'
 import { mensagemDoErro } from '../../lib/erros'
 import { formatBRL } from '../../lib/money'
-import { atualizarSaida, criarSaida } from '../../services/saidas'
+import { atualizarSaida, criarSaida, definirNotaSaida } from '../../services/saidas'
+import CampoNota from '../notas/CampoNota'
 import type { Categoria, Saida, SaldoCategoria } from '../../types/domain'
 import { avaliarFonte, type FonteComSaldo } from './elegibilidade'
 
@@ -71,6 +72,7 @@ function SaidaFormModal({
   const [erroCategoria, setErroCategoria] = useState<string | null>(null)
   const [data, setData] = useState(origem?.data ?? hojeISO())
   const [erroData, setErroData] = useState<string | null>(null)
+  const [notaTexto, setNotaTexto] = useState(origem?.nota ?? '')
 
   const [modoSplit, setModoSplit] = useState(splitsIniciais.length > 1)
   const [fonteSimples, setFonteSimples] = useState(splitsIniciais[0]?.fonteId ?? '')
@@ -399,6 +401,10 @@ function SaidaFormModal({
           ehPagamentoFatura: false,
         })
       }
+      // A nota tem RPC própria (M24): não passa por criar_saida/atualizar_saida.
+      if (notaTexto.trim() !== (saida?.nota ?? '')) {
+        await definirNotaSaida(resultado.saidaId, notaTexto)
+      }
       const { linhas, nota } = montarLinhasFontesEnota(resultado)
       mostrarPainelSaldo({
         titulo: `${tituloAparado} ${saida ? 'atualizada' : 'registrada'}`,
@@ -595,6 +601,8 @@ function SaidaFormModal({
           error={erroData ?? undefined}
           required
         />
+
+        <CampoNota value={notaTexto} onChange={setNotaTexto} />
 
         {erroGeral && <p className="text-sm text-alerta">{erroGeral}</p>}
 

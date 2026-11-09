@@ -18,6 +18,7 @@ function item(parcial: Partial<RecorrenciaDoMes>): RecorrenciaDoMes {
     pagoEm: null,
     saidaId: null,
     valorPagoCentavos: null,
+    nota: null,
     ...parcial,
   }
 }

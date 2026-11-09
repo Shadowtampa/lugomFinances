@@ -9,6 +9,7 @@ import Modal from '../components/ui/Modal'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import ConfirmarFaturaModal from '../features/recorrencias/ConfirmarFaturaModal'
+import IndicadorNota from '../features/notas/IndicadorNota'
 import RecorrenciaFormModal from '../features/recorrencias/RecorrenciaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
@@ -263,6 +264,7 @@ function RecorrenciasPage() {
                           <span className="ml-2 hidden text-xs text-ink-soft sm:inline">{item.categoriaNome}</span>
                         )}
                       </span>
+                      <IndicadorNota nota={item.nota} />
                       <span className="font-money w-24 shrink-0 text-right text-sm text-ink">
                         {formatBRL(item.pagamentoId ? valorEfetivo(item) : item.valorPrevistoCentavos)}
                         {valorReal !== null && valorReal !== item.valorPrevistoCentavos && (

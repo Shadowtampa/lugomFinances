@@ -136,14 +136,15 @@ export async function confirmarImportada(
   id: string,
   categoriaId: string | null,
   recorrenciaId: string | null,
-): Promise<void> {
-  unwrap(
+): Promise<{ saidaId: string | null; entradaId: string | null }> {
+  const r = unwrap<{ saida_id?: string; entrada_id?: string }>(
     await db.rpc('confirmar_importada', {
       p_id: id,
       p_categoria_id: categoriaId,
       p_recorrencia_id: recorrenciaId,
     }),
   )
+  return { saidaId: r?.saida_id ?? null, entradaId: r?.entrada_id ?? null }
 }
 
 export async function ignorarImportada(id: string): Promise<void> {

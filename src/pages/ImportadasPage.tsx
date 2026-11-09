@@ -3,17 +3,21 @@ import { Link } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
+import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import ApelidoModal, { type AlvoApelido } from '../features/apelidos/ApelidoModal'
+import { MAX_NOTA } from '../features/notas/limites'
 import { useAsync } from '../hooks/useAsync'
 import { formatarData, haQuantoTempo, nomeDoMes } from '../lib/date'
 import { mensagemDoErro, mensagemErroSincronizacao } from '../lib/erros'
 import { ordenarParaConfirmacao } from '../lib/integracao'
 import { formatBRL } from '../lib/money'
 import { listarCategorias } from '../services/categorias'
+import { atualizarEntrada } from '../services/entradas'
 import { listarFontes } from '../services/fontes'
+import { definirNotaSaida } from '../services/saidas'
 import {
   confirmarImportada,
   confirmarPagamentoFatura,
@@ -64,6 +68,8 @@ function ImportadasPage() {
   const [sincronizando, setSincronizando] = useState(false)
   const [mostrarDivergentes, setMostrarDivergentes] = useState(false)
   const [apelidoAlvo, setApelidoAlvo] = useState<AlvoApelido | null>(null)
+  /** Nota digitada por importada; null = campo fechado. */
+  const [notas, setNotas] = useState<Record<string, string | undefined>>({})
 
   const pares = useMemo(() => dados.data?.pares ?? [], [dados.data])
   const pendentes = useMemo(() => {
@@ -96,14 +102,18 @@ function ImportadasPage() {
 
   async function confirmar(t: TransacaoImportada) {
     const e = escolhaDe(t)
-    await confirmarImportada(t.id, t.direcao === 'saida' ? e.categoriaId || null : null, e.recorrenciaId || null)
+    return confirmarImportada(t.id, t.direcao === 'saida' ? e.categoriaId || null : null, e.recorrenciaId || null)
   }
 
   async function confirmarUma(t: TransacaoImportada) {
     setOcupadoId(t.id)
     try {
-      await confirmar(t)
-      showToast(`${t.descricao} confirmada.`, 'success')
+      const { saidaId, entradaId } = await confirmar(t)
+      // Nota só no card individual (M24), gravada no lançamento recém-criado.
+      const nota = (notas[t.id] ?? '').trim()
+      if (nota && saidaId) await definirNotaSaida(saidaId, nota)
+      if (nota && entradaId) await atualizarEntrada(entradaId, { nota })
+      showToast(`${t.apelido ?? t.descricao} confirmada.`, 'success')
       dados.recarregar()
     } catch (e) {
       showToast(mensagemDoErro(e), 'error')
@@ -327,6 +337,15 @@ function ImportadasPage() {
                       </div>
                     )}
                     <div className="ml-auto flex gap-2">
+                      {notas[t.id] === undefined && (
+                        <Button
+                          variant="ghost"
+                          disabled={ocupado}
+                          onClick={() => setNotas((n) => ({ ...n, [t.id]: '' }))}
+                        >
+                          + Nota
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         disabled={ocupado}
@@ -357,6 +376,16 @@ function ImportadasPage() {
                       </Button>
                     </div>
                   </div>
+                  {notas[t.id] !== undefined && (
+                    <Input
+                      label="Nota (opcional)"
+                      value={notas[t.id]}
+                      maxLength={MAX_NOTA}
+                      autoFocus
+                      onChange={(e) => setNotas((n) => ({ ...n, [t.id]: e.target.value }))}
+                      hint="Gravada no lançamento ao clicar em Confirmar. Não vale para Confirmar todas."
+                    />
+                  )}
                 </li>
               )
             })}

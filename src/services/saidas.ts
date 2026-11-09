@@ -131,3 +131,8 @@ export async function atualizarSaida(
 export async function excluirSaida(id: string): Promise<void> {
   unwrap(await db.rpc('excluir_saida', { p_saida_id: id }))
 }
+
+/** Nota da Saída (M24). Vazia remove. Não toca em valor, data, Categoria nem splits. */
+export async function definirNotaSaida(id: string, nota: string): Promise<void> {
+  unwrap(await db.rpc('definir_nota_saida', { p_saida_id: id, p_nota: nota }))
+}

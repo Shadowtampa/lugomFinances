@@ -12,6 +12,7 @@ describe('paraSaida', () => {
       valor_total_centavos: 8000,
       data: '2026-09-05',
       eh_pagamento_fatura: false,
+      nota: null,
       created_at: '2026-09-05T12:00:00Z',
       saida_splits: [
         { fonte_id: 'f1', valor_centavos: 5000 },
@@ -26,6 +27,7 @@ describe('paraSaida', () => {
       valorTotalCentavos: 8000,
       data: '2026-09-05',
       ehPagamentoFatura: false,
+      nota: null,
       splits: [
         { fonteId: 'f1', valorCentavos: 5000 },
         { fonteId: 'f2', valorCentavos: 3000 },
@@ -42,6 +44,7 @@ describe('paraSaida', () => {
       valor_total_centavos: 2200,
       data: '2026-09-06',
       eh_pagamento_fatura: false,
+      nota: null,
       created_at: '2026-09-06T12:00:00Z',
     }
 
@@ -57,6 +60,7 @@ describe('paraSaida', () => {
       valor_total_centavos: 3600,
       data: '2026-11-08',
       eh_pagamento_fatura: false,
+      nota: null,
       created_at: '2026-11-08T12:00:00Z',
       chave_estabelecimento: 'esthneygomesguima',
       apelido_estabelecimento: 'Açaí do Lester',
@@ -89,6 +93,7 @@ describe('paraRecorrenciaDoMes', () => {
       pago_em: '2026-11-07',
       saida_id: null,
       valor_pago_centavos: null,
+      nota: null,
     }
     expect(paraRecorrenciaDoMes(row)).toEqual({
       recorrenciaId: 'r1',
@@ -103,6 +108,7 @@ describe('paraRecorrenciaDoMes', () => {
       parcela: 3,
       pagamentoId: 'p1',
       pagoEm: '2026-11-07',
+      nota: null,
       saidaId: null,
       valorPagoCentavos: null,
     })

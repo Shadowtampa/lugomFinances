@@ -9,6 +9,7 @@ import { usePainelSaldo } from '../../contexts/PainelSaldoContext'
 import { formatBRL } from '../../lib/money'
 import { mensagemDoErro } from '../../lib/erros'
 import { atualizarEntrada, criarEntrada } from '../../services/entradas'
+import CampoNota from '../notas/CampoNota'
 import { listarSaldosFontes } from '../../services/fontes'
 import type { Entrada } from '../../types/domain'
 import type { FonteComSaldo } from '../saidas/elegibilidade'
@@ -58,6 +59,7 @@ function EntradaFormModal({
   const [erroFonte, setErroFonte] = useState<string | null>(null)
   const [data, setData] = useState(origem?.data ?? hojeISO())
   const [erroData, setErroData] = useState<string | null>(null)
+  const [notaTexto, setNotaTexto] = useState(origem?.nota ?? '')
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -154,6 +156,7 @@ function EntradaFormModal({
         valorCentavos,
         fonteId,
         data,
+        nota: notaTexto.trim() || null,
       }
 
       if (entrada) {
@@ -228,6 +231,8 @@ function EntradaFormModal({
           error={erroData ?? undefined}
           required
         />
+
+        <CampoNota value={notaTexto} onChange={setNotaTexto} />
 
         {erroGeral && <p className="text-sm text-alerta">{erroGeral}</p>}
 

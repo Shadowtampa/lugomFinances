@@ -2,6 +2,14 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.4.0 — 2026-11-09
+
+**M24: Notas** ([#4](https://github.com/Shadowtampa/lugomFinances/issues/4), `.specs/24-notas.md`)
+
+- Campo "Nota" em Saídas, Entradas e Recorrências. A nota da recorrência vale para todos os meses.
+- Linhas com nota mostram 📝; clique ou toque mostra o texto.
+- Em Importadas, "+ Nota" no card grava a nota no lançamento ao confirmar.
+
 ## 2.3.0 — 2026-11-09
 
 **M23: Filtro de recorrências pagas** ([#3](https://github.com/Shadowtampa/lugomFinances/issues/3), `.specs/23-filtro-recorrencias.md`)

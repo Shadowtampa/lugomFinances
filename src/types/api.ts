@@ -43,6 +43,7 @@ export interface EntradaRow {
   data: string
   eh_pagamento_fatura: boolean
   created_at: string
+  nota: string | null
   /** Campos computados (M22), presentes quando pedidos no select. */
   chave_estabelecimento?: string | null
   apelido_estabelecimento?: string | null
@@ -65,6 +66,7 @@ export interface SaidaRow {
   data: string
   eh_pagamento_fatura: boolean
   created_at: string
+  nota: string | null
   saida_splits?: Pick<SaidaSplitRow, 'fonte_id' | 'valor_centavos'>[]
   /** Campos computados (M22), presentes quando pedidos no select. */
   chave_estabelecimento?: string | null
@@ -127,6 +129,7 @@ export interface RecorrenciaRow {
   mes_inicio: string
   total_parcelas: number | null
   ativa: boolean
+  nota: string | null
   created_at: string
 }
 
@@ -146,6 +149,7 @@ export interface RecorrenciaMesRow {
   pago_em: string | null
   saida_id: string | null
   valor_pago_centavos: number | null
+  nota: string | null
 }
 
 export interface FaturaPendenteRow {
