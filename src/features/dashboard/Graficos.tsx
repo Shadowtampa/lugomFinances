@@ -151,3 +151,62 @@ function Legenda({ itens }: { itens: { nome: string; cor: string }[] }) {
   )
 }
 
+
+export function GraficoBarrasSimples({
+  dados,
+  nome,
+  cor,
+}: {
+  dados: { mes: string; valor: number }[]
+  nome: string
+  cor: string
+}) {
+  if (dados.every((d) => d.valor === 0)) return <SemDados texto="Sem dados no período." />
+  const serie = dados.map((d) => ({ ...d, rotulo: rotuloMes(d.mes) }))
+  return (
+    <div className="h-56 w-full" role="img" aria-label={nome}>
+      <ResponsiveContainer>
+        <BarChart data={serie} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke="var(--color-line)" vertical={false} />
+          <XAxis dataKey="rotulo" tick={EIXO} tickLine={false} axisLine={false} />
+          <YAxis tick={EIXO} tickLine={false} axisLine={false} tickFormatter={abreviar} width={48} />
+          <Tooltip formatter={dinheiroTooltip} contentStyle={TOOLTIP} cursor={{ fill: 'var(--color-base)' }} />
+          <Bar dataKey="valor" name={nome} fill={cor} radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export function GraficoCompromissos({
+  dados,
+}: {
+  dados: { mes: string; cartaoCentavos: number; planejamentoCentavos: number }[]
+}) {
+  if (dados.every((d) => d.cartaoCentavos === 0 && d.planejamentoCentavos === 0)) {
+    return <SemDados texto="Nenhum compromisso futuro cadastrado." />
+  }
+  const serie = dados.map((d) => ({ ...d, rotulo: rotuloMes(d.mes) }))
+  return (
+    <div className="w-full" role="img" aria-label="Compromissos futuros por mês de vencimento">
+      <div className="h-64 w-full">
+        <ResponsiveContainer>
+          <BarChart data={serie} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+            <CartesianGrid stroke="var(--color-line)" vertical={false} />
+            <XAxis dataKey="rotulo" tick={EIXO} tickLine={false} axisLine={false} />
+            <YAxis tick={EIXO} tickLine={false} axisLine={false} tickFormatter={abreviar} width={48} />
+            <Tooltip formatter={dinheiroTooltip} contentStyle={TOOLTIP} cursor={{ fill: 'var(--color-base)' }} />
+            <Bar dataKey="cartaoCentavos" name="Parcelas no cartão" stackId="c" fill="var(--color-restrita)" />
+            <Bar dataKey="planejamentoCentavos" name="Planejamentos parcelados" stackId="c" fill="var(--color-aviso)" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <Legenda
+        itens={[
+          { nome: 'Parcelas no cartão', cor: 'var(--color-restrita)' },
+          { nome: 'Planejamentos parcelados', cor: 'var(--color-aviso)' },
+        ]}
+      />
+    </div>
+  )
+}

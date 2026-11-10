@@ -340,3 +340,83 @@ export function diasDoMes(ym: string): number {
 export function diaDoMes(iso: string): number {
   return Number(iso.slice(8, 10))
 }
+
+// ---------- Cartões e meios de pagamento (M32) ----------
+
+/** dívida / limite × 100; sem limite (ou limite 0) → null. Dívida negativa conta como zero. */
+export function utilizacaoLimite(dividaCentavos: number, limiteCentavos: number | null): number | null {
+  if (limiteCentavos === null) return null
+  return percentual(Math.max(0, dividaCentavos), limiteCentavos)
+}
+
+export type TotalPorChave = { chave: string; totalCentavos: number; quantidade: number }
+
+/** Soma por chave (instituição, Fonte...), maior total primeiro; empate pela chave, para ser estável. */
+export function somarPorChave(itens: { chave: string; valorCentavos: number }[]): TotalPorChave[] {
+  const mapa = new Map<string, TotalPorChave>()
+  for (const i of itens) {
+    const atual = mapa.get(i.chave) ?? { chave: i.chave, totalCentavos: 0, quantidade: 0 }
+    atual.totalCentavos += i.valorCentavos
+    atual.quantidade += 1
+    mapa.set(i.chave, atual)
+  }
+  return [...mapa.values()].sort((a, b) => b.totalCentavos - a.totalCentavos || a.chave.localeCompare(b.chave))
+}
+
+/** A maior compra (maior valor); lista vazia → null. */
+export function maiorCompra<T extends { valorCentavos: number }>(itens: T[]): T | null {
+  if (itens.length === 0) return null
+  return itens.reduce((m, i) => (i.valorCentavos > m.valorCentavos ? i : m))
+}
+
+/** Fatura média dos últimos `n` meses que tiveram fatura paga (meses sem pagamento não entram). */
+export function faturaMedia(pontos: PontoMensal[], n = 6): { mediaCentavos: number | null; meses: number } {
+  const com = [...pontos]
+    .filter((p) => p.totalCentavos > 0)
+    .sort((a, b) => a.mes.localeCompare(b.mes))
+    .slice(-n)
+  if (com.length === 0) return { mediaCentavos: null, meses: 0 }
+  const soma = com.reduce((acc, p) => acc + p.totalCentavos, 0)
+  return { mediaCentavos: Math.round(soma / com.length), meses: com.length }
+}
+
+export type CompromissoMes = {
+  mes: string
+  cartaoCentavos: number
+  planejamentoCentavos: number
+  totalCentavos: number
+}
+
+/**
+ * Compromissos futuros por mês de vencimento, de `mesInicial` por `nMeses`: parcelas restantes
+ * de compras no cartão + competências não pagas de Planejamentos parcelados. Não é dívida.
+ */
+export function compromissosFuturos(
+  parcelasCartao: { restantes: number; valorParcelaCentavos: number; proximoMes: string }[],
+  planejamentos: { competencia: string; valorPrevistoCentavos: number }[],
+  mesInicial: string,
+  nMeses = 12,
+): CompromissoMes[] {
+  const meses = Array.from({ length: nMeses }, (_, k) => deslocarMes(mesInicial, k))
+  const cartao = new Map<string, number>()
+  for (const p of parcelasCartao) {
+    for (let k = 0; k < p.restantes; k++) {
+      const mes = deslocarMes(p.proximoMes, k)
+      cartao.set(mes, (cartao.get(mes) ?? 0) + p.valorParcelaCentavos)
+    }
+  }
+  const plano = new Map<string, number>()
+  for (const p of planejamentos) {
+    const mes = p.competencia.slice(0, 7)
+    plano.set(mes, (plano.get(mes) ?? 0) + p.valorPrevistoCentavos)
+  }
+  return meses.map((mes) => {
+    const c = cartao.get(mes) ?? 0
+    const pl = plano.get(mes) ?? 0
+    return { mes, cartaoCentavos: c, planejamentoCentavos: pl, totalCentavos: c + pl }
+  })
+}
+
+export function totalCompromissos(lista: CompromissoMes[]): number {
+  return lista.reduce((acc, m) => acc + m.totalCentavos, 0)
+}

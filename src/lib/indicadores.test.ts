@@ -3,15 +3,18 @@ import {
   agruparPorCategoria,
   avaliarOrcamento,
   comprometimentoRenda,
+  compromissosFuturos,
   concentracaoTopN,
   contarExcedidas,
   crescimentoPorCategoria,
   diasDoMes,
   diferencaPontos,
+  faturaMedia,
   filtrarPorPeriodo,
   diasNoPeriodo,
   faixaOrcamento,
   maiorAumentoAbsoluto,
+  maiorCompra,
   maiorCrescimentoPercentual,
   mesesDoGrafico,
   mesesTocados,
@@ -23,9 +26,12 @@ import {
   rankingCategorias,
   resolverPeriodo,
   saldoOperacional,
+  somarPorChave,
   somarPorMes,
   taxaEconomia,
   ticketMedio,
+  totalCompromissos,
+  utilizacaoLimite,
   variacaoAbsoluta,
   variacaoPercentual,
 } from './indicadores'
@@ -367,5 +373,110 @@ describe('filtrarPorPeriodo e diferencaPontos', () => {
     expect(diferencaPontos(10, 25)).toBe(-15)
     expect(diferencaPontos(null, 20)).toBeNull()
     expect(diferencaPontos(20, null)).toBeNull()
+  })
+})
+
+describe('Cartões (M32)', () => {
+  it('utilização do limite', () => {
+    expect(utilizacaoLimite(250000, 1000000)).toBe(25)
+    expect(utilizacaoLimite(1200000, 1000000)).toBe(120)
+    expect(utilizacaoLimite(0, 1000000)).toBe(0)
+    expect(utilizacaoLimite(-500, 1000000)).toBe(0)
+  })
+  it('limite ausente ou zero deixa a utilização indisponível', () => {
+    expect(utilizacaoLimite(1000, null)).toBeNull()
+    expect(utilizacaoLimite(1000, 0)).toBeNull()
+  })
+
+  it('soma por chave, maior total primeiro, empate pela chave', () => {
+    const r = somarPorChave([
+      { chave: 'Nubank', valorCentavos: 3000 },
+      { chave: 'Manual', valorCentavos: 5000 },
+      { chave: 'Nubank', valorCentavos: 2000 },
+      { chave: 'Itaú', valorCentavos: 5000 },
+    ])
+    expect(r.map((x) => x.chave)).toEqual(['Itaú', 'Manual', 'Nubank'])
+    expect(r.find((x) => x.chave === 'Nubank')).toEqual({ chave: 'Nubank', totalCentavos: 5000, quantidade: 2 })
+    expect(somarPorChave([])).toEqual([])
+  })
+
+  it('maior compra', () => {
+    const itens = [
+      { titulo: 'a', valorCentavos: 100 },
+      { titulo: 'b', valorCentavos: 900 },
+      { titulo: 'c', valorCentavos: 400 },
+    ]
+    expect(maiorCompra(itens)?.titulo).toBe('b')
+    expect(maiorCompra([])).toBeNull()
+  })
+
+  describe('fatura média', () => {
+    const mes = (m: string, total: number) => ({ mes: m, totalCentavos: total })
+    it('média dos últimos 6 meses com fatura', () => {
+      const pontos = [
+        mes('2026-01', 100000),
+        mes('2026-02', 100000),
+        mes('2026-03', 200000),
+        mes('2026-04', 200000),
+        mes('2026-05', 300000),
+        mes('2026-06', 300000),
+        mes('2026-07', 400000),
+      ]
+      // Fica de fora janeiro: (100+200+200+300+300+400)/6
+      expect(faturaMedia(pontos)).toEqual({ mediaCentavos: 250000, meses: 6 })
+    })
+    it('ignora meses sem fatura em vez de contar como zero', () => {
+      expect(faturaMedia([mes('2026-08', 0), mes('2026-09', 90000), mes('2026-10', 0), mes('2026-11', 110000)])).toEqual({
+        mediaCentavos: 100000,
+        meses: 2,
+      })
+    })
+    it('menos de 6 meses usa os que existem; nenhum → indisponível', () => {
+      expect(faturaMedia([mes('2026-11', 50000)])).toEqual({ mediaCentavos: 50000, meses: 1 })
+      expect(faturaMedia([])).toEqual({ mediaCentavos: null, meses: 0 })
+      expect(faturaMedia([mes('2026-11', 0)])).toEqual({ mediaCentavos: null, meses: 0 })
+    })
+    it('arredonda ao centavo', () => {
+      expect(faturaMedia([mes('2026-10', 100), mes('2026-11', 101)]).mediaCentavos).toBe(101)
+    })
+  })
+
+  describe('compromissos futuros', () => {
+    it('espalha as parcelas restantes do cartão a partir do próximo mês', () => {
+      const r = compromissosFuturos(
+        [{ restantes: 3, valorParcelaCentavos: 25000, proximoMes: '2026-12' }],
+        [],
+        '2026-11',
+        4,
+      )
+      expect(r.map((m) => m.cartaoCentavos)).toEqual([0, 25000, 25000, 25000])
+      expect(totalCompromissos(r)).toBe(75000)
+    })
+    it('soma Planejamentos parcelados no mês de vencimento, virando o ano', () => {
+      const r = compromissosFuturos(
+        [{ restantes: 2, valorParcelaCentavos: 10000, proximoMes: '2026-12' }],
+        [
+          { competencia: '2026-12-01', valorPrevistoCentavos: 30000 },
+          { competencia: '2027-01-01', valorPrevistoCentavos: 30000 },
+          { competencia: '2027-01-01', valorPrevistoCentavos: 5000 },
+        ],
+        '2026-11',
+        3,
+      )
+      expect(r).toEqual([
+        { mes: '2026-11', cartaoCentavos: 0, planejamentoCentavos: 0, totalCentavos: 0 },
+        { mes: '2026-12', cartaoCentavos: 10000, planejamentoCentavos: 30000, totalCentavos: 40000 },
+        { mes: '2027-01', cartaoCentavos: 10000, planejamentoCentavos: 35000, totalCentavos: 45000 },
+      ])
+    })
+    it('o que vence depois da janela não entra', () => {
+      const r = compromissosFuturos([{ restantes: 10, valorParcelaCentavos: 100, proximoMes: '2026-11' }], [], '2026-11', 3)
+      expect(totalCompromissos(r)).toBe(300)
+    })
+    it('sem compromissos, tudo zero', () => {
+      const r = compromissosFuturos([], [], '2026-11', 12)
+      expect(r).toHaveLength(12)
+      expect(totalCompromissos(r)).toBe(0)
+    })
   })
 })

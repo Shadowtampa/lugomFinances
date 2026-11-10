@@ -7,6 +7,8 @@ import type {
   FaturaPendenteRow,
   ConciliacaoContaRow,
   ImportadaPendenteRow,
+  PagamentoFaturaMesRow,
+  ParcelaCartaoRestanteRow,
   ParPagamentoFaturaRow,
   PluggyContaRow,
   PluggyItemRow,
@@ -18,6 +20,7 @@ import type {
   ResultadoCriarSaidaRow,
   ResumoGeralRow,
   SaidaDiaCategoriaRow,
+  SaidaFonteRow,
   SaidaRow,
   SaldoCategoriaRow,
   SaldoFonteRow,
@@ -29,7 +32,9 @@ import type {
   Fonte,
   FaturaPendente,
   ConciliacaoConta,
+  PagamentoFaturaMes,
   ParPagamentoFatura,
+  ParcelaCartaoRestante,
   PluggyConta,
   PluggyItem,
   StatusIntegracao,
@@ -42,6 +47,7 @@ import type {
   ResumoGeral,
   Saida,
   SaldoCategoria,
+  SaidaNaFonte,
   SaldoFonte,
   SomaEntradaDia,
   SomaSaidaDia,
@@ -419,5 +425,32 @@ export function paraSomaEntradaDia(row: EntradaDiaFonteRow): SomaEntradaDia {
     fonteId: row.fonte_id,
     totalCentavos: row.total_centavos,
     quantidade: row.quantidade,
+  }
+}
+
+export function paraSaidaNaFonte(row: SaidaFonteRow): SaidaNaFonte {
+  return {
+    saidaId: row.saida_id,
+    data: row.data,
+    fonteId: row.fonte_id,
+    categoriaId: row.categoria_id,
+    titulo: row.titulo,
+    valorCentavos: row.valor_centavos,
+  }
+}
+
+export function paraPagamentoFaturaMes(row: PagamentoFaturaMesRow): PagamentoFaturaMes {
+  return { fonteId: row.fonte_id, mes: row.mes.slice(0, 7), totalCentavos: row.total_centavos }
+}
+
+export function paraParcelaCartaoRestante(row: ParcelaCartaoRestanteRow): ParcelaCartaoRestante {
+  return {
+    fonteId: row.fonte_id,
+    descricao: row.descricao,
+    parcela: row.parcela,
+    totalParcelas: row.total_parcelas,
+    restantes: row.restantes,
+    valorParcelaCentavos: row.valor_parcela_centavos,
+    proximoMes: row.proximo_mes.slice(0, 7),
   }
 }

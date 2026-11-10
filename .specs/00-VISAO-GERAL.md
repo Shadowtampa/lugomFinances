@@ -250,7 +250,7 @@ auth.users (local, M17)
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
 `apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
-M31: views `v_saidas_dia_categoria` e `v_entradas_dia_fonte` (somas por dia do Dashboard analítico).
+M31: views `v_saidas_dia_categoria` e `v_entradas_dia_fonte` (somas por dia do Dashboard analítico). M32: `v_saidas_fonte`, `v_pagamentos_fatura_mes`, `v_parcelas_cartao_restantes` (aba Cartões).
 M29/M30: view `v_planejamento_resumo` (pago / previsto / falta por competência, forma de pagamento e duração). O Tipo de Planejamento do M29 (`tipos_planejamento`) foi removido no M30.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,

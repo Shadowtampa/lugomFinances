@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { RecorrenciaMesRow, SaidaRow } from '../types/api'
 import {
   deRecorrencia,
+  paraPagamentoFaturaMes,
+  paraParcelaCartaoRestante,
   paraRecorrenciaDoMes,
+  paraSaidaNaFonte,
   paraSomaEntradaDia,
   paraSomaSaidaDia,
   paraResumoPlanejamento,
@@ -207,5 +210,48 @@ describe('somas do Dashboard (M31)', () => {
         quantidade: 1,
       }),
     ).toEqual({ data: '2026-11-05', fonteId: 'f1', totalCentavos: 500000, quantidade: 1 })
+  })
+})
+
+describe('views de cartões (M32)', () => {
+  it('traduz um split de Saída', () => {
+    expect(
+      paraSaidaNaFonte({
+        user_id: 'u1',
+        saida_id: 's1',
+        data: '2026-11-03',
+        fonte_id: 'f1',
+        categoria_id: 'c1',
+        titulo: 'Mercado',
+        valor_centavos: 4500,
+      }),
+    ).toEqual({ saidaId: 's1', data: '2026-11-03', fonteId: 'f1', categoriaId: 'c1', titulo: 'Mercado', valorCentavos: 4500 })
+  })
+  it('corta o mês da fatura para YYYY-MM', () => {
+    expect(
+      paraPagamentoFaturaMes({ user_id: 'u1', fonte_id: 'f1', mes: '2026-10-01', total_centavos: 90000 }),
+    ).toEqual({ fonteId: 'f1', mes: '2026-10', totalCentavos: 90000 })
+  })
+  it('traduz parcelas restantes e corta o próximo mês', () => {
+    expect(
+      paraParcelaCartaoRestante({
+        user_id: 'u1',
+        fonte_id: 'f1',
+        descricao: 'Notebook',
+        parcela: 2,
+        total_parcelas: 6,
+        restantes: 4,
+        valor_parcela_centavos: 25000,
+        proximo_mes: '2026-12-01',
+      }),
+    ).toEqual({
+      fonteId: 'f1',
+      descricao: 'Notebook',
+      parcela: 2,
+      totalParcelas: 6,
+      restantes: 4,
+      valorParcelaCentavos: 25000,
+      proximoMes: '2026-12',
+    })
   })
 })

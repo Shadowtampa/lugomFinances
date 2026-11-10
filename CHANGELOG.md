@@ -2,6 +2,17 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.12.0 — 2026-11-10
+
+**M32: Dashboard — Cartões e meios de pagamento** (#18, épico #11)
+
+- Nova aba **Cartões** no Painel (`/dashboard/cartoes`), com o mesmo filtro de período.
+- Compras no cartão (com variação), ticket médio, maior compra e fatura média (últimos 6 meses com fatura paga).
+- Utilização do limite por cartão e no total (hoje), Saídas por instituição (banco conectado; sem conexão = Manual), participação por meio de pagamento e faturas pagas por mês.
+- **Compromissos futuros** por mês de vencimento (12 meses): parcelas restantes de compras no cartão (a partir do que a Pluggy já importou) + Planejamentos parcelados não pagos. Não é dívida e não entra no Patrimônio líquido.
+- Pagamentos de fatura nunca entram em compras; Saída em várias Fontes é rateada pelo split.
+- Banco: migration `00022_indicadores_cartoes.sql` (views `v_saidas_fonte`, `v_pagamentos_fatura_mes`, `v_parcelas_cartao_restantes`, só leitura).
+
 ## 2.11.0 — 2026-11-10
 
 **M31: Dashboard analítico — Visão geral, Categorias e Planejado × realizado** (#17, épico #11)
