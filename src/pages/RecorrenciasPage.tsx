@@ -191,14 +191,17 @@ function RecorrenciasPage() {
         title="Planejamento Financeiro"
         subtitle={subtituloPlanejamento(forma)}
         action={
-          <Button
-            onClick={() => {
-              setFormAberto({})
-              setAberturaId((id) => id + 1)
-            }}
-          >
-            Novo planejamento
-          </Button>
+          <div className="flex w-full justify-center sm:w-auto">
+            <Button
+              onClick={() => {
+                setFormAberto({})
+                setAberturaId((id) => id + 1)
+              }}
+            >
+              <span aria-hidden="true" className="mr-1.5 text-lg leading-none">+</span>
+              Novo planejamento
+            </Button>
+          </div>
         }
       />
 
@@ -290,7 +293,7 @@ function RecorrenciasPage() {
           ) : (
             <section>
 
-              <div className="mb-4 flex flex-wrap gap-3">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <SeletorFiltro label="Status" valor={filtro} opcoes={OPCOES_FILTRO} onChange={mudarFiltro} />
                 <SeletorFiltro label="Duração" valor={duracao} opcoes={OPCOES_DURACAO} onChange={mudarDuracao} />
               </div>
@@ -310,11 +313,84 @@ function RecorrenciasPage() {
                   const status = statusDaRecorrencia(item, hoje)
                   const estilo = ESTILO_STATUS[status]
                   const valorReal = item.valorPagoCentavos
+                  const acoesBase = [
+                          { label: 'Editar', onClick: () => abrirEditar(item) },
+                          item.ativa
+                            ? {
+                                label: 'Desativar',
+                                onClick: () =>
+                                  executar(
+                                    () => definirRecorrenciaAtiva(item.recorrenciaId, false),
+                                    'Planejamento desativado.',
+                                  ),
+                              }
+                            : {
+                                label: 'Reativar',
+                                onClick: () =>
+                                  executar(
+                                    () => definirRecorrenciaAtiva(item.recorrenciaId, true),
+                                    'Planejamento reativado.',
+                                  ),
+                              },
+                          { label: 'Excluir', perigo: true, onClick: () => setExcluindo(item) },
+                        ]
+                  // Mobile: pagar/desmarcar também ficam no menu ⋯ (a linha não tem botões).
+                  const acaoPagamento = item.pagamentoId
+                    ? {
+                        label: 'Desmarcar pagamento',
+                        onClick: () => executar(() => desmarcarPagamento(item.pagamentoId!), 'Pagamento desmarcado.'),
+                      }
+                    : { label: 'Marcar como paga', onClick: () => abrirPagar(item) }
+                  const menuProps = {
+                    aberto: menuAbertoId === item.recorrenciaId,
+                    onToggle: () => setMenuAbertoId(menuAbertoId === item.recorrenciaId ? null : item.recorrenciaId),
+                    onFechar: () => setMenuAbertoId(null),
+                  }
+                  const valorExibido = formatBRL(item.pagamentoId ? valorEfetivo(item) : item.valorPrevistoCentavos)
                   return (
-                    <li
-                      key={item.recorrenciaId}
-                      className="group flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line py-2"
-                    >
+                    <li key={item.recorrenciaId} className="group border-b border-line py-2">
+                      {/* Mobile */}
+                      <div className="flex items-start gap-2 sm:hidden">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                              {item.titulo}
+                              {item.totalParcelas !== null && (
+                                <span className="ml-1 text-xs text-ink-soft">
+                                  {item.parcela}/{item.totalParcelas}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-money shrink-0 text-sm text-ink">{valorExibido}</span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft">
+                            {item.categoriaNome && <span className="truncate">{item.categoriaNome}</span>}
+                            <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                              item.formaPagamento === 'manual' ? 'border border-line' : 'bg-base'
+                            }`}>
+                              {item.formaPagamento === 'manual' ? 'Manual' : 'Auto'}
+                            </span>
+                            {item.fontesPrevistas.slice(0, 3).map((id) => (
+                              <SeloFonte key={id} fonteId={id} cor={mapaFontes.get(id)?.cor} pequeno />
+                            ))}
+                            <IndicadorNota nota={item.nota} />
+                            <span className={`ml-auto rounded px-2 py-0.5 font-medium ${estilo.classe}`}>{estilo.rotulo}</span>
+                          </div>
+                          {item.saidaId && (
+                            <Link
+                              to={`/saidas?mes=${(item.saidaData ?? item.pagoEm ?? '').slice(0, 7)}&editar=${item.saidaId}`}
+                              className="mt-1 block truncate text-xs text-ink-soft underline-offset-2 hover:underline"
+                            >
+                              ↻ {item.saidaTitulo ?? 'Saída'}
+                              {item.saidaData && ` · ${formatarData(item.saidaData)}`}
+                            </Link>
+                          )}
+                        </div>
+                        <AcoesMenu {...menuProps} itens={[acaoPagamento, ...acoesBase]} />
+                      </div>
+
+                      {/* Desktop */}
+                      <div className="hidden flex-wrap items-center gap-x-3 gap-y-1 sm:flex">
                       <span className="w-14 shrink-0 text-sm text-ink-soft">dia {item.dia}</span>
                       <span className="min-w-0 flex-1 text-sm text-ink">
                         <span className="block truncate">
@@ -362,7 +438,7 @@ function RecorrenciasPage() {
                         </span>
                       )}
                       <span className="font-money w-24 shrink-0 text-right text-sm text-ink">
-                        {formatBRL(item.pagamentoId ? valorEfetivo(item) : item.valorPrevistoCentavos)}
+                        {valorExibido}
                         {valorReal !== null && valorReal !== item.valorPrevistoCentavos && (
                           <span className="block text-xs text-ink-soft line-through">
                             {formatBRL(item.valorPrevistoCentavos)}
@@ -390,34 +466,8 @@ function RecorrenciasPage() {
                           Marcar como paga
                         </Button>
                       )}
-                      <AcoesMenu
-                        aberto={menuAbertoId === item.recorrenciaId}
-                        onToggle={() =>
-                          setMenuAbertoId(menuAbertoId === item.recorrenciaId ? null : item.recorrenciaId)
-                        }
-                        onFechar={() => setMenuAbertoId(null)}
-                        itens={[
-                          { label: 'Editar', onClick: () => abrirEditar(item) },
-                          item.ativa
-                            ? {
-                                label: 'Desativar',
-                                onClick: () =>
-                                  executar(
-                                    () => definirRecorrenciaAtiva(item.recorrenciaId, false),
-                                    'Planejamento desativado.',
-                                  ),
-                              }
-                            : {
-                                label: 'Reativar',
-                                onClick: () =>
-                                  executar(
-                                    () => definirRecorrenciaAtiva(item.recorrenciaId, true),
-                                    'Planejamento reativado.',
-                                  ),
-                              },
-                          { label: 'Excluir', perigo: true, onClick: () => setExcluindo(item) },
-                        ]}
-                      />
+                        <AcoesMenu {...menuProps} itens={acoesBase} />
+                      </div>
                     </li>
                   )
                 })}

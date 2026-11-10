@@ -2,6 +2,16 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.10.3 — 2026-11-10
+
+**Planejamento no mobile** (ajuste sem spec)
+
+- Pago e Falta viram duas linhas empilhadas (sem porcentagem nem barra).
+- "Total geral" vira um alternador: começa fechado e abre Manuais, Automáticas, Recorrentes e Parceladas.
+- Filtros de Status e Duração empilhados.
+- Linhas da lista sem o dia; "Marcar como paga" e "Desmarcar pagamento" vão para o menu ⋯.
+- Botão "Novo planejamento" com "+" (desktop e mobile), centralizado no mobile.
+
 ## 2.10.2 — 2026-11-10
 
 **Cards Pago / Falta mais largos** (ajuste sem spec)

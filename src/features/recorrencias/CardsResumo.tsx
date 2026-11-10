@@ -39,11 +39,17 @@ function Card({ rotulo, centavos, icone, cor, bg, children }: {
   )
 }
 
-/** Cards Pago / Falta do mês, centralizados no topo (M30). Barra = pago ÷ previsto. */
+/** Pago / Falta do mês. Desktop: cards centralizados com barra pago ÷ previsto. Mobile: duas linhas. */
 function CardsResumo({ pagoCentavos, previstoCentavos, faltaCentavos }: Props) {
   const percentual = previstoCentavos > 0 ? Math.min(100, Math.round((pagoCentavos / previstoCentavos) * 100)) : 0
   return (
-    <div className="mb-6 flex flex-wrap justify-center gap-3" aria-label="Resumo do mês">
+    <>
+      {/* Mobile: uma linha por valor, empilhadas, sem barra. */}
+      <div className="mb-4 flex flex-col gap-2 sm:hidden" aria-label="Resumo do mês">
+        <LinhaResumo rotulo="Pago" centavos={pagoCentavos} icone={<IconeCheck />} cor="text-livre" bg="bg-livre/10" />
+        <LinhaResumo rotulo="Falta" centavos={faltaCentavos} icone={<IconeRelogio />} cor="text-alerta" bg="bg-alerta/10" />
+      </div>
+    <div className="mb-6 hidden flex-wrap justify-center gap-3 sm:flex" aria-label="Resumo do mês">
       <Card rotulo="Pago" centavos={pagoCentavos} icone={<IconeCheck />} cor="text-livre" bg="bg-livre/10">
         <div
           role="progressbar"
@@ -62,6 +68,23 @@ function CardsResumo({ pagoCentavos, previstoCentavos, faltaCentavos }: Props) {
       <Card rotulo="Falta" centavos={faltaCentavos} icone={<IconeRelogio />} cor="text-alerta" bg="bg-alerta/10">
         <p className="text-xs text-ink-soft">{faltaCentavos === 0 ? 'Tudo pago' : 'ainda a pagar'}</p>
       </Card>
+    </div>
+    </>
+  )
+}
+
+function LinhaResumo({ rotulo, centavos, icone, cor, bg }: {
+  rotulo: string
+  centavos: number
+  icone: React.ReactNode
+  cor: string
+  bg: string
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 shadow-sm">
+      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${bg} ${cor}`}>{icone}</span>
+      <span className="flex-1 text-sm font-medium text-ink-soft">{rotulo}</span>
+      <span className="font-money whitespace-nowrap text-lg font-semibold text-ink">{formatBRL(centavos)}</span>
     </div>
   )
 }
