@@ -1,6 +1,7 @@
 import type {
   ApelidoEstabelecimentoRow,
   CategoriaRow,
+  EntradaDiaFonteRow,
   EntradaRow,
   FonteRow,
   FaturaPendenteRow,
@@ -16,6 +17,7 @@ import type {
   RecorrenciaRow,
   ResultadoCriarSaidaRow,
   ResumoGeralRow,
+  SaidaDiaCategoriaRow,
   SaidaRow,
   SaldoCategoriaRow,
   SaldoFonteRow,
@@ -41,6 +43,8 @@ import type {
   Saida,
   SaldoCategoria,
   SaldoFonte,
+  SomaEntradaDia,
+  SomaSaidaDia,
   VinculoRecorrencia,
 } from '../types/domain'
 import { identidadeDaFonte } from '../lib/identidadeFontes'
@@ -397,5 +401,23 @@ export function deEntrada(dados: Partial<Omit<Entrada, 'id'>>) {
     ...(dados.valorCentavos !== undefined && { valor_centavos: dados.valorCentavos }),
     ...(dados.data !== undefined && { data: dados.data }),
     ...(dados.nota !== undefined && { nota: dados.nota }),
+  }
+}
+
+export function paraSomaSaidaDia(row: SaidaDiaCategoriaRow): SomaSaidaDia {
+  return {
+    data: row.data,
+    categoriaId: row.categoria_id,
+    totalCentavos: row.total_centavos,
+    quantidade: row.quantidade,
+  }
+}
+
+export function paraSomaEntradaDia(row: EntradaDiaFonteRow): SomaEntradaDia {
+  return {
+    data: row.data,
+    fonteId: row.fonte_id,
+    totalCentavos: row.total_centavos,
+    quantidade: row.quantidade,
   }
 }

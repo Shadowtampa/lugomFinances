@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import ProtectedLayout from './components/layout/ProtectedLayout'
 import CategoriasPage from './pages/CategoriasPage'
 import ConexoesPage from './pages/ConexoesPage'
+import DashboardAnaliticoPage from './pages/DashboardAnaliticoPage'
 import DashboardPage from './pages/DashboardPage'
 import EntradasPage from './pages/EntradasPage'
 import FontesPage from './pages/FontesPage'
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
     Component: ProtectedLayout,
     children: [
       { index: true, Component: DashboardPage },
+      { path: 'dashboard/:aba', Component: DashboardAnaliticoPage },
       { path: 'entradas', Component: EntradasPage },
       { path: 'saidas', Component: SaidasPage },
       { path: 'fontes', Component: FontesPage },

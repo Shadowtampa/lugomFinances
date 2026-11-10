@@ -289,3 +289,21 @@ export interface ResultadoCriarSaidaRow {
     gasto_mes_atual_centavos: number
   } | null
 }
+
+/** v_saidas_dia_categoria (M31): somas por dia e Categoria, já sem fatura/saldo inicial/futuros. */
+export interface SaidaDiaCategoriaRow {
+  user_id: string
+  data: string
+  categoria_id: string
+  total_centavos: number
+  quantidade: number
+}
+
+/** v_entradas_dia_fonte (M31): somas por dia e Fonte (cartão fora). */
+export interface EntradaDiaFonteRow {
+  user_id: string
+  data: string
+  fonte_id: string
+  total_centavos: number
+  quantidade: number
+}

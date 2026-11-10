@@ -39,6 +39,11 @@ const NAV_ITEMS = [
 
 const APP_VERSION = __APP_VERSION__
 
+/** O Painel (/) também fica ativo nas abas analíticas (/dashboard/...). (M31) */
+function painelAtivo(to: string, pathname: string) {
+  return to === '/' && pathname.startsWith('/dashboard')
+}
+
 const NavMobileContext = createContext<() => void>(() => {})
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -99,7 +104,11 @@ function AppShell({ children }: { children: ReactNode }) {
           <span className="mb-4 px-3 text-lg font-semibold text-ink">Lugom</span>
           {NAV_ITEMS.map((item) => (
             <Fragment key={item.to}>
-              <NavLink to={item.to} end={item.end} className={navLinkClass}>
+              <NavLink
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => navLinkClass({ isActive: isActive || painelAtivo(item.to, location.pathname) })}
+              >
                 {item.label}
                 {item.to === '/recorrencias' && (
                   <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
@@ -153,7 +162,7 @@ function AppShell({ children }: { children: ReactNode }) {
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                className={navLinkClass}
+                className={({ isActive }) => navLinkClass({ isActive: isActive || painelAtivo(item.to, location.pathname) })}
                 onClick={() => setDrawerAberto(false)}
               >
                 {item.label}
