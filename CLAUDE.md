@@ -57,13 +57,15 @@ Work items live as GitHub issues on `Shadowtampa/lugomFinances` (use `gh`). Each
 
 ## Versioning
 
-Every milestone bumps the **minor** version in `package.json` (`npm install --package-lock-only` to sync the lock) and adds an entry at the top of `CHANGELOG.md` in the same commit; a fix without a spec bumps the patch. The menu shows the version via `__APP_VERSION__` (injected in `vite.config.ts`). The repo's GitHub default branch is not `main`, so `Closes #n` doesn't auto-close: close the issue with `gh issue close` after pushing.
+Every milestone bumps the **minor** version in `package.json` (`npm install --package-lock-only` to sync the lock) and adds an entry at the top of `CHANGELOG.md` in the same commit; a fix without a spec bumps the patch. The menu shows the version via `__APP_VERSION__` (injected in `vite.config.ts`). The repo's GitHub default branch is not `main`, so `Closes #n` doesn't auto-close: close the issue with `gh issue close` after the milestone is merged into `main`.
 
 ## Git actions
 
 Never `git commit`, `push`, or merge a branch unless the user explicitly asks for
 it in that turn. Finishing or verifying a milestone/feature is not itself
 permission — wait to be told.
+
+**The remote does not matter.** The whole system lives on the user's homelab; nothing is deployed from GitHub. Merging a branch into the local `main` is what publishes a milestone to the environment where it's needed — never `git push` it (to `origin` or anywhere) unless the user asks. "Is it on main?" means local `main`; don't treat `origin/main` being behind as pending work. A milestone is only "published" when its code is on local `main` **and** its migrations have been applied to the homelab database (see README); an unapplied migration breaks the live front, since `npm run build` goes live instantly.
 
 ## Commands
 
