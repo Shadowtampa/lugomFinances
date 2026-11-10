@@ -56,7 +56,7 @@ function escolherPares(candidatos: ParPagamentoFatura[]): ParPagamentoFatura[] {
   return pares
 }
 
-/** Escolhas do usuário por linha (categoria e recorrência); default = sugestões. */
+/** Escolhas do usuário por linha (categoria e planejamento); default = sugestões. */
 type Escolha = { categoriaId: string; recorrenciaId: string }
 
 function ImportadasPage() {

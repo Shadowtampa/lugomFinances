@@ -143,11 +143,19 @@ export async function definirFontesRecorrencia(recorrenciaId: string, fonteIds: 
   unwrap(await db.rpc('definir_fontes_recorrencia', { p_recorrencia_id: recorrenciaId, p_fonte_ids: fonteIds }))
 }
 
-/** Tipos de Planejamento (M29), em ordem de exibição. */
-export async function listarTiposPlanejamento(): Promise<TipoPlanejamento[]> {
-  const rows = unwrap<TipoPlanejamentoRow[]>(
-    await db.from('tipos_planejamento').select('*').order('ordem'),
-  )
+let tiposEmCache: Promise<TipoPlanejamento[]> | null = null
+
+/** Tipos de Planejamento (M29), em ordem de exibição. Rol fixo: buscado uma vez por sessão. */
+export function listarTiposPlanejamento(): Promise<TipoPlanejamento[]> {
+  tiposEmCache ??= buscarTiposPlanejamento().catch((e: unknown) => {
+    tiposEmCache = null // falhou: tenta de novo na próxima chamada
+    throw e
+  })
+  return tiposEmCache
+}
+
+async function buscarTiposPlanejamento(): Promise<TipoPlanejamento[]> {
+  const rows = unwrap<TipoPlanejamentoRow[]>(await db.from('tipos_planejamento').select('*').order('ordem'))
   return rows.map(paraTipoPlanejamento)
 }
 

@@ -19,12 +19,12 @@ insert into tipos_planejamento (id, slug, nome, ordem) values
   (5, 'contas',         'Contas',                5);
 
 -- Tabela global (sem user_id): qualquer usuário autenticado lê; ninguém escreve.
+-- Só existe policy de select: com RLS ligada, insert/update/delete são negados. (Não adianta
+-- `revoke`: 99999_grants.sql devolve DML a todas as tabelas; a RLS é a proteção real.)
 alter table tipos_planejamento enable row level security;
 
 create policy "ler_tipos_planejamento" on tipos_planejamento
   for select to authenticated using (true);
-
-revoke insert, update, delete on tipos_planejamento from authenticated;
 
 -- Registros existentes viram "Contas" (id 5); depois a coluna fica obrigatória, sem default.
 alter table recorrencias

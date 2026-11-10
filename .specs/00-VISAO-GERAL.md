@@ -224,7 +224,8 @@ auth.users (local, M17)
    │
    └── recorrencias (M19 — fora de qualquer saldo)
          id, user_id, titulo, valor_previsto_centavos, dia, categoria_id,
-         mes_inicio, total_parcelas, ativa
+         mes_inicio, total_parcelas, ativa,
+         tipo_planejamento_id (M29, obrigatório → tipos_planejamento)
             │
             └── recorrencias_pagamentos
                   id, recorrencia_id, competencia, pago_em, saida_id (opcional, único, cascade)
@@ -236,6 +237,7 @@ auth.users (local, M17)
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
 `apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
+M29: `tipos_planejamento` (enum global de 5 Tipos, sem `user_id`, só leitura) e a view `v_planejamento_resumo` (pago / previsto / falta por competência e Tipo).
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.

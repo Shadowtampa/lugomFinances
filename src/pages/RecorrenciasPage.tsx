@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, NavLink, Navigate, useParams, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
@@ -14,6 +14,7 @@ import IndicadorNota from '../features/notas/IndicadorNota'
 import RecorrenciaFormModal from '../features/recorrencias/RecorrenciaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
+import { usePlanejamentoPaginado } from '../hooks/usePlanejamentoPaginado'
 import { deslocarMes, formatarData, hojeISO, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
 import { resumoDoTipo, subtituloPlanejamento, tipoPorSlug } from '../lib/planejamento'
@@ -32,7 +33,6 @@ import {
   desmarcarPagamento,
   excluirRecorrencia,
   listarFaturasPendentes,
-  listarPlanejamentoPagina,
   listarResumoPlanejamento,
   listarTiposPlanejamento,
   marcarComoPaga,
@@ -103,65 +103,20 @@ function RecorrenciasPage() {
 
   const filtro = lerFiltroRecorrencia(params.get('status'))
 
-  // Lista paginada pela API (10 por vez). `versaoLista` força recarga após uma ação.
-  const [itens, setItens] = useState<RecorrenciaDoMes[]>([])
-  const [totalFiltrado, setTotalFiltrado] = useState(0)
-  const [carregandoLista, setCarregandoLista] = useState(true)
-  const [carregandoMais, setCarregandoMais] = useState(false)
-  const [erroLista, setErroLista] = useState(false)
-  const [versaoLista, setVersaoLista] = useState(0)
-  // Quantos itens refazer na próxima busca (recarga após ação); consumido e zerado pelo effect.
-  const tamanhoRecarga = useRef(0)
-  const contextoLista = `${mes}|${tipoId ?? ''}|${filtro}`
-  const contextoRef = useRef(contextoLista)
-  contextoRef.current = contextoLista
-
-  useEffect(() => {
-    if (aguardandoTipo || slugInvalido) return
-    let cancelado = false
-    const tamanho = tamanhoRecarga.current
-    tamanhoRecarga.current = 0
-    setCarregandoLista(true)
-    setErroLista(false)
-    listarPlanejamentoPagina({ competencia: mes, tipoId, filtro, offset: 0, tamanho: tamanho || undefined })
-      .then((pagina) => {
-        if (cancelado) return
-        setItens(pagina.itens)
-        setTotalFiltrado(pagina.total)
-      })
-      .catch(() => {
-        if (!cancelado) setErroLista(true)
-      })
-      .finally(() => {
-        if (!cancelado) setCarregandoLista(false)
-      })
-    return () => {
-      cancelado = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mes, tipoId, filtro, versaoLista, aguardandoTipo, slugInvalido])
-
+  const lista = usePlanejamentoPaginado({
+    competencia: mes,
+    tipoId,
+    filtro,
+    pausado: aguardandoTipo || slugInvalido,
+    onErroCarregarMais: (mensagem) => showToast(mensagem, 'error'),
+  })
+  const { itens, total: totalFiltrado, carregando: carregandoLista, erro: erroLista, carregandoMais, carregarMais } = lista
+  const recarregarLista = lista.recarregar
+  const recarregarDados = dados.recarregar
   const recarregarTudo = useCallback(() => {
-    tamanhoRecarga.current = Math.max(itens.length, 1)
-    setVersaoLista((v) => v + 1)
-    dados.recarregar()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itens.length, dados.recarregar])
-
-  async function carregarMais() {
-    setCarregandoMais(true)
-    const contexto = contextoLista
-    try {
-      const pagina = await listarPlanejamentoPagina({ competencia: mes, tipoId, filtro, offset: itens.length })
-      if (contexto !== contextoRef.current) return // trocou mês/Tipo/filtro no meio
-      setItens((atuais) => [...atuais, ...pagina.itens])
-      setTotalFiltrado(pagina.total)
-    } catch (e) {
-      showToast(mensagemDoErro(e), 'error')
-    } finally {
-      setCarregandoMais(false)
-    }
-  }
+    recarregarLista()
+    recarregarDados()
+  }, [recarregarLista, recarregarDados])
 
   const resumo = useMemo(
     () => resumoDoTipo(dados.data?.resumoPorTipo ?? [], tipoId),

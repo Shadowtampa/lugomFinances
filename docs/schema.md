@@ -16,6 +16,9 @@ Todas com RLS habilitada, escopadas por `user_id = auth.uid()` (join no pai para
 | `entradas` | `fonte_id`, `valor_centavos`, `data`, `recorrente`, `dia_recorrencia`, `template_id` | insert direto via PostgREST (sem RPC) |
 | `saidas` | `categoria_id`, `valor_total_centavos`, `data`, `recorrente`, `template_id` | **nunca** insert direto — sempre via `criar_saida` |
 | `saida_splits` | `saida_id`, `fonte_id`, `valor_centavos` | `unique (saida_id, fonte_id)` |
+| `recorrencias` | `titulo`, `valor_previsto_centavos`, `dia`, `categoria_id`, `mes_inicio`, `total_parcelas`, `ativa`, `tipo_planejamento_id` | Planejamento na UI (M19/M29). Acompanhamento mensal, nunca afeta saldo |
+| `recorrencias_pagamentos` | `recorrencia_id`, `competencia`, `pago_em`, `saida_id` | `unique (recorrencia_id, competencia)`; `saida_id` único, `on delete cascade` (M28) |
+| `tipos_planejamento` | `slug`, `nome`, `ordem` | M29. Enum global (sem `user_id`): Assinaturas, Transferências manuais, Compras parceladas, Dívidas, Contas. Só leitura (RLS só com select) |
 
 Todo valor monetário é `bigint` em centavos. Nenhum `numeric`/`float`.
 
@@ -26,6 +29,8 @@ Todo valor monetário é `bigint` em centavos. Nenhum `numeric`/`float`.
   (`limite_mensal × meses_ativos − Σ saídas`). Estourar não bloqueia (RN-06).
 - **`v_resumo_geral`** — saldo total/livre/restrito por usuário. `saldo_livre` exclui
   fontes restritas — é a resposta ao problema central do app.
+- **`v_recorrencias_mes`** — uma linha por planejamento e competência (M19), com pagamento, Saída ligada (M28) e `tipo_planejamento_id` (M29).
+- **`v_planejamento_resumo`** — `quantidade`, `previsto`, `pago` e `falta` em centavos por competência e Tipo (M29); alimenta os cards da tela.
 - **`v_recorrencias_pendentes`** — templates recorrentes ainda não lançados no mês
   corrente (RN-08).
 
