@@ -31,6 +31,7 @@ function item(parcial: Partial<RecorrenciaDoMes>): RecorrenciaDoMes {
     fontesPrevistas: [],
     saidaTitulo: null,
     saidaData: null,
+    tipoPlanejamentoId: 5,
     ...parcial,
   }
 }

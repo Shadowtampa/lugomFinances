@@ -6,16 +6,19 @@ import MoneyInput from '../../components/ui/MoneyInput'
 import Select from '../../components/ui/Select'
 import { mesAtual } from '../../lib/date'
 import { mensagemDoErro } from '../../lib/erros'
+import { TIPO_PADRAO_SLUG, tipoPorSlug } from '../../lib/planejamento'
 import { avisosFontesPrevistas } from '../../lib/recorrencias'
 import { atualizarRecorrencia, criarRecorrencia, definirFontesRecorrencia } from '../../services/recorrencias'
 import CampoNota from '../notas/CampoNota'
-import type { Categoria, Fonte, Recorrencia } from '../../types/domain'
+import type { Categoria, Fonte, Recorrencia, TipoPlanejamento } from '../../types/domain'
 import FontesPrevistasSelect from './FontesPrevistasSelect'
 
 interface RecorrenciaFormModalProps {
   aberto: boolean
   recorrencia?: Recorrencia
   categorias: Pick<Categoria, 'id' | 'nome'>[]
+  /** Tipos de Planejamento (M29). */
+  tipos: TipoPlanejamento[]
   /** Todas as Fontes (inclusive arquivadas, para mostrar vínculos antigos). */
   fontes: Fonte[]
   onFechar(): void
@@ -26,6 +29,7 @@ function RecorrenciaFormModal({
   aberto,
   recorrencia,
   categorias,
+  tipos,
   fontes,
   onFechar,
   onSalvo,
@@ -33,6 +37,10 @@ function RecorrenciaFormModal({
   const [titulo, setTitulo] = useState(recorrencia?.titulo ?? '')
   const [valorCentavos, setValorCentavos] = useState(recorrencia?.valorPrevistoCentavos ?? 0)
   const [dia, setDia] = useState<number | ''>(recorrencia?.dia ?? '')
+  // Tipo obrigatório; em um planejamento novo, sempre começa em Contas.
+  const [tipoId, setTipoId] = useState<number | ''>(
+    recorrencia?.tipoPlanejamentoId ?? tipoPorSlug(tipos, TIPO_PADRAO_SLUG)?.id ?? '',
+  )
   const [categoriaId, setCategoriaId] = useState(recorrencia?.categoriaId ?? '')
   const [totalParcelas, setTotalParcelas] = useState<number | ''>(recorrencia?.totalParcelas ?? '')
   const [mesInicio, setMesInicio] = useState(recorrencia?.mesInicio ?? mesAtual())
@@ -55,6 +63,7 @@ function RecorrenciaFormModal({
     const tituloAparado = titulo.trim()
     if (tituloAparado.length < 1 || tituloAparado.length > 60)
       novosErros.titulo = 'Título deve ter entre 1 e 60 caracteres.'
+    if (tipoId === '') novosErros.tipo = 'Selecione o tipo de planejamento.'
     if (valorCentavos <= 0) novosErros.valor = 'Valor deve ser maior que zero.'
     if (dia === '' || !Number.isInteger(dia) || dia < 1 || dia > 31)
       novosErros.dia = 'Dia deve estar entre 1 e 31.'
@@ -68,6 +77,7 @@ function RecorrenciaFormModal({
       titulo: tituloAparado,
       valorPrevistoCentavos: valorCentavos,
       dia: dia as number,
+      tipoPlanejamentoId: tipoId as number,
       categoriaId: categoriaId || null,
       totalParcelas: totalParcelas === '' ? null : totalParcelas,
       mesInicio,
@@ -92,7 +102,7 @@ function RecorrenciaFormModal({
   }
 
   return (
-    <Modal open={aberto} onClose={onFechar} title={recorrencia ? 'Editar recorrência' : 'Nova recorrência'}>
+    <Modal open={aberto} onClose={onFechar} title={recorrencia ? 'Editar Planejamento Financeiro' : 'Novo Planejamento Financeiro'}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label="Título"
@@ -119,6 +129,19 @@ function RecorrenciaFormModal({
           hint={typeof dia === 'number' && dia > 28 ? 'Em meses mais curtos, vale o último dia do mês.' : undefined}
           required
         />
+        <Select
+          label="Tipo de planejamento"
+          value={tipoId}
+          onChange={(event) => setTipoId(event.target.value === '' ? '' : Number(event.target.value))}
+          error={erros.tipo}
+          required
+        >
+          {tipos.map((tipo) => (
+            <option key={tipo.id} value={tipo.id}>
+              {tipo.nome}
+            </option>
+          ))}
+        </Select>
         <Select
           label="Categoria (opcional)"
           value={categoriaId}
@@ -168,7 +191,7 @@ function RecorrenciaFormModal({
             Cancelar
           </Button>
           <Button type="submit" loading={enviando} disabled={enviando}>
-            Salvar recorrência
+            Salvar planejamento
           </Button>
         </div>
       </form>

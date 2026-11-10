@@ -166,7 +166,7 @@ function SaidasPage() {
     setMenuAbertoId(null)
   }
 
-  // ?editar=<id> (M28): vindo da tela Recorrências, abre a edição da Saída ligada.
+  // ?editar=<id> (M28): vindo da tela Planejamento Financeiro, abre a edição da Saída ligada.
   const editarId = params.get('editar')
   useEffect(() => {
     if (!editarId) return
@@ -352,9 +352,9 @@ function SaidasPage() {
                     {saida.recorrencia && (
                       <span
                         className="shrink-0 text-xs text-ink-soft"
-                        title="Recorrência quitada por esta saída"
+                        title="Planejamento quitado por esta saída"
                       >
-                        ↻ {saida.recorrencia.titulo ?? 'Recorrência'} {rotuloCompetencia(saida.recorrencia.competencia)}
+                        ↻ {saida.recorrencia.titulo ?? 'Planejamento'} {rotuloCompetencia(saida.recorrencia.competencia)}
                       </span>
                     )}
                     {ehFuturo(saida.data) && (

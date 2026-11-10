@@ -74,7 +74,7 @@ function CardRecorrencias({ pendentes, atrasadas, faltaCentavos }: { pendentes: 
       }`}
     >
       <span className="text-ink">
-        Recorrências de {nomeDoMes(mesAtual()).split(' ')[0].toLowerCase()}:{' '}
+        Planejamento de {nomeDoMes(mesAtual()).split(' ')[0].toLowerCase()}:{' '}
         <span className={atrasadas > 0 ? 'text-alerta' : ''}>{partes.join(', ')}</span>
       </span>
       <span className="font-money text-ink-soft">{formatBRL(faltaCentavos)} a pagar</span>

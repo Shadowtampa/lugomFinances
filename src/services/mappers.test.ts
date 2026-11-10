@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { RecorrenciaMesRow, SaidaRow } from '../types/api'
-import { deRecorrencia, paraRecorrenciaDoMes, paraSaida, paraVinculoRecorrencia } from './mappers'
+import {
+  deRecorrencia,
+  paraRecorrenciaDoMes,
+  paraResumoPlanejamento,
+  paraSaida,
+  paraTipoPlanejamento,
+  paraVinculoRecorrencia,
+} from './mappers'
 
 describe('paraSaida', () => {
   it('desempacota os splits aninhados', () => {
@@ -98,6 +105,7 @@ describe('paraRecorrenciaDoMes', () => {
       fontes_previstas: [],
       saida_titulo: null,
       saida_data: null,
+      tipo_planejamento_id: 2,
     }
     expect(paraRecorrenciaDoMes(row)).toEqual({
       recorrenciaId: 'r1',
@@ -118,6 +126,7 @@ describe('paraRecorrenciaDoMes', () => {
       valorPagoCentavos: null,
       saidaTitulo: null,
       saidaData: null,
+      tipoPlanejamentoId: 2,
     })
   })
 })
@@ -127,6 +136,44 @@ describe('deRecorrencia', () => {
     expect(deRecorrencia({ mesInicio: '2026-11', categoriaId: null })).toEqual({
       mes_inicio: '2026-11-01',
       categoria_id: null,
+    })
+  })
+
+  it('envia o Tipo de Planejamento quando presente', () => {
+    expect(deRecorrencia({ tipoPlanejamentoId: 5 })).toEqual({ tipo_planejamento_id: 5 })
+  })
+})
+
+describe('paraTipoPlanejamento', () => {
+  it('converte a linha do enum', () => {
+    expect(paraTipoPlanejamento({ id: 2, slug: 'transferencias', nome: 'Transferências manuais', ordem: 2 })).toEqual({
+      id: 2,
+      slug: 'transferencias',
+      nome: 'Transferências manuais',
+      ordem: 2,
+    })
+  })
+})
+
+describe('paraResumoPlanejamento', () => {
+  it('converte competência para YYYY-MM', () => {
+    expect(
+      paraResumoPlanejamento({
+        user_id: 'u1',
+        competencia: '2026-11-01',
+        tipo_planejamento_id: 5,
+        quantidade: 3,
+        previsto_centavos: 30000,
+        pago_centavos: 10000,
+        falta_centavos: 20000,
+      }),
+    ).toEqual({
+      competencia: '2026-11',
+      tipoPlanejamentoId: 5,
+      quantidade: 3,
+      previstoCentavos: 30000,
+      pagoCentavos: 10000,
+      faltaCentavos: 20000,
     })
   })
 })

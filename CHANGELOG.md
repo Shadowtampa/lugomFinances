@@ -2,6 +2,17 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.9.0 — 2026-11-10
+
+**M29: Planejamento Financeiro** (#10)
+
+- A aba Recorrências vira **Planejamento Financeiro**: sidebar com subseções aninhadas (Geral + Assinaturas, Transferências manuais, Compras parceladas, Dívidas, Contas) e, no mobile, chips no topo da página. Rota continua `/recorrencias`; subseções em `/recorrencias/:tipo`.
+- Todo planejamento tem um **Tipo de Planejamento** obrigatório (padrão Contas, também ao criar de outra subseção). Os já existentes viram Contas. Categoria de gasto continua opcional.
+- Título "Planejamento Financeiro" com subtítulo "Planejamento Financeiro - <Tipo>", dois cards Pago / Falta ao lado do título (calculados no banco para o mês e Tipo selecionados) e, na Geral, quantitativos por Tipo + total.
+- Lista paginada pela API, 10 por vez, com "Carregar mais"; filtro de status passa a ser feito no banco.
+- Botão "Novo planejamento"; formulário "Novo Planejamento Financeiro"; textos de UI trocam "recorrência" por "planejamento".
+- Banco: migration `00019_tipos_planejamento.sql` (tabela `tipos_planejamento`, `recorrencias.tipo_planejamento_id`, `v_recorrencias_mes` com o Tipo, `v_planejamento_resumo`).
+
 ## 2.8.0 — 2026-11-09
 
 **M28: Vincular Saída a uma Recorrência** (#9)

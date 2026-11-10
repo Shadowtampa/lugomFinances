@@ -1,11 +1,16 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { Fragment, createContext, useContext, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAsync } from '../../hooks/useAsync'
 import { hojeISO, mesAtual } from '../../lib/date'
 import { statusDaRecorrencia } from '../../lib/recorrencias'
 import { contarImportadasPendentes } from '../../services/integracao'
-import { listarFaturasPendentes, listarRecorrenciasDoMes } from '../../services/recorrencias'
+import {
+  listarFaturasPendentes,
+  listarRecorrenciasDoMes,
+  listarTiposPlanejamento,
+} from '../../services/recorrencias'
+import type { TipoPlanejamento } from '../../types/domain'
 
 async function carregarPendencias() {
   const [doMes, faturas, importadas] = await Promise.all([
@@ -29,7 +34,7 @@ const NAV_ITEMS = [
   { to: '/saidas', label: 'Saídas' },
   { to: '/fontes', label: 'Fontes' },
   { to: '/categorias', label: 'Categorias' },
-  { to: '/recorrencias', label: 'Recorrências' },
+  { to: '/recorrencias', label: 'Planejamento Financeiro' },
   { to: '/conexoes', label: 'Conexões' },
 ]
 
@@ -56,6 +61,29 @@ function BadgePendencias({ count, atrasado }: { count: number; atrasado: boolean
   )
 }
 
+/** Subseções do Planejamento Financeiro (M29): Geral + um item por Tipo. Aberto na área de Planejamento. */
+function SubmenuPlanejamento({ tipos }: { tipos: TipoPlanejamento[] }) {
+  const { pathname } = useLocation()
+  if (!pathname.startsWith('/recorrencias')) return null
+  const itens = [{ to: '/recorrencias', label: 'Geral' }, ...tipos.map((t) => ({ to: `/recorrencias/${t.slug}`, label: t.nome }))]
+  return (
+    <div className="ml-3 flex flex-col gap-0.5 border-l border-line pl-2">
+      {itens.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end
+          className={({ isActive }) =>
+            `rounded px-3 py-1.5 text-sm ${isActive ? 'bg-livre/10 font-medium text-livre' : 'text-ink-soft hover:bg-base'}`
+          }
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </div>
+  )
+}
+
 function AppShell({ children }: { children: ReactNode }) {
   const { user, sair } = useAuth()
   const location = useLocation()
@@ -63,6 +91,7 @@ function AppShell({ children }: { children: ReactNode }) {
   const contagemPendencias = pendencias.data?.contagem ?? 0
   const temAtrasado = pendencias.data?.atrasado ?? false
 
+  const tipos = useAsync(listarTiposPlanejamento, [])
   const [drawerAberto, setDrawerAberto] = useState(false)
 
   return (
@@ -72,15 +101,18 @@ function AppShell({ children }: { children: ReactNode }) {
         <nav className="hidden w-56 shrink-0 flex-col gap-1 border-r border-line bg-surface p-4 md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
           <span className="mb-4 px-3 text-lg font-semibold text-ink">Lugom</span>
           {NAV_ITEMS.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
-              {item.label}
-              {item.to === '/recorrencias' && (
-                <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
-              )}
-              {item.to === '/importadas' && (
-                <BadgePendencias count={pendencias.data?.importadas ?? 0} atrasado={false} />
-              )}
-            </NavLink>
+            <Fragment key={item.to}>
+              <NavLink to={item.to} end={item.end} className={navLinkClass}>
+                {item.label}
+                {item.to === '/recorrencias' && (
+                  <BadgePendencias count={contagemPendencias} atrasado={temAtrasado} />
+                )}
+                {item.to === '/importadas' && (
+                  <BadgePendencias count={pendencias.data?.importadas ?? 0} atrasado={false} />
+                )}
+              </NavLink>
+              {item.to === '/recorrencias' && <SubmenuPlanejamento tipos={tipos.data ?? []} />}
+            </Fragment>
           ))}
 
           <div className="mt-auto flex flex-col gap-2 border-t border-line pt-4">
@@ -155,21 +187,38 @@ function AppShell({ children }: { children: ReactNode }) {
   )
 }
 
-export function PageHeader({ title, action }: { title: string; action?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  cards,
+  action,
+}: {
+  title: string
+  subtitle?: string
+  /** Cards de resumo ao lado do título (M29). */
+  cards?: ReactNode
+  action?: ReactNode
+}) {
   const abrirConfigNavMobile = useContext(NavMobileContext)
 
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          aria-label="Abrir menu"
-          className="flex h-9 w-9 items-center justify-center rounded text-ink-soft hover:bg-base md:hidden"
-          onClick={abrirConfigNavMobile}
-        >
-          ☰
-        </button>
-        <h1 className="text-xl font-semibold text-ink">{title}</h1>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            className="flex h-9 w-9 items-center justify-center rounded text-ink-soft hover:bg-base md:hidden"
+            onClick={abrirConfigNavMobile}
+          >
+            ☰
+          </button>
+          <div>
+            <h1 className="text-xl font-semibold text-ink">{title}</h1>
+            {subtitle && <p className="text-sm text-ink-soft">{subtitle}</p>}
+          </div>
+        </div>
+        {cards}
       </div>
       {action}
     </div>

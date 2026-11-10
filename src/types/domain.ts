@@ -119,6 +119,7 @@ export type Recorrencia = {
   mesInicio: string
   totalParcelas: number | null
   ativa: boolean
+  tipoPlanejamentoId: number
   nota?: string | null
   /** Meio de pagamento previsto (M27): ids de Fonte, só autocontrole. */
   fontesPrevistas?: string[]
@@ -147,6 +148,25 @@ export type RecorrenciaDoMes = {
   /** Saída ligada (M28), quando paga por um lançamento. */
   saidaTitulo: string | null
   saidaData: string | null
+  tipoPlanejamentoId: number
+}
+
+/** Tipo de Planejamento (M29): rol fixo, tabela `tipos_planejamento`. */
+export type TipoPlanejamento = {
+  id: number
+  slug: string
+  nome: string
+  ordem: number
+}
+
+/** Pago / previsto / falta de uma competência (YYYY-MM) para um Tipo. */
+export type ResumoPlanejamento = {
+  competencia: string
+  tipoPlanejamentoId: number
+  quantidade: number
+  previstoCentavos: number
+  pagoCentavos: number
+  faltaCentavos: number
 }
 
 export type PluggyItem = {

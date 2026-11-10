@@ -502,7 +502,7 @@ function SaidaFormModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {mostrarVinculo && (opcoesVinculo.length > 0 || vinculoOriginal) && (
           <Select
-            label="Recorrência"
+            label="Planejamento"
             hint="Opcional. Marca a conta como paga por esta saída."
             value={vinculoChave}
             onChange={(event) => escolherVinculo(event.target.value)}
@@ -510,7 +510,7 @@ function SaidaFormModal({
             <option value="">— nenhuma —</option>
             {vinculoOriginal && vinculoOriginalForaDaLista && (
               <option value={chaveVinculo(vinculoOriginal)}>
-                {vinculoOriginal.titulo ?? 'Recorrência'} — {rotuloCompetencia(vinculoOriginal.competencia)}
+                {vinculoOriginal.titulo ?? 'Planejamento'} — {rotuloCompetencia(vinculoOriginal.competencia)}
               </option>
             )}
             {opcoesVinculo.map((opcao) => (

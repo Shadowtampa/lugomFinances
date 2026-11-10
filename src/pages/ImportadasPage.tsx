@@ -323,7 +323,7 @@ function ImportadasPage() {
                     {sugestoes.length > 0 && (
                       <div className="w-full sm:w-64">
                         <Select
-                          label="É uma recorrência?"
+                          label="É um planejamento?"
                           value={escolha.recorrenciaId}
                           onChange={(e) => escolher(t.id, { recorrenciaId: e.target.value })}
                         >

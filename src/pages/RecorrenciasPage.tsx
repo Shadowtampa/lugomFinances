@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, NavLink, Navigate, useParams, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
 import SeloFonte from '../components/ui/SeloFonte'
@@ -16,11 +16,10 @@ import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
 import { deslocarMes, formatarData, hojeISO, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
+import { resumoDoTipo, subtituloPlanejamento, tipoPorSlug } from '../lib/planejamento'
 import { formatBRL } from '../lib/money'
 import {
-  filtrarRecorrencias,
   lerFiltroRecorrencia,
-  resumoDoMes,
   statusDaRecorrencia,
   rotuloFontesPrevistas,
   valorEfetivo,
@@ -33,15 +32,18 @@ import {
   desmarcarPagamento,
   excluirRecorrencia,
   listarFaturasPendentes,
-  listarRecorrenciasDoMes,
+  listarPlanejamentoPagina,
+  listarResumoPlanejamento,
+  listarTiposPlanejamento,
   marcarComoPaga,
   obterRecorrencia,
 } from '../services/recorrencias'
 import type { FaturaPendente, Recorrencia, RecorrenciaDoMes, StatusRecorrencia } from '../types/domain'
 
 async function carregarDados(mes: string) {
-  const [itens, faturas, categorias, fontesBase, saldosFontes] = await Promise.all([
-    listarRecorrenciasDoMes(mes),
+  const [resumoPorTipo, tipos, faturas, categorias, fontesBase, saldosFontes] = await Promise.all([
+    listarResumoPlanejamento(mes),
+    listarTiposPlanejamento(),
     listarFaturasPendentes(),
     listarCategorias(),
     listarFontes({ incluirArquivadas: true }),
@@ -52,7 +54,7 @@ async function carregarDados(mes: string) {
     ...f,
     saldoCentavos: mapaSaldos.get(f.id) ?? 0,
   }))
-  return { itens, faturas, categorias: categorias.filter((c) => !c.arquivada), fontes }
+  return { resumoPorTipo, tipos, faturas, categorias: categorias.filter((c) => !c.arquivada), fontes }
 }
 
 const OPCOES_FILTRO: { valor: FiltroRecorrencia; rotulo: string }[] = [
@@ -67,12 +69,28 @@ const ESTILO_STATUS: Record<StatusRecorrencia, { rotulo: string; classe: string 
   atrasada: { rotulo: 'Atrasada', classe: 'bg-alerta/10 text-alerta' },
 }
 
+function CardResumo({ rotulo, centavos, detalhe }: { rotulo: string; centavos: number; detalhe?: string }) {
+  return (
+    <div className="min-w-[8.5rem] rounded border border-line bg-surface px-3 py-2">
+      <p className="text-xs text-ink-soft">{rotulo}</p>
+      <p className="font-money text-lg font-semibold text-ink">{formatBRL(centavos)}</p>
+      {detalhe && <p className="font-money text-xs text-ink-soft">{detalhe}</p>}
+    </div>
+  )
+}
+
 function RecorrenciasPage() {
   const { showToast } = useToast()
+  const { tipo: slugTipo } = useParams()
   const [params, setParams] = useSearchParams()
   const mes = params.get('mes') ?? mesAtual()
   const dados = useAsync(() => carregarDados(mes), [mes])
   const hoje = hojeISO()
+  const tipos = dados.data?.tipos
+  const tipoAtual = tipos ? tipoPorSlug(tipos, slugTipo) : undefined
+  const slugInvalido = Boolean(slugTipo && tipos && !tipoAtual)
+  const aguardandoTipo = Boolean(slugTipo && !tipos)
+  const tipoId = tipoAtual?.id
 
   const [aberturaId, setAberturaId] = useState(0)
   const [formAberto, setFormAberto] = useState<{ recorrencia?: Recorrencia } | null>(null)
@@ -83,10 +101,73 @@ function RecorrenciasPage() {
   const [menuAbertoId, setMenuAbertoId] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
 
-  const itens = useMemo(() => dados.data?.itens ?? [], [dados.data])
-  const resumo = useMemo(() => resumoDoMes(itens), [itens])
   const filtro = lerFiltroRecorrencia(params.get('status'))
-  const visiveis = useMemo(() => filtrarRecorrencias(itens, filtro), [itens, filtro])
+
+  // Lista paginada pela API (10 por vez). `versaoLista` força recarga após uma ação.
+  const [itens, setItens] = useState<RecorrenciaDoMes[]>([])
+  const [totalFiltrado, setTotalFiltrado] = useState(0)
+  const [carregandoLista, setCarregandoLista] = useState(true)
+  const [carregandoMais, setCarregandoMais] = useState(false)
+  const [erroLista, setErroLista] = useState(false)
+  const [versaoLista, setVersaoLista] = useState(0)
+  // Quantos itens refazer na próxima busca (recarga após ação); consumido e zerado pelo effect.
+  const tamanhoRecarga = useRef(0)
+  const contextoLista = `${mes}|${tipoId ?? ''}|${filtro}`
+  const contextoRef = useRef(contextoLista)
+  contextoRef.current = contextoLista
+
+  useEffect(() => {
+    if (aguardandoTipo || slugInvalido) return
+    let cancelado = false
+    const tamanho = tamanhoRecarga.current
+    tamanhoRecarga.current = 0
+    setCarregandoLista(true)
+    setErroLista(false)
+    listarPlanejamentoPagina({ competencia: mes, tipoId, filtro, offset: 0, tamanho: tamanho || undefined })
+      .then((pagina) => {
+        if (cancelado) return
+        setItens(pagina.itens)
+        setTotalFiltrado(pagina.total)
+      })
+      .catch(() => {
+        if (!cancelado) setErroLista(true)
+      })
+      .finally(() => {
+        if (!cancelado) setCarregandoLista(false)
+      })
+    return () => {
+      cancelado = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mes, tipoId, filtro, versaoLista, aguardandoTipo, slugInvalido])
+
+  const recarregarTudo = useCallback(() => {
+    tamanhoRecarga.current = Math.max(itens.length, 1)
+    setVersaoLista((v) => v + 1)
+    dados.recarregar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itens.length, dados.recarregar])
+
+  async function carregarMais() {
+    setCarregandoMais(true)
+    const contexto = contextoLista
+    try {
+      const pagina = await listarPlanejamentoPagina({ competencia: mes, tipoId, filtro, offset: itens.length })
+      if (contexto !== contextoRef.current) return // trocou mês/Tipo/filtro no meio
+      setItens((atuais) => [...atuais, ...pagina.itens])
+      setTotalFiltrado(pagina.total)
+    } catch (e) {
+      showToast(mensagemDoErro(e), 'error')
+    } finally {
+      setCarregandoMais(false)
+    }
+  }
+
+  const resumo = useMemo(
+    () => resumoDoTipo(dados.data?.resumoPorTipo ?? [], tipoId),
+    [dados.data, tipoId],
+  )
+  const visiveis = itens
   const mapaFontes = useMemo(
     () => new Map((dados.data?.fontes ?? []).map((f) => [f.id, f])),
     [dados.data],
@@ -113,7 +194,7 @@ function RecorrenciasPage() {
     try {
       await acao()
       showToast(sucesso, 'success')
-      dados.recarregar()
+      recarregarTudo()
     } catch (e) {
       showToast(mensagemDoErro(e), 'error')
     } finally {
@@ -137,10 +218,21 @@ function RecorrenciasPage() {
     }
   }
 
+  if (slugInvalido) return <Navigate to="/recorrencias" replace />
+
   return (
     <>
       <PageHeader
-        title="Recorrências"
+        title="Planejamento Financeiro"
+        subtitle={subtituloPlanejamento(tipoAtual)}
+        cards={
+          dados.data && (
+            <div className="flex gap-3">
+              <CardResumo rotulo="Pago" centavos={resumo.pagoCentavos} detalhe={`de ${formatBRL(resumo.previstoCentavos)}`} />
+              <CardResumo rotulo="Falta" centavos={resumo.faltaCentavos} />
+            </div>
+          )
+        }
         action={
           <Button
             onClick={() => {
@@ -148,10 +240,30 @@ function RecorrenciasPage() {
               setAberturaId((id) => id + 1)
             }}
           >
-            Nova recorrência
+            Novo planejamento
           </Button>
         }
       />
+
+      {/* Mobile: as subseções viram chips no topo; no desktop ficam na sidebar. */}
+      {tipos && (
+        <nav aria-label="Subseções do planejamento" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:hidden">
+          {[{ to: '/recorrencias', label: 'Geral' }, ...tipos.map((t) => ({ to: `/recorrencias/${t.slug}`, label: t.nome }))].map(
+            (chip) => (
+              <NavLink
+                key={chip.to}
+                to={chip.to}
+                end
+                className={({ isActive }) =>
+                  `shrink-0 rounded-full px-3 py-1 text-sm ${isActive ? 'bg-ink text-surface' : 'bg-base text-ink-soft'}`
+                }
+              >
+                {chip.label}
+              </NavLink>
+            ),
+          )}
+        </nav>
+      )}
 
       <div className="mb-4 flex items-center gap-2">
         <button
@@ -179,7 +291,7 @@ function RecorrenciasPage() {
       </div>
 
       {dados.isLoading && !dados.data && <Spinner />}
-      {dados.erro && <p className="text-sm text-alerta">Não foi possível carregar as recorrências.</p>}
+      {(dados.erro || erroLista) && <p className="text-sm text-alerta">Não foi possível carregar o planejamento.</p>}
 
       {dados.data && (
         <div className="flex flex-col gap-8">
@@ -207,20 +319,33 @@ function RecorrenciasPage() {
             </section>
           )}
 
-          {itens.length === 0 ? (
+          {!tipoAtual && tipos && resumo.quantidade > 0 && (
+            <section aria-label="Quantitativos por tipo">
+              <h2 className="mb-3 text-sm font-medium text-ink-soft">Por tipo</h2>
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {[...tipos.map((t) => ({ chave: t.id, nome: t.nome, ...resumoDoTipo(dados.data!.resumoPorTipo, t.id) })),
+                  { chave: 'total', nome: 'Total geral', ...resumo }].map((linha) => (
+                  <li key={linha.chave} className="rounded border border-line bg-surface px-3 py-2">
+                    <p className="flex items-baseline justify-between text-sm text-ink">
+                      <span className={linha.chave === 'total' ? 'font-semibold' : ''}>{linha.nome}</span>
+                      <span className="text-xs text-ink-soft">{linha.quantidade}</span>
+                    </p>
+                    <p className="font-money text-xs text-ink-soft">
+                      Pago {formatBRL(linha.pagoCentavos)} · Falta {formatBRL(linha.faltaCentavos)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {resumo.quantidade === 0 && !carregandoLista ? (
             <EmptyState
-              titulo="Nenhuma recorrência neste mês"
-              texto="Cadastre suas contas fixas (internet, plano de saúde, parcelas) para acompanhar o que já foi pago e o que falta pagar."
+              titulo="Nenhum planejamento neste mês"
+              texto="Cadastre seus planejamentos (assinaturas, contas, parcelas, dívidas) para acompanhar o que já foi pago e o que falta pagar."
             />
           ) : (
             <section>
-              <p className="mb-1 text-sm text-ink">
-                Pago <span className="font-money font-semibold">{formatBRL(resumo.pagoCentavos)}</span> de{' '}
-                <span className="font-money">{formatBRL(resumo.previstoCentavos)}</span>
-              </p>
-              <p className="mb-4 text-sm text-ink-soft">
-                Falta <span className="font-money">{formatBRL(resumo.faltaCentavos)}</span>
-              </p>
 
               <div role="group" aria-label="Filtrar por status" className="mb-3 flex gap-1">
                 {OPCOES_FILTRO.map((opcao) => (
@@ -238,7 +363,7 @@ function RecorrenciasPage() {
                 ))}
               </div>
 
-              {visiveis.length === 0 && (
+              {visiveis.length === 0 && !carregandoLista && (
                 <p className="py-4 text-sm text-ink-soft">
                   {filtro === 'pagas' ? `Nada pago em ${nomeDoMes(mes)} ainda.` : `Tudo pago em ${nomeDoMes(mes)}.`}
                 </p>
@@ -271,7 +396,7 @@ function RecorrenciasPage() {
                         <Link
                           to={`/saidas?mes=${(item.saidaData ?? item.pagoEm ?? '').slice(0, 7)}&editar=${item.saidaId}`}
                           className="max-w-[14rem] shrink-0 truncate text-xs text-ink-soft underline-offset-2 hover:underline"
-                          title="Abrir a saída que pagou esta recorrência"
+                          title="Abrir a saída que pagou este planejamento"
                         >
                           ↻ {item.saidaTitulo ?? 'Saída'}
                           {item.saidaData && ` · ${formatarData(item.saidaData)}`}
@@ -333,7 +458,7 @@ function RecorrenciasPage() {
                                 onClick: () =>
                                   executar(
                                     () => definirRecorrenciaAtiva(item.recorrenciaId, false),
-                                    'Recorrência desativada.',
+                                    'Planejamento desativado.',
                                   ),
                               }
                             : {
@@ -341,7 +466,7 @@ function RecorrenciasPage() {
                                 onClick: () =>
                                   executar(
                                     () => definirRecorrenciaAtiva(item.recorrenciaId, true),
-                                    'Recorrência reativada.',
+                                    'Planejamento reativado.',
                                   ),
                               },
                           { label: 'Excluir', perigo: true, onClick: () => setExcluindo(item) },
@@ -351,6 +476,14 @@ function RecorrenciasPage() {
                   )
                 })}
               </ul>
+
+              {itens.length < totalFiltrado && (
+                <div className="mt-4 flex justify-center">
+                  <Button variant="secondary" loading={carregandoMais} onClick={carregarMais}>
+                    Carregar mais ({totalFiltrado - itens.length})
+                  </Button>
+                </div>
+              )}
             </section>
           )}
         </div>
@@ -362,12 +495,13 @@ function RecorrenciasPage() {
           aberto
           recorrencia={formAberto.recorrencia}
           categorias={dados.data?.categorias ?? []}
+          tipos={dados.data?.tipos ?? []}
           fontes={dados.data?.fontes ?? []}
           onFechar={() => setFormAberto(null)}
           onSalvo={() => {
             setFormAberto(null)
-            showToast('Recorrência salva.', 'success')
-            dados.recarregar()
+            showToast('Planejamento salvo.', 'success')
+            recarregarTudo()
           }}
         />
       )}
@@ -408,7 +542,7 @@ function RecorrenciasPage() {
         </form>
       </Modal>
 
-      <Modal open={excluindo !== null} onClose={() => setExcluindo(null)} title="Excluir recorrência">
+      <Modal open={excluindo !== null} onClose={() => setExcluindo(null)} title="Excluir planejamento">
         <p className="mb-4 text-sm text-ink">
           Excluir "{excluindo?.titulo}"? O histórico de pagamentos dela também é apagado. Lançamentos de
           Saída não são afetados. Para só parar de acompanhar, use Desativar.
@@ -424,7 +558,7 @@ function RecorrenciasPage() {
               const item = excluindo
               if (!item) return
               setExcluindo(null)
-              executar(() => excluirRecorrencia(item.recorrenciaId), 'Recorrência excluída.')
+              executar(() => excluirRecorrencia(item.recorrenciaId), 'Planejamento excluído.')
             }}
           >
             Excluir
@@ -441,7 +575,7 @@ function RecorrenciasPage() {
         onFechar={() => setFatura(null)}
         onSalvo={() => {
           setFatura(null)
-          dados.recarregar()
+          recarregarTudo()
         }}
       />
     </>

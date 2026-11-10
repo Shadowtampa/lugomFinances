@@ -60,6 +60,12 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   apontar para a Saída real que o quitou (`saida_id`, 1:1 desde o M28), mas não precisa. Só existem
   recorrências de saída. (Até o M18, recorrência era uma Entrada/Saída com
   `recorrente = true` que gerava lançamentos — modelo removido no M19.)
+  **Desde o M29 o termo de domínio na UI é Planejamento** (aba Planejamento
+  Financeiro); schema e rota seguem `recorrencias`.
+- **Tipo de Planejamento** (M29) — classificação obrigatória de um Planejamento,
+  de um rol fixo: Assinaturas, Transferências manuais, Compras parceladas,
+  Dívidas, Contas (padrão). **Não é Categoria**: Categoria é natureza do gasto;
+  um Planejamento tem Tipo (obrigatório) e pode ter Categoria (opcional).
 - **Cartão de crédito** (M13) — uma Fonte com `eh_cartao = true`, sem saldo
   disponível: tem `limite_centavos` e `dia_fatura`. Seu saldo é sempre `≤ 0` e
   representa a dívida atual. No dia da fatura, uma pendência assistida (como as de

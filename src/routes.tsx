@@ -23,6 +23,7 @@ export const router = createBrowserRouter([
       { path: 'fontes', Component: FontesPage },
       { path: 'categorias', Component: CategoriasPage },
       { path: 'recorrencias', Component: RecorrenciasPage },
+      { path: 'recorrencias/:tipo', Component: RecorrenciasPage },
       { path: 'importadas', Component: ImportadasPage },
       { path: 'conexoes', Component: ConexoesPage },
     ],
