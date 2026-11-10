@@ -2,6 +2,12 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.10.2 — 2026-11-10
+
+**Cards Pago / Falta mais largos** (ajuste sem spec)
+
+- Os cards do Planejamento ganham largura e o valor não quebra mais entre "R$" e o número.
+
 ## 2.10.1 — 2026-11-10
 
 **Filtros do Planejamento em drop-down colorido** (ajuste sem spec)

@@ -28,12 +28,12 @@ function Card({ rotulo, centavos, icone, cor, bg, children }: {
   children?: React.ReactNode
 }) {
   return (
-    <div className="flex min-w-[10.5rem] flex-1 flex-col gap-2 rounded-lg border border-line bg-surface px-4 py-3 shadow-sm sm:max-w-[15rem]">
+    <div className="flex min-w-[14rem] flex-1 flex-col gap-2 rounded-lg border border-line bg-surface px-4 py-3 shadow-sm sm:max-w-[22rem]">
       <div className="flex items-center gap-2">
         <span className={`flex h-8 w-8 items-center justify-center rounded-full ${bg} ${cor}`}>{icone}</span>
         <span className="text-sm font-medium text-ink-soft">{rotulo}</span>
       </div>
-      <p className="font-money text-2xl font-semibold text-ink">{formatBRL(centavos)}</p>
+      <p className="font-money whitespace-nowrap text-2xl font-semibold text-ink">{formatBRL(centavos)}</p>
       {children}
     </div>
   )
