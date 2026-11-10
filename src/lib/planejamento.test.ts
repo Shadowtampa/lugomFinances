@@ -1,22 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
+  FORMA_PADRAO,
   PAGINA_PLANEJAMENTO,
-  TIPO_PADRAO_SLUG,
-  resumoDoTipo,
+  formaPorSlug,
+  lerFiltroDuracao,
+  resumoDe,
+  slugDaForma,
   subtituloPlanejamento,
-  tipoPorSlug,
 } from './planejamento'
-import type { ResumoPlanejamento, TipoPlanejamento } from '../types/domain'
-
-const tipos: TipoPlanejamento[] = [
-  { id: 1, slug: 'assinaturas', nome: 'Assinaturas', ordem: 1 },
-  { id: 5, slug: 'contas', nome: 'Contas', ordem: 5 },
-]
+import type { ResumoPlanejamento } from '../types/domain'
 
 function resumo(p: Partial<ResumoPlanejamento>): ResumoPlanejamento {
   return {
     competencia: '2026-11',
-    tipoPlanejamentoId: 5,
+    formaPagamento: 'manual',
+    recorrente: true,
     quantidade: 1,
     previstoCentavos: 100,
     pagoCentavos: 40,
@@ -25,53 +23,71 @@ function resumo(p: Partial<ResumoPlanejamento>): ResumoPlanejamento {
   }
 }
 
-describe('tipoPorSlug', () => {
-  it('acha o Tipo pelo slug e devolve undefined para slug inválido', () => {
-    expect(tipoPorSlug(tipos, 'assinaturas')?.id).toBe(1)
-    expect(tipoPorSlug(tipos, 'xpto')).toBeUndefined()
-    expect(tipoPorSlug(tipos, undefined)).toBeUndefined()
+describe('formaPorSlug / slugDaForma', () => {
+  it('traduz slug da URL para a forma e de volta', () => {
+    expect(formaPorSlug('manuais')).toBe('manual')
+    expect(formaPorSlug('automaticas')).toBe('automatica')
+    expect(slugDaForma('manual')).toBe('manuais')
+    expect(slugDaForma('automatica')).toBe('automaticas')
+  })
+
+  it('slug desconhecido (inclusive os do M29) ou ausente devolve undefined', () => {
+    expect(formaPorSlug('assinaturas')).toBeUndefined()
+    expect(formaPorSlug(undefined)).toBeUndefined()
   })
 })
 
 describe('subtituloPlanejamento', () => {
-  it('usa Geral sem Tipo e o nome do Tipo com ele', () => {
+  it('Geral sem forma; Manuais / Automáticas com ela', () => {
     expect(subtituloPlanejamento()).toBe('Planejamento Financeiro - Geral')
-    expect(subtituloPlanejamento(tipos[0])).toBe('Planejamento Financeiro - Assinaturas')
+    expect(subtituloPlanejamento('manual')).toBe('Planejamento Financeiro - Manuais')
+    expect(subtituloPlanejamento('automatica')).toBe('Planejamento Financeiro - Automáticas')
   })
 })
 
-describe('resumoDoTipo', () => {
+describe('lerFiltroDuracao', () => {
+  it('aceita os valores válidos; o resto vale "todas"', () => {
+    expect(lerFiltroDuracao('recorrente')).toBe('recorrente')
+    expect(lerFiltroDuracao('parcelado')).toBe('parcelado')
+    expect(lerFiltroDuracao('xpto')).toBe('todas')
+    expect(lerFiltroDuracao(null)).toBe('todas')
+  })
+})
+
+describe('resumoDe', () => {
   const linhas = [
-    resumo({ tipoPlanejamentoId: 1, quantidade: 2, previstoCentavos: 300, pagoCentavos: 100, faltaCentavos: 200 }),
-    resumo({ tipoPlanejamentoId: 5 }),
+    resumo({ formaPagamento: 'manual', recorrente: true, quantidade: 2, previstoCentavos: 300, pagoCentavos: 100, faltaCentavos: 200 }),
+    resumo({ formaPagamento: 'manual', recorrente: false }),
+    resumo({ formaPagamento: 'automatica', recorrente: true, quantidade: 4, previstoCentavos: 1000, pagoCentavos: 1000, faltaCentavos: 0 }),
   ]
 
-  it('soma todos os Tipos quando não há Tipo', () => {
-    expect(resumoDoTipo(linhas)).toEqual({
-      quantidade: 3,
-      previstoCentavos: 400,
-      pagoCentavos: 140,
-      faltaCentavos: 260,
-    })
+  it('sem filtro soma tudo', () => {
+    expect(resumoDe(linhas)).toEqual({ quantidade: 7, previstoCentavos: 1400, pagoCentavos: 1140, faltaCentavos: 260 })
   })
 
-  it('filtra por Tipo', () => {
-    expect(resumoDoTipo(linhas, 1)).toEqual({
-      quantidade: 2,
-      previstoCentavos: 300,
-      pagoCentavos: 100,
-      faltaCentavos: 200,
-    })
+  it('filtra por forma', () => {
+    expect(resumoDe(linhas, { forma: 'manual' }).quantidade).toBe(3)
+    expect(resumoDe(linhas, { forma: 'automatica' }).quantidade).toBe(4)
   })
 
-  it('zera quando o Tipo não tem registros', () => {
-    expect(resumoDoTipo(linhas, 4).quantidade).toBe(0)
+  it('filtra por duração', () => {
+    expect(resumoDe(linhas, { duracao: 'recorrente' }).quantidade).toBe(6)
+    expect(resumoDe(linhas, { duracao: 'parcelado' }).quantidade).toBe(1)
+    expect(resumoDe(linhas, { duracao: 'todas' }).quantidade).toBe(7)
+  })
+
+  it('combina forma e duração', () => {
+    expect(resumoDe(linhas, { forma: 'manual', duracao: 'recorrente' }).quantidade).toBe(2)
+  })
+
+  it('zera quando nada casa', () => {
+    expect(resumoDe([], { forma: 'manual' })).toEqual({ quantidade: 0, previstoCentavos: 0, pagoCentavos: 0, faltaCentavos: 0 })
   })
 })
 
 describe('constantes', () => {
-  it('padrão é Contas e página tem 10', () => {
-    expect(TIPO_PADRAO_SLUG).toBe('contas')
+  it('forma padrão é manual e página tem 10', () => {
+    expect(FORMA_PADRAO).toBe('manual')
     expect(PAGINA_PLANEJAMENTO).toBe(10)
   })
 })

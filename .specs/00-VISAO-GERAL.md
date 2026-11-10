@@ -62,10 +62,15 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   `recorrente = true` que gerava lançamentos — modelo removido no M19.)
   **Desde o M29 o termo de domínio na UI é Planejamento** (aba Planejamento
   Financeiro); schema e rota seguem `recorrencias`.
-- **Tipo de Planejamento** (M29) — classificação obrigatória de um Planejamento,
-  de um rol fixo: Assinaturas, Transferências manuais, Compras parceladas,
-  Dívidas, Contas (padrão). **Não é Categoria**: Categoria é natureza do gasto;
-  um Planejamento tem Tipo (obrigatório) e pode ter Categoria (opcional).
+- **Duração** (M30) — de um Planejamento: **recorrente** (sem fim) ou **parcelado**
+  (N parcelas). Derivada do número de parcelas, não é escolhida à parte.
+- **Forma de pagamento** (M30) — de um Planejamento: **manual** (o usuário faz a
+  transferência/PIX) ou **automática** (cartão/débito; o usuário só confere).
+  Não confundir com Fonte prevista (M27), que diz *de onde* sai o dinheiro.
+  Um Planejamento é classificado por Duração + Forma de pagamento + Categoria
+  (natureza do gasto). "Assinatura" e "conta" não são conceitos do domínio: ambas
+  são Planejamentos recorrentes. (O M29 usava um Tipo de Planejamento único, com
+  opções que se sobrepunham; removido no M30.)
 - **Cartão de crédito** (M13) — uma Fonte com `eh_cartao = true`, sem saldo
   disponível: tem `limite_centavos` e `dia_fatura`. Seu saldo é sempre `≤ 0` e
   representa a dívida atual. No dia da fatura, uma pendência assistida (como as de
@@ -225,7 +230,7 @@ auth.users (local, M17)
    └── recorrencias (M19 — fora de qualquer saldo)
          id, user_id, titulo, valor_previsto_centavos, dia, categoria_id,
          mes_inicio, total_parcelas, ativa,
-         tipo_planejamento_id (M29, obrigatório → tipos_planejamento)
+         forma_pagamento (M30: 'manual' | 'automatica', obrigatório)
             │
             └── recorrencias_pagamentos
                   id, recorrencia_id, competencia, pago_em, saida_id (opcional, único, cascade)
@@ -237,7 +242,7 @@ auth.users (local, M17)
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
 `apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
-M29: `tipos_planejamento` (enum global de 5 Tipos, sem `user_id`, só leitura) e a view `v_planejamento_resumo` (pago / previsto / falta por competência e Tipo).
+M29/M30: view `v_planejamento_resumo` (pago / previsto / falta por competência, forma de pagamento e duração). O Tipo de Planejamento do M29 (`tipos_planejamento`) foi removido no M30.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.

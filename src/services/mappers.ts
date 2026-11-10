@@ -13,7 +13,6 @@ import type {
   SugestaoRecorrenciaRow,
   RecorrenciaMesRow,
   ResumoPlanejamentoRow,
-  TipoPlanejamentoRow,
   RecorrenciaRow,
   ResultadoCriarSaidaRow,
   ResumoGeralRow,
@@ -37,7 +36,6 @@ import type {
   Recorrencia,
   RecorrenciaDoMes,
   ResumoPlanejamento,
-  TipoPlanejamento,
   ResultadoCriarSaida,
   ResumoGeral,
   Saida,
@@ -185,7 +183,7 @@ export function paraRecorrencia(row: RecorrenciaRow): Recorrencia {
     mesInicio: row.mes_inicio.slice(0, 7),
     totalParcelas: row.total_parcelas,
     ativa: row.ativa,
-    tipoPlanejamentoId: row.tipo_planejamento_id,
+    formaPagamento: row.forma_pagamento,
     nota: row.nota ?? null,
     fontesPrevistas: row.recorrencias_fontes?.map((rf) => rf.fonte_id) ?? [],
   }
@@ -211,18 +209,15 @@ export function paraRecorrenciaDoMes(row: RecorrenciaMesRow): RecorrenciaDoMes {
     fontesPrevistas: row.fontes_previstas ?? [],
     saidaTitulo: row.saida_titulo ?? null,
     saidaData: row.saida_data ?? null,
-    tipoPlanejamentoId: row.tipo_planejamento_id,
+    formaPagamento: row.forma_pagamento,
   }
-}
-
-export function paraTipoPlanejamento(row: TipoPlanejamentoRow): TipoPlanejamento {
-  return { id: row.id, slug: row.slug, nome: row.nome, ordem: row.ordem }
 }
 
 export function paraResumoPlanejamento(row: ResumoPlanejamentoRow): ResumoPlanejamento {
   return {
     competencia: row.competencia.slice(0, 7),
-    tipoPlanejamentoId: row.tipo_planejamento_id,
+    formaPagamento: row.forma_pagamento,
+    recorrente: row.recorrente,
     quantidade: row.quantidade,
     previstoCentavos: row.previsto_centavos,
     pagoCentavos: row.pago_centavos,
@@ -390,7 +385,7 @@ export function deRecorrencia(dados: Partial<Omit<Recorrencia, 'id'>>) {
     ...(dados.mesInicio !== undefined && { mes_inicio: `${dados.mesInicio}-01` }),
     ...(dados.totalParcelas !== undefined && { total_parcelas: dados.totalParcelas }),
     ...(dados.ativa !== undefined && { ativa: dados.ativa }),
-    ...(dados.tipoPlanejamentoId !== undefined && { tipo_planejamento_id: dados.tipoPlanejamentoId }),
+    ...(dados.formaPagamento !== undefined && { forma_pagamento: dados.formaPagamento }),
     ...(dados.nota !== undefined && { nota: dados.nota }),
   }
 }

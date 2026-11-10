@@ -2,6 +2,18 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.10.0 — 2026-11-10
+
+**M30: Planejamento por Duração e Forma de pagamento** (#12)
+
+- O Tipo de Planejamento do M29 saiu: misturava duração, forma de pagamento e natureza do gasto, e um mesmo planejamento cabia em mais de um tipo. Agora cada planejamento tem **Duração** (recorrente ou parcelado, derivada das parcelas) + **Forma de pagamento** (Manual ou Automática, campo novo) + Categoria.
+- Subseções da aba: **Geral / Manuais / Automáticas** (sidebar no desktop, chips no mobile). Endereços antigos como `/recorrencias/assinaturas` voltam para a Geral.
+- Novo filtro de Duração (Todas / Recorrentes / Parceladas) junto do filtro de status, aplicado no banco.
+- Cards Pago / Falta centralizados, maiores, com ícone, cores e barra de progresso; seguem a subseção e o filtro de Duração.
+- Geral mostra Manuais, Automáticas, Recorrentes, Parceladas e Total geral. Cada linha mostra o selo Manual/Auto e a Categoria, inclusive no mobile.
+- Formulário: "Forma de pagamento" (padrão Manual) no lugar de "Tipo de planejamento".
+- Banco: migration `00020_forma_pagamento.sql` (`recorrencias.forma_pagamento`, remove `tipos_planejamento`, recria `v_recorrencias_mes`, `v_sugestoes_recorrencia` e `v_planejamento_resumo`). Registros atuais: cartão previsto = Automática; o resto = Manual.
+
 ## 2.9.0 — 2026-11-10
 
 **M29: Planejamento Financeiro** (#10)

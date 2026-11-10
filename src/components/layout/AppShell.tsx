@@ -8,9 +8,8 @@ import { contarImportadasPendentes } from '../../services/integracao'
 import {
   listarFaturasPendentes,
   listarRecorrenciasDoMes,
-  listarTiposPlanejamento,
 } from '../../services/recorrencias'
-import type { TipoPlanejamento } from '../../types/domain'
+import { LINKS_SUBSECOES } from '../../lib/planejamento'
 
 async function carregarPendencias() {
   const [doMes, faturas, importadas] = await Promise.all([
@@ -61,14 +60,13 @@ function BadgePendencias({ count, atrasado }: { count: number; atrasado: boolean
   )
 }
 
-/** Subseções do Planejamento Financeiro (M29): Geral + um item por Tipo. Aberto na área de Planejamento. */
-function SubmenuPlanejamento({ tipos }: { tipos: TipoPlanejamento[] }) {
+/** Subseções do Planejamento Financeiro (M30): Geral / Manuais / Automáticas. Aberto na área de Planejamento. */
+function SubmenuPlanejamento() {
   const { pathname } = useLocation()
   if (!pathname.startsWith('/recorrencias')) return null
-  const itens = [{ to: '/recorrencias', label: 'Geral' }, ...tipos.map((t) => ({ to: `/recorrencias/${t.slug}`, label: t.nome }))]
   return (
     <div className="ml-3 flex flex-col gap-0.5 border-l border-line pl-2">
-      {itens.map((item) => (
+      {LINKS_SUBSECOES.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
@@ -91,7 +89,6 @@ function AppShell({ children }: { children: ReactNode }) {
   const contagemPendencias = pendencias.data?.contagem ?? 0
   const temAtrasado = pendencias.data?.atrasado ?? false
 
-  const tipos = useAsync(listarTiposPlanejamento, [])
   const [drawerAberto, setDrawerAberto] = useState(false)
 
   return (
@@ -111,7 +108,7 @@ function AppShell({ children }: { children: ReactNode }) {
                   <BadgePendencias count={pendencias.data?.importadas ?? 0} atrasado={false} />
                 )}
               </NavLink>
-              {item.to === '/recorrencias' && <SubmenuPlanejamento tipos={tipos.data ?? []} />}
+              {item.to === '/recorrencias' && <SubmenuPlanejamento />}
             </Fragment>
           ))}
 

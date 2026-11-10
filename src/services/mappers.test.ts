@@ -5,7 +5,6 @@ import {
   paraRecorrenciaDoMes,
   paraResumoPlanejamento,
   paraSaida,
-  paraTipoPlanejamento,
   paraVinculoRecorrencia,
 } from './mappers'
 
@@ -105,7 +104,7 @@ describe('paraRecorrenciaDoMes', () => {
       fontes_previstas: [],
       saida_titulo: null,
       saida_data: null,
-      tipo_planejamento_id: 2,
+      forma_pagamento: 'automatica',
     }
     expect(paraRecorrenciaDoMes(row)).toEqual({
       recorrenciaId: 'r1',
@@ -126,7 +125,7 @@ describe('paraRecorrenciaDoMes', () => {
       valorPagoCentavos: null,
       saidaTitulo: null,
       saidaData: null,
-      tipoPlanejamentoId: 2,
+      formaPagamento: 'automatica',
     })
   })
 })
@@ -139,19 +138,8 @@ describe('deRecorrencia', () => {
     })
   })
 
-  it('envia o Tipo de Planejamento quando presente', () => {
-    expect(deRecorrencia({ tipoPlanejamentoId: 5 })).toEqual({ tipo_planejamento_id: 5 })
-  })
-})
-
-describe('paraTipoPlanejamento', () => {
-  it('converte a linha do enum', () => {
-    expect(paraTipoPlanejamento({ id: 2, slug: 'transferencias', nome: 'Transferências manuais', ordem: 2 })).toEqual({
-      id: 2,
-      slug: 'transferencias',
-      nome: 'Transferências manuais',
-      ordem: 2,
-    })
+  it('envia a Forma de pagamento quando presente', () => {
+    expect(deRecorrencia({ formaPagamento: 'automatica' })).toEqual({ forma_pagamento: 'automatica' })
   })
 })
 
@@ -161,7 +149,8 @@ describe('paraResumoPlanejamento', () => {
       paraResumoPlanejamento({
         user_id: 'u1',
         competencia: '2026-11-01',
-        tipo_planejamento_id: 5,
+        forma_pagamento: 'manual',
+        recorrente: false,
         quantidade: 3,
         previsto_centavos: 30000,
         pago_centavos: 10000,
@@ -169,7 +158,8 @@ describe('paraResumoPlanejamento', () => {
       }),
     ).toEqual({
       competencia: '2026-11',
-      tipoPlanejamentoId: 5,
+      formaPagamento: 'manual',
+      recorrente: false,
       quantidade: 3,
       previstoCentavos: 30000,
       pagoCentavos: 10000,

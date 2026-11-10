@@ -11,13 +11,23 @@ import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import ConfirmarFaturaModal from '../features/recorrencias/ConfirmarFaturaModal'
 import IndicadorNota from '../features/notas/IndicadorNota'
+import CardsResumo from '../features/recorrencias/CardsResumo'
+import QuantitativosPlanejamento from '../features/recorrencias/QuantitativosPlanejamento'
 import RecorrenciaFormModal from '../features/recorrencias/RecorrenciaFormModal'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
 import { usePlanejamentoPaginado } from '../hooks/usePlanejamentoPaginado'
 import { deslocarMes, formatarData, hojeISO, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
-import { resumoDoTipo, subtituloPlanejamento, tipoPorSlug } from '../lib/planejamento'
+import {
+  LINKS_SUBSECOES,
+  ROTULO_FORMA,
+  formaPorSlug,
+  lerFiltroDuracao,
+  resumoDe,
+  subtituloPlanejamento,
+  type FiltroDuracao,
+} from '../lib/planejamento'
 import { formatBRL } from '../lib/money'
 import {
   lerFiltroRecorrencia,
@@ -34,16 +44,14 @@ import {
   excluirRecorrencia,
   listarFaturasPendentes,
   listarResumoPlanejamento,
-  listarTiposPlanejamento,
   marcarComoPaga,
   obterRecorrencia,
 } from '../services/recorrencias'
 import type { FaturaPendente, Recorrencia, RecorrenciaDoMes, StatusRecorrencia } from '../types/domain'
 
 async function carregarDados(mes: string) {
-  const [resumoPorTipo, tipos, faturas, categorias, fontesBase, saldosFontes] = await Promise.all([
+  const [resumoPorForma, faturas, categorias, fontesBase, saldosFontes] = await Promise.all([
     listarResumoPlanejamento(mes),
-    listarTiposPlanejamento(),
     listarFaturasPendentes(),
     listarCategorias(),
     listarFontes({ incluirArquivadas: true }),
@@ -54,7 +62,7 @@ async function carregarDados(mes: string) {
     ...f,
     saldoCentavos: mapaSaldos.get(f.id) ?? 0,
   }))
-  return { resumoPorTipo, tipos, faturas, categorias: categorias.filter((c) => !c.arquivada), fontes }
+  return { resumoPorForma, faturas, categorias: categorias.filter((c) => !c.arquivada), fontes }
 }
 
 const OPCOES_FILTRO: { valor: FiltroRecorrencia; rotulo: string }[] = [
@@ -69,28 +77,21 @@ const ESTILO_STATUS: Record<StatusRecorrencia, { rotulo: string; classe: string 
   atrasada: { rotulo: 'Atrasada', classe: 'bg-alerta/10 text-alerta' },
 }
 
-function CardResumo({ rotulo, centavos, detalhe }: { rotulo: string; centavos: number; detalhe?: string }) {
-  return (
-    <div className="min-w-[8.5rem] rounded border border-line bg-surface px-3 py-2">
-      <p className="text-xs text-ink-soft">{rotulo}</p>
-      <p className="font-money text-lg font-semibold text-ink">{formatBRL(centavos)}</p>
-      {detalhe && <p className="font-money text-xs text-ink-soft">{detalhe}</p>}
-    </div>
-  )
-}
+const OPCOES_DURACAO: { valor: FiltroDuracao; rotulo: string }[] = [
+  { valor: 'todas', rotulo: 'Todas' },
+  { valor: 'recorrente', rotulo: 'Recorrentes' },
+  { valor: 'parcelado', rotulo: 'Parceladas' },
+]
 
 function RecorrenciasPage() {
   const { showToast } = useToast()
-  const { tipo: slugTipo } = useParams()
+  const { subsecao } = useParams()
   const [params, setParams] = useSearchParams()
   const mes = params.get('mes') ?? mesAtual()
   const dados = useAsync(() => carregarDados(mes), [mes])
   const hoje = hojeISO()
-  const tipos = dados.data?.tipos
-  const tipoAtual = tipos ? tipoPorSlug(tipos, slugTipo) : undefined
-  const slugInvalido = Boolean(slugTipo && tipos && !tipoAtual)
-  const aguardandoTipo = Boolean(slugTipo && !tipos)
-  const tipoId = tipoAtual?.id
+  const forma = formaPorSlug(subsecao)
+  const slugInvalido = Boolean(subsecao && !forma)
 
   const [aberturaId, setAberturaId] = useState(0)
   const [formAberto, setFormAberto] = useState<{ recorrencia?: Recorrencia } | null>(null)
@@ -102,12 +103,14 @@ function RecorrenciasPage() {
   const [ocupado, setOcupado] = useState(false)
 
   const filtro = lerFiltroRecorrencia(params.get('status'))
+  const duracao = lerFiltroDuracao(params.get('duracao'))
 
   const lista = usePlanejamentoPaginado({
     competencia: mes,
-    tipoId,
+    forma,
+    duracao,
     filtro,
-    pausado: aguardandoTipo || slugInvalido,
+    pausado: slugInvalido,
     onErroCarregarMais: (mensagem) => showToast(mensagem, 'error'),
   })
   const { itens, total: totalFiltrado, carregando: carregandoLista, erro: erroLista, carregandoMais, carregarMais } = lista
@@ -118,10 +121,9 @@ function RecorrenciasPage() {
     recarregarDados()
   }, [recarregarLista, recarregarDados])
 
-  const resumo = useMemo(
-    () => resumoDoTipo(dados.data?.resumoPorTipo ?? [], tipoId),
-    [dados.data, tipoId],
-  )
+  const linhasResumo = dados.data?.resumoPorForma
+  const resumo = useMemo(() => resumoDe(linhasResumo ?? [], { forma, duracao }), [linhasResumo, forma, duracao])
+  const resumoSemDuracao = useMemo(() => resumoDe(linhasResumo ?? [], { forma }), [linhasResumo, forma])
   const visiveis = itens
   const mapaFontes = useMemo(
     () => new Map((dados.data?.fontes ?? []).map((f) => [f.id, f])),
@@ -133,6 +135,13 @@ function RecorrenciasPage() {
   function mudarFiltro(novo: FiltroRecorrencia) {
     setParams((p) => {
       p.set('status', novo)
+      return p
+    })
+  }
+
+  function mudarDuracao(nova: FiltroDuracao) {
+    setParams((p) => {
+      p.set('duracao', nova)
       return p
     })
   }
@@ -179,15 +188,7 @@ function RecorrenciasPage() {
     <>
       <PageHeader
         title="Planejamento Financeiro"
-        subtitle={subtituloPlanejamento(tipoAtual)}
-        cards={
-          dados.data && (
-            <div className="flex gap-3">
-              <CardResumo rotulo="Pago" centavos={resumo.pagoCentavos} detalhe={`de ${formatBRL(resumo.previstoCentavos)}`} />
-              <CardResumo rotulo="Falta" centavos={resumo.faltaCentavos} />
-            </div>
-          )
-        }
+        subtitle={subtituloPlanejamento(forma)}
         action={
           <Button
             onClick={() => {
@@ -201,23 +202,27 @@ function RecorrenciasPage() {
       />
 
       {/* Mobile: as subseções viram chips no topo; no desktop ficam na sidebar. */}
-      {tipos && (
-        <nav aria-label="Subseções do planejamento" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:hidden">
-          {[{ to: '/recorrencias', label: 'Geral' }, ...tipos.map((t) => ({ to: `/recorrencias/${t.slug}`, label: t.nome }))].map(
-            (chip) => (
-              <NavLink
-                key={chip.to}
-                to={chip.to}
-                end
-                className={({ isActive }) =>
-                  `shrink-0 rounded-full px-3 py-1 text-sm ${isActive ? 'bg-ink text-surface' : 'bg-base text-ink-soft'}`
-                }
-              >
-                {chip.label}
-              </NavLink>
-            ),
-          )}
-        </nav>
+      <nav aria-label="Subseções do planejamento" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:hidden">
+        {LINKS_SUBSECOES.map((chip) => (
+          <NavLink
+            key={chip.to}
+            to={chip.to}
+            end
+            className={({ isActive }) =>
+              `shrink-0 rounded-full px-3 py-1 text-sm ${isActive ? 'bg-ink text-surface' : 'bg-base text-ink-soft'}`
+            }
+          >
+            {chip.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {dados.data && (
+        <CardsResumo
+          pagoCentavos={resumo.pagoCentavos}
+          previstoCentavos={resumo.previstoCentavos}
+          faltaCentavos={resumo.faltaCentavos}
+        />
       )}
 
       <div className="mb-4 flex items-center gap-2">
@@ -274,30 +279,12 @@ function RecorrenciasPage() {
             </section>
           )}
 
-          {!tipoAtual && tipos && resumo.quantidade > 0 && (
-            <section aria-label="Quantitativos por tipo">
-              <h2 className="mb-3 text-sm font-medium text-ink-soft">Por tipo</h2>
-              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {[...tipos.map((t) => ({ chave: t.id, nome: t.nome, ...resumoDoTipo(dados.data!.resumoPorTipo, t.id) })),
-                  { chave: 'total', nome: 'Total geral', ...resumo }].map((linha) => (
-                  <li key={linha.chave} className="rounded border border-line bg-surface px-3 py-2">
-                    <p className="flex items-baseline justify-between text-sm text-ink">
-                      <span className={linha.chave === 'total' ? 'font-semibold' : ''}>{linha.nome}</span>
-                      <span className="text-xs text-ink-soft">{linha.quantidade}</span>
-                    </p>
-                    <p className="font-money text-xs text-ink-soft">
-                      Pago {formatBRL(linha.pagoCentavos)} · Falta {formatBRL(linha.faltaCentavos)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {!forma && resumoSemDuracao.quantidade > 0 && <QuantitativosPlanejamento linhas={dados.data.resumoPorForma} />}
 
-          {resumo.quantidade === 0 && !carregandoLista ? (
+          {resumoSemDuracao.quantidade === 0 && !carregandoLista ? (
             <EmptyState
               titulo="Nenhum planejamento neste mês"
-              texto="Cadastre seus planejamentos (assinaturas, contas, parcelas, dívidas) para acompanhar o que já foi pago e o que falta pagar."
+              texto="Cadastre seus planejamentos (contas, assinaturas, parcelas) para acompanhar o que já foi pago e o que falta pagar."
             />
           ) : (
             <section>
@@ -318,9 +305,29 @@ function RecorrenciasPage() {
                 ))}
               </div>
 
+              <div role="group" aria-label="Filtrar por duração" className="mb-3 flex gap-1">
+                {OPCOES_DURACAO.map((opcao) => (
+                  <button
+                    key={opcao.valor}
+                    type="button"
+                    aria-pressed={duracao === opcao.valor}
+                    onClick={() => mudarDuracao(opcao.valor)}
+                    className={`rounded-full px-3 py-1 text-sm ${
+                      duracao === opcao.valor ? 'bg-ink text-surface' : 'text-ink-soft hover:bg-base'
+                    }`}
+                  >
+                    {opcao.rotulo}
+                  </button>
+                ))}
+              </div>
+
               {visiveis.length === 0 && !carregandoLista && (
                 <p className="py-4 text-sm text-ink-soft">
-                  {filtro === 'pagas' ? `Nada pago em ${nomeDoMes(mes)} ainda.` : `Tudo pago em ${nomeDoMes(mes)}.`}
+                  {resumo.quantidade === 0
+                    ? `Nenhum planejamento ${duracao === 'parcelado' ? 'parcelado' : 'recorrente'} em ${nomeDoMes(mes)}.`
+                    : filtro === 'pagas'
+                      ? `Nada pago em ${nomeDoMes(mes)} ainda.`
+                      : `Tudo pago em ${nomeDoMes(mes)}.`}
                 </p>
               )}
 
@@ -335,16 +342,26 @@ function RecorrenciasPage() {
                       className="group flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line py-2"
                     >
                       <span className="w-14 shrink-0 text-sm text-ink-soft">dia {item.dia}</span>
-                      <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                        {item.titulo}
-                        {item.totalParcelas !== null && (
-                          <span className="ml-1 text-xs text-ink-soft">
-                            {item.parcela}/{item.totalParcelas}
-                          </span>
-                        )}
+                      <span className="min-w-0 flex-1 text-sm text-ink">
+                        <span className="block truncate">
+                          {item.titulo}
+                          {item.totalParcelas !== null && (
+                            <span className="ml-1 text-xs text-ink-soft">
+                              {item.parcela}/{item.totalParcelas}
+                            </span>
+                          )}
+                        </span>
                         {item.categoriaNome && (
-                          <span className="ml-2 hidden text-xs text-ink-soft sm:inline">{item.categoriaNome}</span>
+                          <span className="block truncate text-xs text-ink-soft">{item.categoriaNome}</span>
                         )}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                          item.formaPagamento === 'manual' ? 'border border-line text-ink-soft' : 'bg-base text-ink-soft'
+                        }`}
+                        title={`Pagamento ${ROTULO_FORMA[item.formaPagamento].toLowerCase()}`}
+                      >
+                        {item.formaPagamento === 'manual' ? 'Manual' : 'Auto'}
                       </span>
                       <IndicadorNota nota={item.nota} />
                       {item.saidaId && (
@@ -450,7 +467,6 @@ function RecorrenciasPage() {
           aberto
           recorrencia={formAberto.recorrencia}
           categorias={dados.data?.categorias ?? []}
-          tipos={dados.data?.tipos ?? []}
           fontes={dados.data?.fontes ?? []}
           onFechar={() => setFormAberto(null)}
           onSalvo={() => {

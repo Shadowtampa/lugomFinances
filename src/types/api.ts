@@ -134,7 +134,7 @@ export interface RecorrenciaRow {
   total_parcelas: number | null
   ativa: boolean
   nota: string | null
-  tipo_planejamento_id: number
+  forma_pagamento: 'manual' | 'automatica'
   created_at: string
   /** Embed de recorrencias_fontes (M27), quando pedido no select. */
   recorrencias_fontes?: { fonte_id: string }[]
@@ -160,20 +160,14 @@ export interface RecorrenciaMesRow {
   fontes_previstas: string[]
   saida_titulo: string | null
   saida_data: string | null
-  tipo_planejamento_id: number
-}
-
-export interface TipoPlanejamentoRow {
-  id: number
-  slug: string
-  nome: string
-  ordem: number
+  forma_pagamento: 'manual' | 'automatica'
 }
 
 export interface ResumoPlanejamentoRow {
   user_id: string
   competencia: string
-  tipo_planejamento_id: number
+  forma_pagamento: 'manual' | 'automatica'
+  recorrente: boolean
   quantidade: number
   previsto_centavos: number
   pago_centavos: number
