@@ -2,6 +2,20 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.11.0 — 2026-11-10
+
+**M31: Dashboard analítico — Visão geral, Categorias e Planejado × realizado** (#17, épico #11)
+
+- O Painel ganha abas: **Hoje** (o painel de sempre), **Visão geral** e **Categorias** (`/dashboard/visao-geral`, `/dashboard/categorias`). No mobile as abas viram chips.
+- **Filtro de período** nas abas analíticas: Mês atual (padrão), Mês anterior, Últimos 3/6/12 meses, Ano atual e Personalizado. Fica na URL e acompanha a troca de aba. Todo indicador compara com o período anterior de mesmo tamanho.
+- **Visão geral:** Entradas, Saídas, Saldo operacional, Taxa de economia, Comprometimento da renda e Patrimônio líquido (hoje); gráficos de Entradas × Saídas por mês, Saldo operacional e Entradas por Fonte.
+- **Categorias:** rosca e ranking (total, participação, lançamentos, ticket médio, variação), concentração das 3 e 5 maiores, maior crescimento em % e em R$, evolução das 5 maiores.
+- **Planejado × realizado:** limite mensal da Categoria × meses do período, com as faixas Dentro (≤70%), Atenção, Próximo do limite (>90%) e Excedido (>100%), e projeção de fechamento só no Mês atual, marcada como estimativa.
+- Fora das somas: pagamento de fatura, saldo inicial da Pluggy, lançamentos futuros e Entradas em cartão. Sem Entradas ou sem base anterior, o indicador mostra "—".
+- Fórmulas só em `src/lib/indicadores.ts` (testadas); gráficos com `recharts`.
+- Banco: migration `00021_indicadores_dashboard.sql` (views `v_saidas_dia_categoria` e `v_entradas_dia_fonte`, só leitura).
+- Glossário: Patrimônio líquido, Compromisso futuro e Transferência entre Fontes próprias.
+
 ## 2.10.3 — 2026-11-10
 
 **Planejamento no mobile** (ajuste sem spec)

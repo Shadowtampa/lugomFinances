@@ -30,6 +30,7 @@ Todo valor monetário é `bigint` em centavos. Nenhum `numeric`/`float`.
   fontes restritas — é a resposta ao problema central do app.
 - **`v_recorrencias_mes`** — uma linha por planejamento e competência (M19), com pagamento, Saída ligada (M28) e `forma_pagamento` (M30).
 - **`v_planejamento_resumo`** — `quantidade`, `previsto`, `pago` e `falta` em centavos por competência, forma de pagamento e duração (M30); alimenta os cards da tela.
+- **`v_saidas_dia_categoria`** / **`v_entradas_dia_fonte`** — somas por dia (M31) que alimentam o Dashboard analítico. Fora: pagamento de fatura, saldo inicial da Pluggy, lançamentos futuros e, nas Entradas, Fontes cartão. As fórmulas ficam em `src/lib/indicadores.ts`.
 - **`v_recorrencias_pendentes`** — templates recorrentes ainda não lançados no mês
   corrente (RN-08).
 

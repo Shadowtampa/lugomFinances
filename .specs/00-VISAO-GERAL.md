@@ -78,6 +78,14 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
 - **Lançamento futuro** (M14) — uma Entrada ou Saída com `data` no futuro. Fica
   visível no sistema desde já, mas só passa a contar no saldo quando a data chega
   — não é um status, é um filtro de data nas views de saldo.
+- **Patrimônio líquido** (#11) — soma dos saldos das Fontes que não são cartão
+  (restritas incluídas) menos a dívida atual dos cartões. É um retrato de hoje, não
+  segue filtro de período.
+- **Compromisso futuro** (#11) — parcela que ainda vai vencer: competência não paga de
+  um Planejamento parcelado ou parcela restante de compra no cartão. Não é dívida e
+  não entra no Patrimônio líquido; é mostrado à parte.
+- **Transferência entre Fontes próprias** — não é conceito do domínio: a importada é
+  ignorada e nunca vira Entrada nem Saída. Por isso nenhum indicador precisa excluí-la.
 
 ### Por que "Fonte" e não "Entrada" como origem da Saída
 
@@ -242,6 +250,7 @@ auth.users (local, M17)
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
 `apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
+M31: views `v_saidas_dia_categoria` e `v_entradas_dia_fonte` (somas por dia do Dashboard analítico).
 M29/M30: view `v_planejamento_resumo` (pago / previsto / falta por competência, forma de pagamento e duração). O Tipo de Planejamento do M29 (`tipos_planejamento`) foi removido no M30.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,

@@ -255,3 +255,19 @@ export type FaturaPendente = {
   valorSugeridoCentavos: number
   diaFatura: number
 }
+
+/** Soma de Saídas num dia para uma Categoria (M31). */
+export type SomaSaidaDia = {
+  data: string
+  categoriaId: string
+  totalCentavos: number
+  quantidade: number
+}
+
+/** Soma de Entradas num dia para uma Fonte (M31). */
+export type SomaEntradaDia = {
+  data: string
+  fonteId: string
+  totalCentavos: number
+  quantidade: number
+}

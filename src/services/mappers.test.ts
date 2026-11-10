@@ -3,6 +3,8 @@ import type { RecorrenciaMesRow, SaidaRow } from '../types/api'
 import {
   deRecorrencia,
   paraRecorrenciaDoMes,
+  paraSomaEntradaDia,
+  paraSomaSaidaDia,
   paraResumoPlanejamento,
   paraSaida,
   paraVinculoRecorrencia,
@@ -179,5 +181,31 @@ describe('paraVinculoRecorrencia', () => {
     expect(paraVinculoRecorrencia(null)).toBeNull()
     expect(paraVinculoRecorrencia([])).toBeNull()
     expect(paraVinculoRecorrencia(undefined)).toBeNull()
+  })
+})
+
+describe('somas do Dashboard (M31)', () => {
+  it('traduz a soma de Saídas por dia e Categoria', () => {
+    expect(
+      paraSomaSaidaDia({
+        user_id: 'u1',
+        data: '2026-11-03',
+        categoria_id: 'c1',
+        total_centavos: 12345,
+        quantidade: 2,
+      }),
+    ).toEqual({ data: '2026-11-03', categoriaId: 'c1', totalCentavos: 12345, quantidade: 2 })
+  })
+
+  it('traduz a soma de Entradas por dia e Fonte', () => {
+    expect(
+      paraSomaEntradaDia({
+        user_id: 'u1',
+        data: '2026-11-05',
+        fonte_id: 'f1',
+        total_centavos: 500000,
+        quantidade: 1,
+      }),
+    ).toEqual({ data: '2026-11-05', fonteId: 'f1', totalCentavos: 500000, quantidade: 1 })
   })
 })

@@ -4,6 +4,7 @@ import { PageHeader } from '../components/layout/AppShell'
 import SeloFonte from '../components/ui/SeloFonte'
 import Button from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
+import AbasDashboard from '../features/dashboard/AbasDashboard'
 import AvisoIntegracao from '../features/dashboard/AvisoIntegracao'
 import BarraLimite, { calcularPercentual } from '../features/categorias/BarraLimite'
 import EntradaFormModal from '../features/entradas/EntradaFormModal'
@@ -172,6 +173,8 @@ function DashboardPage() {
           </div>
         }
       />
+
+      <AbasDashboard />
 
       <AvisoIntegracao
         status={integracao.data}
