@@ -39,6 +39,7 @@ import type {
   Saida,
   SaldoCategoria,
   SaldoFonte,
+  VinculoRecorrencia,
 } from '../types/domain'
 import { identidadeDaFonte } from '../lib/identidadeFontes'
 
@@ -132,6 +133,18 @@ export function paraApelido(row: ApelidoEstabelecimentoRow): ApelidoEstabelecime
   return { chave: row.chave, apelido: row.apelido }
 }
 
+export function paraVinculoRecorrencia(
+  embed: SaidaRow['recorrencias_pagamentos'],
+): VinculoRecorrencia | null {
+  const row = Array.isArray(embed) ? embed[0] : embed
+  if (!row) return null
+  return {
+    recorrenciaId: row.recorrencia_id,
+    competencia: row.competencia.slice(0, 7),
+    titulo: row.recorrencias?.titulo,
+  }
+}
+
 export function paraSaida(row: SaidaRow): Saida {
   return {
     id: row.id,
@@ -145,6 +158,7 @@ export function paraSaida(row: SaidaRow): Saida {
       fonteId: split.fonte_id,
       valorCentavos: split.valor_centavos,
     })),
+    recorrencia: paraVinculoRecorrencia(row.recorrencias_pagamentos),
     ...camposApelido(row),
   }
 }
@@ -190,6 +204,8 @@ export function paraRecorrenciaDoMes(row: RecorrenciaMesRow): RecorrenciaDoMes {
     valorPagoCentavos: row.valor_pago_centavos,
     nota: row.nota ?? null,
     fontesPrevistas: row.fontes_previstas ?? [],
+    saidaTitulo: row.saida_titulo ?? null,
+    saidaData: row.saida_data ?? null,
   }
 }
 

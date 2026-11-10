@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
@@ -22,10 +22,11 @@ import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import { useAsync } from '../hooks/useAsync'
 import { deslocarMes, ehFuturo, formatarData, mesAtual, nomeDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
+import { rotuloCompetencia } from '../lib/recorrencias'
 import { formatBRL } from '../lib/money'
 import { listarCategorias, listarSaldosCategorias } from '../services/categorias'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
-import { contarSaidas, excluirSaida, listarSaidas, somarSaidasMes } from '../services/saidas'
+import { contarSaidas, excluirSaida, listarSaidas, obterSaida, somarSaidasMes } from '../services/saidas'
 import type { Categoria, Saida } from '../types/domain'
 
 const POR_PAGINA = 10
@@ -164,6 +165,27 @@ function SaidasPage() {
     setAberturaId((id) => id + 1)
     setMenuAbertoId(null)
   }
+
+  // ?editar=<id> (M28): vindo da tela Recorrências, abre a edição da Saída ligada.
+  const editarId = params.get('editar')
+  useEffect(() => {
+    if (!editarId) return
+    let ativo = true
+    obterSaida(editarId)
+      .then((saida) => {
+        if (ativo) abrirEditar(saida)
+      })
+      .catch((e) => showToast(mensagemDoErro(e), 'error'))
+      .finally(() => {
+        const proximo = new URLSearchParams(params)
+        proximo.delete('editar')
+        setParams(proximo, { replace: true })
+      })
+    return () => {
+      ativo = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editarId])
 
   function abrirDuplicar(saida: Saida) {
     setSaidaEditando(undefined)
@@ -327,6 +349,14 @@ function SaidasPage() {
                       <TituloComApelido titulo={saida.titulo} apelido={saida.apelido} />
                     </span>
                     <IndicadorNota nota={saida.nota} />
+                    {saida.recorrencia && (
+                      <span
+                        className="shrink-0 text-xs text-ink-soft"
+                        title="Recorrência quitada por esta saída"
+                      >
+                        ↻ {saida.recorrencia.titulo ?? 'Recorrência'} {rotuloCompetencia(saida.recorrencia.competencia)}
+                      </span>
+                    )}
                     {ehFuturo(saida.data) && (
                       <span
                         className="shrink-0 text-xs text-ink-soft"

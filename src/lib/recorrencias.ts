@@ -70,3 +70,57 @@ export function avisosFontesPrevistas(
     .filter((f) => ids.includes(f.id) && f.tipo === 'restrita' && !f.categoriasPermitidas?.includes(categoriaId))
     .map((f) => `${f.nome} não aceita ${categoriaNome ?? 'essa categoria'}; o pagamento por ela vai ser recusado.`)
 }
+
+const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+/** "nov/2026" a partir de YYYY-MM. */
+export function rotuloCompetencia(ym: string): string {
+  const [ano, mes] = ym.split('-').map(Number)
+  return `${MESES_CURTOS[mes - 1]}/${ano}`
+}
+
+export type SituacaoVinculo = 'pendente' | 'atrasada' | 'manual' | 'vinculada'
+
+export type OpcaoVinculo = {
+  recorrenciaId: string
+  /** YYYY-MM */
+  competencia: string
+  titulo: string
+  situacao: SituacaoVinculo
+  item: RecorrenciaDoMes
+}
+
+/**
+ * Competências que uma Saída de `mes` pode quitar (M28):
+ * não pagas do mês e de meses anteriores (atrasadas), marcadas sem lançamento só no próprio
+ * mês, e a já ligada à Saída em edição. Ordem: competência, dia, título.
+ */
+export function opcoesDeVinculo(
+  itens: RecorrenciaDoMes[],
+  mes: string,
+  hoje: string,
+  saidaIdEmEdicao?: string,
+): OpcaoVinculo[] {
+  const opcoes: OpcaoVinculo[] = []
+  for (const item of itens) {
+    if (item.competencia > mes) continue
+    let situacao: SituacaoVinculo | null = null
+    if (saidaIdEmEdicao && item.saidaId === saidaIdEmEdicao) situacao = 'vinculada'
+    else if (!item.pagamentoId) situacao = item.competencia < mes || statusDaRecorrencia(item, hoje) === 'atrasada' ? 'atrasada' : 'pendente'
+    else if (!item.saidaId && item.competencia === mes) situacao = 'manual'
+    if (situacao) {
+      opcoes.push({ recorrenciaId: item.recorrenciaId, competencia: item.competencia, titulo: item.titulo, situacao, item })
+    }
+  }
+  return opcoes.sort(
+    (a, b) =>
+      a.competencia.localeCompare(b.competencia) ||
+      a.item.dia - b.item.dia ||
+      a.titulo.localeCompare(b.titulo),
+  )
+}
+
+/** Chave única de uma competência de recorrência, para o <select>. */
+export function chaveVinculo(v: { recorrenciaId: string; competencia: string }): string {
+  return `${v.recorrenciaId}|${v.competencia}`
+}

@@ -34,6 +34,9 @@ const CODIGOS_RPC_CONHECIDOS = new Set([
   'APELIDO_INVALIDO',
   'NOTA_INVALIDA',
   'RECORRENCIA_INVALIDA',
+  'RECORRENCIA_JA_VINCULADA',
+  'RECORRENCIA_EM_FATURA',
+  'COMPETENCIA_OBRIGATORIA',
 ])
 
 const MENSAGENS: Record<string, string> = {
@@ -64,6 +67,9 @@ const MENSAGENS: Record<string, string> = {
   APELIDO_INVALIDO: 'Apelido inválido: use até 60 caracteres.',
   NOTA_INVALIDA: 'A nota pode ter no máximo 500 caracteres.',
   RECORRENCIA_INVALIDA: 'Recorrência não encontrada.',
+  RECORRENCIA_JA_VINCULADA: 'Essa recorrência já foi paga por outra saída neste mês.',
+  RECORRENCIA_EM_FATURA: 'Pagamento de fatura não pode quitar uma recorrência.',
+  COMPETENCIA_OBRIGATORIA: 'Escolha o mês da recorrência.',
   ITEM_ID_INVALIDO: 'Item ID inválido: deve ser um UUID (ex.: 1a2b3c4d-…).',
   DUPLICADO: 'Já existe um registro com esse nome.',
   UNKNOWN: 'Algo deu errado. Tente novamente.',

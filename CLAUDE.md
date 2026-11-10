@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-M1–M17 and M19–M27 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
+M1–M17 and M19–M28 are built (M18 superseded by M20's integration warning). The app runs only on the homelab (no Supabase, no Vercel) — see `.specs/17-backend-local.md`.
 
 Before any task, read `.specs/00-VISAO-GERAL.md`. It contains the domain glossary, the business rules (RN-01 through RN-11), the stack decisions, and code conventions. They are mandatory and are not repeated in full here.
 
@@ -35,7 +35,7 @@ Vite + React 19 + TypeScript, Tailwind CSS v4, React Router v7 (declarative/SPA 
 
 ## Working a milestone
 
-The spec set in `.specs/` is the source of truth and is meant to be worked one milestone per session, in strict dependency order (`.specs/COMO-USAR.md` has the full rationale and dependency graph):
+Milestones M1–M27 have their specs in `.specs/` (frozen history; `.specs/COMO-USAR.md` has the original rationale and dependency graph). **From M28 on, the spec lives in the GitHub issue body, not in `.specs/`** — see Issue tracker. Milestones are worked one per session; the original M1–M12 order was:
 
 ```
 M1 setup → M2 schema → M3 auth → M4 camada de dados
@@ -45,7 +45,7 @@ M1 setup → M2 schema → M3 auth → M4 camada de dados
               → M12 notificacoes (always last — consolidates balance feedback into the final layout)
 ```
 
-Each `NN-*.md` file has its own Escopo, Tarefas, Critérios de aceite, and Definition of Done. Read the target milestone's spec file (plus `00-VISAO-GERAL.md`) fully before writing code for it. If a spec turns out to be wrong once code exists, **update the spec first, then the code** — a stale spec is worse than none, because it will be trusted on the next session.
+Each spec (the issue body from M28 on; a `NN-*.md` file before that) has its own Decisões, Escopo, Tarefas and Critérios de aceite. Read the target milestone's issue (plus `00-VISAO-GERAL.md`) fully before writing code for it. If a spec turns out to be wrong once code exists, **update the issue body first, then the code** — a stale spec is worse than none, because it will be trusted on the next session. Domain-wide rules (glossary, RN-xx, data model) still live in `.specs/00-VISAO-GERAL.md` and are updated there.
 
 Commit convention: one commit per completed milestone, message `M<n>: <título da spec>`; break M8 (the largest, splits UI) into intermediate commits by section if needed.
 
@@ -53,7 +53,7 @@ Branch convention: each milestone starts on its own branch off the base branch, 
 
 ## Issue tracker
 
-Work items live as GitHub issues on `Shadowtampa/lugomFinances` (use `gh`). Each new milestone/feature gets an issue titled `M<n>: <título>`; the issue holds the decisions and acceptance criteria, and the `.specs/NN-*.md` file is still written before code and linked from the issue. Every issue carries one category label (`bug` / `enhancement`) and one triage state label: `needs-triage` (not grilled yet), `needs-info`, `ready-for-agent` (fully specified), `ready-for-human`, `wontfix`. Reference the issue in the milestone commit (`Closes #<n>`).
+Work items live as GitHub issues on `Shadowtampa/lugomFinances` (use `gh`). Each new milestone/feature gets an issue titled `M<n>: <título>`; the issue body **is the spec** (Decisões, Escopo, Tarefas, Critérios de aceite), written before code with `gh issue edit --body-file`; no new `.specs/NN-*.md` files are created. Every issue carries one category label (`bug` / `enhancement`) and one triage state label: `needs-triage` (not grilled yet), `needs-info`, `ready-for-agent` (fully specified), `ready-for-human`, `wontfix`. Reference the issue in the milestone commit (`Closes #<n>`).
 
 ## Versioning
 

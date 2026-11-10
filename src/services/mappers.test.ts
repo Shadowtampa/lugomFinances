@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { RecorrenciaMesRow, SaidaRow } from '../types/api'
-import { deRecorrencia, paraRecorrenciaDoMes, paraSaida } from './mappers'
+import { deRecorrencia, paraRecorrenciaDoMes, paraSaida, paraVinculoRecorrencia } from './mappers'
 
 describe('paraSaida', () => {
   it('desempacota os splits aninhados', () => {
@@ -28,6 +28,7 @@ describe('paraSaida', () => {
       data: '2026-09-05',
       ehPagamentoFatura: false,
       nota: null,
+      recorrencia: null,
       splits: [
         { fonteId: 'f1', valorCentavos: 5000 },
         { fonteId: 'f2', valorCentavos: 3000 },
@@ -95,6 +96,8 @@ describe('paraRecorrenciaDoMes', () => {
       valor_pago_centavos: null,
       nota: null,
       fontes_previstas: [],
+      saida_titulo: null,
+      saida_data: null,
     }
     expect(paraRecorrenciaDoMes(row)).toEqual({
       recorrenciaId: 'r1',
@@ -113,6 +116,8 @@ describe('paraRecorrenciaDoMes', () => {
       fontesPrevistas: [],
       saidaId: null,
       valorPagoCentavos: null,
+      saidaTitulo: null,
+      saidaData: null,
     })
   })
 })
@@ -123,5 +128,19 @@ describe('deRecorrencia', () => {
       mes_inicio: '2026-11-01',
       categoria_id: null,
     })
+  })
+})
+
+describe('paraVinculoRecorrencia', () => {
+  it('aceita objeto ou array do embed e converte competência', () => {
+    const row = { recorrencia_id: 'r1', competencia: '2026-10-01', recorrencias: { titulo: 'Aluguel' } }
+    const esperado = { recorrenciaId: 'r1', competencia: '2026-10', titulo: 'Aluguel' }
+    expect(paraVinculoRecorrencia(row)).toEqual(esperado)
+    expect(paraVinculoRecorrencia([row])).toEqual(esperado)
+  })
+  it('sem vínculo vira null', () => {
+    expect(paraVinculoRecorrencia(null)).toBeNull()
+    expect(paraVinculoRecorrencia([])).toBeNull()
+    expect(paraVinculoRecorrencia(undefined)).toBeNull()
   })
 })

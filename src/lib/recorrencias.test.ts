@@ -3,6 +3,8 @@ import {
   avisosFontesPrevistas,
   filtrarRecorrencias,
   lerFiltroRecorrencia,
+  opcoesDeVinculo,
+  rotuloCompetencia,
   resumoDoMes,
   rotuloFontesPrevistas,
   statusDaRecorrencia,
@@ -27,6 +29,8 @@ function item(parcial: Partial<RecorrenciaDoMes>): RecorrenciaDoMes {
     valorPagoCentavos: null,
     nota: null,
     fontesPrevistas: [],
+    saidaTitulo: null,
+    saidaData: null,
     ...parcial,
   }
 }
@@ -124,5 +128,41 @@ describe('avisosFontesPrevistas', () => {
   it('não avisa quando a categoria é permitida ou não há categoria', () => {
     expect(avisosFontesPrevistas(['vr'], fontes, 'alimentacao', 'Alimentação')).toEqual([])
     expect(avisosFontesPrevistas(['vr'], fontes, null, null)).toEqual([])
+  })
+})
+
+describe('rotuloCompetencia', () => {
+  it('formata mês curto e ano', () => {
+    expect(rotuloCompetencia('2026-11')).toBe('nov/2026')
+    expect(rotuloCompetencia('2027-01')).toBe('jan/2027')
+  })
+})
+
+describe('opcoesDeVinculo', () => {
+  const hoje = '2026-11-09'
+  const outPendente = item({ recorrenciaId: 'aluguel', competencia: '2026-10', dia: 5 })
+  const outManualAntiga = item({ recorrenciaId: 'luz', competencia: '2026-10', pagamentoId: 'p0' })
+  const novAtrasada = item({ recorrenciaId: 'aluguel', competencia: '2026-11', dia: 5 })
+  const novPendente = item({ recorrenciaId: 'net', competencia: '2026-11', dia: 20 })
+  const novManual = item({ recorrenciaId: 'luz', competencia: '2026-11', pagamentoId: 'p1' })
+  const novOutraSaida = item({ recorrenciaId: 'agua', competencia: '2026-11', pagamentoId: 'p2', saidaId: 's9' })
+  const novEstaSaida = item({ recorrenciaId: 'gas', competencia: '2026-11', pagamentoId: 'p3', saidaId: 's1' })
+  const dezFuturo = item({ recorrenciaId: 'net', competencia: '2026-12' })
+  const todos = [novPendente, novManual, novOutraSaida, novEstaSaida, outPendente, outManualAntiga, novAtrasada, dezFuturo]
+
+  it('lista não pagas (inclusive atrasadas de meses anteriores) e manuais do próprio mês', () => {
+    const r = opcoesDeVinculo(todos, '2026-11', hoje)
+    expect(r.map((o) => [o.recorrenciaId, o.competencia, o.situacao])).toEqual([
+      ['aluguel', '2026-10', 'atrasada'],
+      ['aluguel', '2026-11', 'atrasada'],
+      ['luz', '2026-11', 'manual'],
+      ['net', '2026-11', 'pendente'],
+    ])
+  })
+
+  it('inclui a competência já ligada à Saída em edição', () => {
+    const r = opcoesDeVinculo(todos, '2026-11', hoje, 's1')
+    expect(r.find((o) => o.recorrenciaId === 'gas')?.situacao).toBe('vinculada')
+    expect(r.some((o) => o.recorrenciaId === 'agua')).toBe(false)
   })
 })

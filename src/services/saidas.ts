@@ -2,9 +2,12 @@ import { primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/date'
 import { unwrap } from '../lib/erros'
 import { db } from '../lib/api'
 import type { ResultadoCriarSaidaRow, SaidaRow } from '../types/api'
-import type { ResultadoCriarSaida, Saida } from '../types/domain'
+import type { ResultadoCriarSaida, Saida, VinculoRecorrencia } from '../types/domain'
 import { CAMPOS_APELIDO } from './apelidos'
 import { paraResultadoCriarSaida, paraSaida } from './mappers'
+
+/** Vínculo com recorrência (M28): competência que a Saída quita. */
+const CAMPOS_VINCULO = 'recorrencias_pagamentos(recorrencia_id,competencia,recorrencias(titulo))'
 
 export async function listarSaidas(filtro?: {
   mes?: string
@@ -15,8 +18,8 @@ export async function listarSaidas(filtro?: {
   porPagina?: number
 }): Promise<Saida[]> {
   let query = filtro?.fonteId
-    ? db.from('saidas').select(`*, ${CAMPOS_APELIDO}, saida_splits!inner(fonte_id,valor_centavos)`)
-    : db.from('saidas').select(`*, ${CAMPOS_APELIDO}, saida_splits(fonte_id,valor_centavos)`)
+    ? db.from('saidas').select(`*, ${CAMPOS_APELIDO}, ${CAMPOS_VINCULO}, saida_splits!inner(fonte_id,valor_centavos)`)
+    : db.from('saidas').select(`*, ${CAMPOS_APELIDO}, ${CAMPOS_VINCULO}, saida_splits(fonte_id,valor_centavos)`)
   query = query.order('data', { ascending: false })
 
   if (filtro?.mes) {
@@ -87,7 +90,7 @@ export async function obterSaida(id: string): Promise<Saida> {
   const row = unwrap<SaidaRow>(
     await db
       .from('saidas')
-      .select(`*, ${CAMPOS_APELIDO}, saida_splits(fonte_id,valor_centavos)`)
+      .select(`*, ${CAMPOS_APELIDO}, ${CAMPOS_VINCULO}, saida_splits(fonte_id,valor_centavos)`)
       .eq('id', id)
       .single(),
   )
@@ -98,7 +101,15 @@ function paraSplitsRpc(splits: Saida['splits']) {
   return splits.map((split) => ({ fonte_id: split.fonteId, valor_centavos: split.valorCentavos }))
 }
 
-export async function criarSaida(dados: Omit<Saida, 'id'>): Promise<ResultadoCriarSaida> {
+type DadosSaida = Omit<Saida, 'id' | 'recorrencia'> & { recorrencia?: VinculoRecorrencia | null }
+
+function paraVinculoRpc(vinculo: VinculoRecorrencia | null | undefined) {
+  return vinculo
+    ? { p_recorrencia_id: vinculo.recorrenciaId, p_competencia: `${vinculo.competencia}-01` }
+    : {}
+}
+
+export async function criarSaida(dados: DadosSaida): Promise<ResultadoCriarSaida> {
   const row = unwrap<ResultadoCriarSaidaRow>(
     await db.rpc('criar_saida', {
       p_titulo: dados.titulo,
@@ -106,6 +117,7 @@ export async function criarSaida(dados: Omit<Saida, 'id'>): Promise<ResultadoCri
       p_categoria_id: dados.categoriaId,
       p_data: dados.data,
       p_splits: paraSplitsRpc(dados.splits),
+      ...paraVinculoRpc(dados.recorrencia),
     }),
   )
   return paraResultadoCriarSaida(row)
@@ -113,7 +125,7 @@ export async function criarSaida(dados: Omit<Saida, 'id'>): Promise<ResultadoCri
 
 export async function atualizarSaida(
   id: string,
-  dados: Omit<Saida, 'id'>,
+  dados: DadosSaida,
 ): Promise<ResultadoCriarSaida> {
   const row = unwrap<ResultadoCriarSaidaRow>(
     await db.rpc('atualizar_saida', {
@@ -123,6 +135,7 @@ export async function atualizarSaida(
       p_categoria_id: dados.categoriaId,
       p_data: dados.data,
       p_splits: paraSplitsRpc(dados.splits),
+      ...paraVinculoRpc(dados.recorrencia),
     }),
   )
   return paraResultadoCriarSaida(row)

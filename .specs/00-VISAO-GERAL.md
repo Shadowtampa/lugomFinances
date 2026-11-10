@@ -57,7 +57,7 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   de saúde, parcelas), com valor previsto e dia de vencimento. **Não é um
   lançamento e nunca afeta saldo**: é um checklist de "paga / não paga" por
   competência (`recorrencias` + `recorrencias_pagamentos`). Um pagamento pode
-  apontar para a Saída real que o quitou (`saida_id`), mas não precisa. Só existem
+  apontar para a Saída real que o quitou (`saida_id`, 1:1 desde o M28), mas não precisa. Só existem
   recorrências de saída. (Até o M18, recorrência era uma Entrada/Saída com
   `recorrente = true` que gerava lançamentos — modelo removido no M19.)
 - **Cartão de crédito** (M13) — uma Fonte com `eh_cartao = true`, sem saldo
@@ -117,6 +117,12 @@ Para cada competência em que está vigente (`mes_inicio` ≤ mês, dentro de
 `recorrencias_pagamentos`), **Atrasada** (sem pagamento e hoje passou do dia de
 vencimento resolvido no mês) ou **Pendente**. Marcar como paga não cria Saída
 nem mexe em saldo.
+**Vínculo (M28):** uma Saída pode quitar **uma** competência de **uma** recorrência,
+escolhida no formulário de Saída (`criar_saida`/`atualizar_saida` com `p_recorrencia_id`,
+`p_competencia`); cada competência tem no máximo uma Saída (`unique (saida_id)`). Vincular
+cria o pagamento ou substitui a marcação manual (`pago_em` = data da Saída). Excluir a Saída
+apaga o pagamento (`on delete cascade`) e a competência volta a pendente. A Saída segue
+todas as regras de saldo/allowlist; o vínculo nunca afeta saldo.
 
 **RN-15** (M20/M21) — Nada que vem da Pluggy vira lançamento sem confirmação do usuário.
 Cada conta vinculada tem um **"importar desde"** (= `data_corte + 1`, padrão: dia 1º do mês
@@ -215,7 +221,7 @@ auth.users (local, M17)
          mes_inicio, total_parcelas, ativa
             │
             └── recorrencias_pagamentos
-                  id, recorrencia_id, competencia, pago_em, saida_id (opcional)
+                  id, recorrencia_id, competencia, pago_em, saida_id (opcional, único, cascade)
 ```
 
 **Views:** `v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`,

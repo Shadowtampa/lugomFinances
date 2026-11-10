@@ -56,6 +56,12 @@ export interface SaidaSplitRow {
   valor_centavos: number
 }
 
+export interface VinculoRecorrenciaRow {
+  recorrencia_id: string
+  competencia: string
+  recorrencias: { titulo: string } | null
+}
+
 export interface SaidaRow {
   id: string
   user_id: string
@@ -67,6 +73,8 @@ export interface SaidaRow {
   created_at: string
   nota: string | null
   saida_splits?: Pick<SaidaSplitRow, 'fonte_id' | 'valor_centavos'>[]
+  /** Embed do vínculo com recorrência (M28). PostgREST devolve objeto (FK única) — aceita array por segurança. */
+  recorrencias_pagamentos?: VinculoRecorrenciaRow | VinculoRecorrenciaRow[] | null
   /** Campos computados (M22), presentes quando pedidos no select. */
   chave_estabelecimento?: string | null
   apelido_estabelecimento?: string | null
@@ -149,6 +157,8 @@ export interface RecorrenciaMesRow {
   valor_pago_centavos: number | null
   nota: string | null
   fontes_previstas: string[]
+  saida_titulo: string | null
+  saida_data: string | null
 }
 
 export interface FaturaPendenteRow {

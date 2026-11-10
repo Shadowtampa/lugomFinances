@@ -1,3 +1,4 @@
+import { deslocarMes } from '../lib/date'
 import { unwrap } from '../lib/erros'
 import { db } from '../lib/api'
 import type {
@@ -64,6 +65,24 @@ export async function listarRecorrenciasDoMes(competencia: string): Promise<Reco
       .from('v_recorrencias_mes')
       .select('*')
       .eq('competencia', `${competencia}-01`)
+      .order('dia')
+      .order('titulo'),
+  )
+  return rows.map(paraRecorrenciaDoMes)
+}
+
+/**
+ * Competências candidatas a vínculo com uma Saída de `mes` (M28): de mes−3 até mes.
+ * O front filtra com `opcoesDeVinculo` (lib/recorrencias).
+ */
+export async function listarRecorrenciasParaVinculo(mes: string): Promise<RecorrenciaDoMes[]> {
+  const rows = unwrap<RecorrenciaMesRow[]>(
+    await db
+      .from('v_recorrencias_mes')
+      .select('*')
+      .gte('competencia', `${deslocarMes(mes, -3)}-01`)
+      .lte('competencia', `${mes}-01`)
+      .order('competencia')
       .order('dia')
       .order('titulo'),
   )

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '../components/layout/AppShell'
 import AcoesMenu from '../components/ui/AcoesMenu'
 import SeloFonte from '../components/ui/SeloFonte'
@@ -267,6 +267,16 @@ function RecorrenciasPage() {
                         )}
                       </span>
                       <IndicadorNota nota={item.nota} />
+                      {item.saidaId && (
+                        <Link
+                          to={`/saidas?mes=${(item.saidaData ?? item.pagoEm ?? '').slice(0, 7)}&editar=${item.saidaId}`}
+                          className="max-w-[14rem] shrink-0 truncate text-xs text-ink-soft underline-offset-2 hover:underline"
+                          title="Abrir a saída que pagou esta recorrência"
+                        >
+                          ↻ {item.saidaTitulo ?? 'Saída'}
+                          {item.saidaData && ` · ${formatarData(item.saidaData)}`}
+                        </Link>
+                      )}
                       {item.fontesPrevistas.length > 0 && (
                         <span
                           className="flex max-w-[12rem] shrink-0 items-center gap-1 text-xs text-ink-soft"

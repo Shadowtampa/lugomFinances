@@ -2,6 +2,17 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.8.0 — 2026-11-09
+
+**M28: Vincular Saída a uma Recorrência** (#9)
+
+- Novo campo opcional "Recorrência" no formulário de Saída: lista as contas não pagas do mês da data, as atrasadas dos 3 meses anteriores e as marcadas como pagas sem lançamento. Escolher uma marca a competência como paga por essa Saída.
+- Numa Saída nova, escolher a recorrência preenche título, valor previsto, Categoria e a Fonte prevista (quando há só uma), sem sobrescrever o que já foi digitado.
+- Editar a Saída mantém o vínculo; limpar ou trocar o campo devolve a competência antiga para pendente. Excluir a Saída também.
+- Lista de Saídas mostra "↻ Aluguel nov/2026"; na tela Recorrências, a competência paga mostra a Saída que a quitou, com link para editá-la.
+- Banco: migration `00018_vincular_saida_recorrencia.sql` (vínculo 1:1, cascade, `criar_saida`/`atualizar_saida` com `p_recorrencia_id`/`p_competencia`).
+- Specs passam a viver nas issues do GitHub (CLAUDE.md).
+
 ## 2.7.4 — 2026-11-09
 
 **Editar Saída não acusa mais saldo insuficiente** (ajuste sem spec)

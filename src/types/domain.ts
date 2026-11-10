@@ -58,6 +58,15 @@ export type SaidaSplit = {
   valorCentavos: number
 }
 
+/** Vínculo 1:1 entre uma Saída e uma competência de recorrência (M28). Não afeta saldo. */
+export type VinculoRecorrencia = {
+  recorrenciaId: string
+  /** YYYY-MM */
+  competencia: string
+  /** Título da recorrência; só na leitura. */
+  titulo?: string
+}
+
 export type Saida = {
   id: string
   categoriaId: string
@@ -68,6 +77,8 @@ export type Saida = {
   /** Observação livre (M24). */
   nota?: string | null
   splits: SaidaSplit[]
+  /** Competência de recorrência que esta Saída quita (M28). */
+  recorrencia?: VinculoRecorrencia | null
   /** Só em lançamentos vindos da Pluggy (M22). */
   chaveEstabelecimento?: string | null
   /** Apelido do estabelecimento; null quando não há ou o título foi editado (M22). */
@@ -133,6 +144,9 @@ export type RecorrenciaDoMes = {
   valorPagoCentavos: number | null
   nota: string | null
   fontesPrevistas: string[]
+  /** Saída ligada (M28), quando paga por um lançamento. */
+  saidaTitulo: string | null
+  saidaData: string | null
 }
 
 export type PluggyItem = {

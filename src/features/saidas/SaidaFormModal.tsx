@@ -9,9 +9,11 @@ import { usePainelSaldo } from '../../contexts/PainelSaldoContext'
 import type { ApiError } from '../../lib/erros'
 import { mensagemDoErro } from '../../lib/erros'
 import { formatBRL } from '../../lib/money'
+import { chaveVinculo, opcoesDeVinculo, rotuloCompetencia, type OpcaoVinculo } from '../../lib/recorrencias'
+import { listarRecorrenciasParaVinculo } from '../../services/recorrencias'
 import { atualizarSaida, criarSaida, definirNotaSaida } from '../../services/saidas'
 import CampoNota from '../notas/CampoNota'
-import type { Categoria, Saida, SaldoCategoria } from '../../types/domain'
+import type { Categoria, RecorrenciaDoMes, Saida, SaldoCategoria, VinculoRecorrencia } from '../../types/domain'
 import { avaliarFonte, type FonteComSaldo } from './elegibilidade'
 
 interface SaidaFormModalProps {
@@ -37,6 +39,13 @@ function hojeISO(): string {
 
 function opcaoLabel(fonte: FonteComSaldo, motivo: string | undefined): string {
   return motivo ? `${fonte.nome} — ${motivo}` : fonte.nome
+}
+
+const SUFIXO_VINCULO: Record<OpcaoVinculo['situacao'], string> = {
+  pendente: '',
+  atrasada: ' (atrasada)',
+  manual: ' (marcada sem lançamento)',
+  vinculada: '',
 }
 
 function previewFonte(fonte: FonteComSaldo | undefined, valorCentavos: number) {
@@ -93,6 +102,55 @@ function SaidaFormModal({
     splitsIniciais.length > 1 ? splitsIniciais : [],
   )
   const [erroFonteLinha, setErroFonteLinha] = useState<Record<number, string>>({})
+
+  // Vínculo com recorrência (M28). Duplicar não copia: só a Saída em edição traz o vínculo.
+  const vinculoOriginal = saida?.recorrencia ?? null
+  const [vinculoChave, setVinculoChave] = useState(vinculoOriginal ? chaveVinculo(vinculoOriginal) : '')
+  const [candidatas, setCandidatas] = useState<RecorrenciaDoMes[]>([])
+  const mesDaData = /^\d{4}-\d{2}-\d{2}$/.test(data) ? data.slice(0, 7) : null
+  const mostrarVinculo = !saida?.ehPagamentoFatura
+
+  useEffect(() => {
+    if (!aberto || !mesDaData || !mostrarVinculo) return
+    let ativo = true
+    listarRecorrenciasParaVinculo(mesDaData)
+      .then((itens) => ativo && setCandidatas(itens))
+      .catch(() => ativo && setCandidatas([]))
+    return () => {
+      ativo = false
+    }
+  }, [aberto, mesDaData, mostrarVinculo])
+
+  const opcoesVinculo = useMemo(
+    () => (mesDaData ? opcoesDeVinculo(candidatas, mesDaData, hojeISO(), saida?.id) : []),
+    [candidatas, mesDaData, saida?.id],
+  )
+  // O vínculo atual some da lista se a data mudar de mês; continua selecionável.
+  const vinculoOriginalForaDaLista =
+    vinculoOriginal && !opcoesVinculo.some((o) => chaveVinculo(o) === chaveVinculo(vinculoOriginal))
+
+  function escolherVinculo(chave: string) {
+    setVinculoChave(chave)
+    if (saida || !chave) return
+    const opcao = opcoesVinculo.find((o) => chaveVinculo(o) === chave)
+    if (!opcao) return
+    const { item } = opcao
+    if (!titulo.trim()) setTitulo(item.titulo)
+    if (valorCentavos === 0) setValorCentavos(item.valorPrevistoCentavos)
+    if (!categoriaId && item.categoriaId && categorias.some((c) => c.id === item.categoriaId)) {
+      setCategoriaId(item.categoriaId)
+    }
+    if (!modoSplit && !fonteSimples && item.fontesPrevistas.length === 1) {
+      const fonteId = item.fontesPrevistas[0]
+      if (fontes.some((f) => f.id === fonteId)) setFonteSimples(fonteId)
+    }
+  }
+
+  function vinculoEscolhido(): VinculoRecorrencia | null {
+    if (!vinculoChave) return null
+    const [recorrenciaId, competencia] = vinculoChave.split('|')
+    return { recorrenciaId, competencia }
+  }
 
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -398,6 +456,7 @@ function SaidaFormModal({
       categoriaId,
       data,
       splits: splitsFinais,
+      recorrencia: mostrarVinculo ? vinculoEscolhido() : null,
     }
 
     try {
@@ -441,6 +500,28 @@ function SaidaFormModal({
       size={modoSplit ? 'xl' : 'md'}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {mostrarVinculo && (opcoesVinculo.length > 0 || vinculoOriginal) && (
+          <Select
+            label="Recorrência"
+            hint="Opcional. Marca a conta como paga por esta saída."
+            value={vinculoChave}
+            onChange={(event) => escolherVinculo(event.target.value)}
+          >
+            <option value="">— nenhuma —</option>
+            {vinculoOriginal && vinculoOriginalForaDaLista && (
+              <option value={chaveVinculo(vinculoOriginal)}>
+                {vinculoOriginal.titulo ?? 'Recorrência'} — {rotuloCompetencia(vinculoOriginal.competencia)}
+              </option>
+            )}
+            {opcoesVinculo.map((opcao) => (
+              <option key={chaveVinculo(opcao)} value={chaveVinculo(opcao)}>
+                {opcao.titulo} — {rotuloCompetencia(opcao.competencia)}
+                {SUFIXO_VINCULO[opcao.situacao]}
+              </option>
+            ))}
+          </Select>
+        )}
+
         <Input
           ref={tituloRef}
           label="Título"
