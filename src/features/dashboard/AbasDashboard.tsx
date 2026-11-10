@@ -4,6 +4,7 @@ const ABAS = [
   { to: '/', label: 'Hoje', analitica: false },
   { to: '/dashboard/visao-geral', label: 'Visão geral', analitica: true },
   { to: '/dashboard/categorias', label: 'Categorias', analitica: true },
+  { to: '/dashboard/cartoes', label: 'Cartões', analitica: true },
 ]
 
 /** Abas do Dashboard: abas no desktop, chips roláveis no mobile. O filtro de período vai junto na URL. */

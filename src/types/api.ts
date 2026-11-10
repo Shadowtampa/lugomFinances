@@ -307,3 +307,34 @@ export interface EntradaDiaFonteRow {
   total_centavos: number
   quantidade: number
 }
+
+/** v_saidas_fonte (M32): um split de Saída por linha. */
+export interface SaidaFonteRow {
+  user_id: string
+  saida_id: string
+  data: string
+  fonte_id: string
+  categoria_id: string
+  titulo: string
+  valor_centavos: number
+}
+
+/** v_pagamentos_fatura_mes (M32): `mes` é o dia 1º (YYYY-MM-DD). */
+export interface PagamentoFaturaMesRow {
+  user_id: string
+  fonte_id: string
+  mes: string
+  total_centavos: number
+}
+
+/** v_parcelas_cartao_restantes (M32): `proximo_mes` é o dia 1º (YYYY-MM-DD). */
+export interface ParcelaCartaoRestanteRow {
+  user_id: string
+  fonte_id: string
+  descricao: string
+  parcela: number
+  total_parcelas: number
+  restantes: number
+  valor_parcela_centavos: number
+  proximo_mes: string
+}

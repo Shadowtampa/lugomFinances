@@ -271,3 +271,38 @@ export type SomaEntradaDia = {
   totalCentavos: number
   quantidade: number
 }
+
+/** Parcela de uma Saída numa Fonte (M32): o split, já sem fatura/saldo inicial/futuros. */
+export type SaidaNaFonte = {
+  saidaId: string
+  data: string
+  fonteId: string
+  categoriaId: string
+  titulo: string
+  valorCentavos: number
+}
+
+/** Pagamentos de fatura de um cartão num mês (M32). `mes` = YYYY-MM. */
+export type PagamentoFaturaMes = {
+  fonteId: string
+  mes: string
+  totalCentavos: number
+}
+
+/** Parcelas que ainda vão vencer numa compra no cartão (M32). `proximoMes` = YYYY-MM. */
+export type ParcelaCartaoRestante = {
+  fonteId: string
+  descricao: string
+  parcela: number
+  totalParcelas: number
+  restantes: number
+  valorParcelaCentavos: number
+  proximoMes: string
+}
+
+/** Competência de Planejamento parcelado ainda não paga (M32). `competencia` = YYYY-MM-DD. */
+export type ParcelaPlanejamentoFutura = {
+  titulo: string
+  competencia: string
+  valorPrevistoCentavos: number
+}
