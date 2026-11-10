@@ -8,11 +8,13 @@ import type {
   RecorrenciaMesRow,
   SaidaDiaCategoriaRow,
   SaidaFonteRow,
+  SaidaLancamentoRow,
 } from '../types/api'
 import type {
   PagamentoFaturaMes,
   ParcelaCartaoRestante,
   ParcelaPlanejamentoFutura,
+  SaidaLancamento,
   SaidaNaFonte,
   SomaEntradaDia,
   SomaSaidaDia,
@@ -20,6 +22,7 @@ import type {
 import {
   paraPagamentoFaturaMes,
   paraParcelaCartaoRestante,
+  paraSaidaLancamento,
   paraSaidaNaFonte,
   paraSomaEntradaDia,
   paraSomaSaidaDia,
@@ -116,4 +119,19 @@ export async function listarParcelasPlanejamentoFuturas(deMes: string): Promise<
     competencia: r.competencia,
     valorPrevistoCentavos: r.valor_previsto_centavos,
   }))
+}
+
+/** Saídas (uma por linha) com estabelecimento no intervalo (M33). View: v_saidas_lancamento. */
+export async function listarSaidasLancamento(de: string, ate: string): Promise<SaidaLancamento[]> {
+  const rows = await buscarTudo<SaidaLancamentoRow>((inicio, fim) =>
+    db
+      .from('v_saidas_lancamento')
+      .select('*')
+      .gte('data', de)
+      .lte('data', ate)
+      .order('data')
+      .order('saida_id')
+      .range(inicio, fim),
+  )
+  return rows.map(paraSaidaLancamento)
 }

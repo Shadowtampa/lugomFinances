@@ -420,3 +420,140 @@ export function compromissosFuturos(
 export function totalCompromissos(lista: CompromissoMes[]): number {
   return lista.reduce((acc, m) => acc + m.totalCentavos, 0)
 }
+
+// ---------- Comportamento financeiro (M33) ----------
+
+/** Período até hoje: o que ainda não aconteceu não conta como dia decorrido. */
+export function periodoDecorrido(periodo: Periodo, hoje: string): Periodo | null {
+  if (periodo.de > hoje) return null
+  return { de: periodo.de, ate: periodo.ate < hoje ? periodo.ate : hoje }
+}
+
+/** Dias decorridos (DI) do período, até hoje; período inteiro no futuro → 0. */
+export function diasDecorridos(periodo: Periodo, hoje: string): number {
+  const p = periodoDecorrido(periodo, hoje)
+  return p ? diasNoPeriodo(p) : 0
+}
+
+/** total / dias, arredondado ao centavo; 0 dias → null. */
+export function gastoMedioDiario(totalCentavos: number, dias: number): number | null {
+  return dias <= 0 ? null : Math.round(totalCentavos / dias)
+}
+
+/** Lançamentos por dia; 0 dias → null. */
+export function frequenciaCompras(quantidade: number, dias: number): number | null {
+  return dias <= 0 ? null : quantidade / dias
+}
+
+export type GastoDia = { data: string; totalCentavos: number }
+
+/** Uma linha por dia do período (inclusive), com zero nos dias sem Saída. */
+export function gastoPorDia(itens: { data: string; valorCentavos: number }[], periodo: Periodo): GastoDia[] {
+  const mapa = new Map<string, number>()
+  for (const i of itens) mapa.set(i.data, (mapa.get(i.data) ?? 0) + i.valorCentavos)
+  const dias: GastoDia[] = []
+  for (let d = periodo.de; d <= periodo.ate; d = somarDias(d, 1)) {
+    dias.push({ data: d, totalCentavos: mapa.get(d) ?? 0 })
+  }
+  return dias
+}
+
+/** Dia de maior gasto (empate: o mais antigo); sem gasto nenhum → null. */
+export function diaMaiorGasto(dias: GastoDia[]): GastoDia | null {
+  let melhor: GastoDia | null = null
+  for (const d of dias) {
+    if (d.totalCentavos > 0 && (melhor === null || d.totalCentavos > melhor.totalCentavos)) melhor = d
+  }
+  return melhor
+}
+
+/** 0 = domingo … 6 = sábado. */
+export function diaDaSemana(iso: string): number {
+  return new Date(`${iso}T12:00:00Z`).getUTCDay()
+}
+
+export type GastoDiaSemana = {
+  dia: number
+  totalCentavos: number
+  ocorrencias: number
+  mediaCentavos: number | null
+}
+
+/** Total por dia da semana e média por ocorrência do dia (ocorrências = dias do período com esse dia). */
+export function gastoPorDiaDaSemana(dias: GastoDia[]): GastoDiaSemana[] {
+  const base: GastoDiaSemana[] = Array.from({ length: 7 }, (_, dia) => ({
+    dia,
+    totalCentavos: 0,
+    ocorrencias: 0,
+    mediaCentavos: null,
+  }))
+  for (const d of dias) {
+    const alvo = base[diaDaSemana(d.data)]
+    alvo.totalCentavos += d.totalCentavos
+    alvo.ocorrencias += 1
+  }
+  for (const b of base) b.mediaCentavos = b.ocorrencias === 0 ? null : Math.round(b.totalCentavos / b.ocorrencias)
+  return base
+}
+
+/** Intensidade do calendário de calor: gasto do dia ÷ maior gasto diário × 100; sem gasto → null. */
+export function intensidadeNormalizada(totalCentavos: number, maiorCentavos: number): number | null {
+  return percentual(totalCentavos, maiorCentavos)
+}
+
+export function maiorGastoDiario(dias: GastoDia[]): number {
+  return dias.reduce((m, d) => Math.max(m, d.totalCentavos), 0)
+}
+
+export type TicketMes = { mes: string; totalCentavos: number; quantidade: number; ticketCentavos: number | null }
+
+/** Total, quantidade e ticket médio por mês (mês sem Saída: ticket indisponível). */
+export function ticketMedioPorMes(itens: { data: string; valorCentavos: number }[], meses: string[]): TicketMes[] {
+  const mapa = new Map<string, { total: number; qtd: number }>(meses.map((m) => [m, { total: 0, qtd: 0 }]))
+  for (const i of itens) {
+    const alvo = mapa.get(mesDe(i.data))
+    if (alvo) {
+      alvo.total += i.valorCentavos
+      alvo.qtd += 1
+    }
+  }
+  return meses.map((mes) => {
+    const { total, qtd } = mapa.get(mes) ?? { total: 0, qtd: 0 }
+    return { mes, totalCentavos: total, quantidade: qtd, ticketCentavos: ticketMedio(total, qtd) }
+  })
+}
+
+export type Estabelecimento = {
+  chave: string
+  nome: string
+  totalCentavos: number
+  quantidade: number
+  ticketCentavos: number | null
+}
+
+/** Agrupa por estabelecimento; o nome exibido é o da maior Saída do grupo. Maior total primeiro. */
+export function rankingEstabelecimentos(
+  itens: { chave: string; nome: string; valorCentavos: number }[],
+): Estabelecimento[] {
+  const mapa = new Map<string, Estabelecimento & { maior: number }>()
+  for (const i of itens) {
+    const atual = mapa.get(i.chave) ?? {
+      chave: i.chave,
+      nome: i.nome,
+      totalCentavos: 0,
+      quantidade: 0,
+      ticketCentavos: null,
+      maior: -1,
+    }
+    atual.totalCentavos += i.valorCentavos
+    atual.quantidade += 1
+    if (i.valorCentavos > atual.maior) {
+      atual.maior = i.valorCentavos
+      atual.nome = i.nome
+    }
+    mapa.set(i.chave, atual)
+  }
+  return [...mapa.values()]
+    .map(({ maior: _maior, ...e }) => ({ ...e, ticketCentavos: ticketMedio(e.totalCentavos, e.quantidade) }))
+    .sort((a, b) => b.totalCentavos - a.totalCentavos || a.chave.localeCompare(b.chave))
+}

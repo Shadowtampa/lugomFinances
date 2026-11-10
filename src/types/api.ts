@@ -338,3 +338,13 @@ export interface ParcelaCartaoRestanteRow {
   valor_parcela_centavos: number
   proximo_mes: string
 }
+
+/** v_saidas_lancamento (M33): uma Saída por linha, com estabelecimento (apelido aplicado). */
+export interface SaidaLancamentoRow {
+  user_id: string
+  saida_id: string
+  data: string
+  chave: string
+  nome: string
+  valor_total_centavos: number
+}

@@ -210,3 +210,55 @@ export function GraficoCompromissos({
     </div>
   )
 }
+
+/** Linha simples; `valor` nulo deixa um buraco na linha (mês sem dado). */
+export function GraficoLinhaSimples({
+  dados,
+  nome,
+  cor,
+}: {
+  dados: { rotulo: string; valor: number | null }[]
+  nome: string
+  cor: string
+}) {
+  if (dados.every((d) => d.valor === null || d.valor === 0)) return <SemDados />
+  return (
+    <div className="h-56 w-full" role="img" aria-label={nome}>
+      <ResponsiveContainer>
+        <LineChart data={dados} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke="var(--color-line)" vertical={false} />
+          <XAxis dataKey="rotulo" tick={EIXO} tickLine={false} axisLine={false} minTickGap={24} />
+          <YAxis tick={EIXO} tickLine={false} axisLine={false} tickFormatter={abreviar} width={48} />
+          <Tooltip formatter={dinheiroTooltip} contentStyle={TOOLTIP} />
+          <Line dataKey="valor" name={nome} stroke={cor} strokeWidth={2} dot={dados.length <= 31 ? { r: 2 } : false} connectNulls={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+/** Barras com rótulo livre no eixo (dia da semana, mês...). */
+export function GraficoBarrasRotulos({
+  dados,
+  nome,
+  cor,
+}: {
+  dados: { rotulo: string; valor: number }[]
+  nome: string
+  cor: string
+}) {
+  if (dados.every((d) => d.valor === 0)) return <SemDados />
+  return (
+    <div className="h-56 w-full" role="img" aria-label={nome}>
+      <ResponsiveContainer>
+        <BarChart data={dados} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke="var(--color-line)" vertical={false} />
+          <XAxis dataKey="rotulo" tick={EIXO} tickLine={false} axisLine={false} />
+          <YAxis tick={EIXO} tickLine={false} axisLine={false} tickFormatter={abreviar} width={48} />
+          <Tooltip formatter={dinheiroTooltip} contentStyle={TOOLTIP} cursor={{ fill: 'var(--color-base)' }} />
+          <Bar dataKey="valor" name={nome} fill={cor} radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}

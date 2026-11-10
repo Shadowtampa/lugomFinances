@@ -5,6 +5,7 @@ import {
   paraPagamentoFaturaMes,
   paraParcelaCartaoRestante,
   paraRecorrenciaDoMes,
+  paraSaidaLancamento,
   paraSaidaNaFonte,
   paraSomaEntradaDia,
   paraSomaSaidaDia,
@@ -253,5 +254,20 @@ describe('views de cartões (M32)', () => {
       valorParcelaCentavos: 25000,
       proximoMes: '2026-12',
     })
+  })
+})
+
+describe('paraSaidaLancamento (M33)', () => {
+  it('traduz a Saída com o estabelecimento', () => {
+    expect(
+      paraSaidaLancamento({
+        user_id: 'u1',
+        saida_id: 's1',
+        data: '2026-11-03',
+        chave: 'ifood',
+        nome: 'iFood',
+        valor_total_centavos: 4290,
+      }),
+    ).toEqual({ saidaId: 's1', data: '2026-11-03', chave: 'ifood', nome: 'iFood', valorCentavos: 4290 })
   })
 })

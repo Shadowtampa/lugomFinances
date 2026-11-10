@@ -306,3 +306,12 @@ export type ParcelaPlanejamentoFutura = {
   competencia: string
   valorPrevistoCentavos: number
 }
+
+/** Uma Saída para a análise de comportamento (M33). `chave` agrupa o estabelecimento. */
+export type SaidaLancamento = {
+  saidaId: string
+  data: string
+  chave: string
+  nome: string
+  valorCentavos: number
+}

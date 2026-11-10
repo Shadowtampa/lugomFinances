@@ -32,6 +32,7 @@ Todo valor monetário é `bigint` em centavos. Nenhum `numeric`/`float`.
 - **`v_planejamento_resumo`** — `quantidade`, `previsto`, `pago` e `falta` em centavos por competência, forma de pagamento e duração (M30); alimenta os cards da tela.
 - **`v_saidas_dia_categoria`** / **`v_entradas_dia_fonte`** — somas por dia (M31) que alimentam o Dashboard analítico. Fora: pagamento de fatura, saldo inicial da Pluggy, lançamentos futuros e, nas Entradas, Fontes cartão. As fórmulas ficam em `src/lib/indicadores.ts`.
 - **`v_saidas_fonte`** / **`v_pagamentos_fatura_mes`** / **`v_parcelas_cartao_restantes`** — apoio da aba Cartões (M32): um split de Saída por linha; pagamentos de fatura por cartão e mês; parcelas de compras no cartão que ainda vão vencer (a partir de `transacoes_importadas`).
+- **`v_saidas_lancamento`** — uma Saída por linha (M33), com o estabelecimento e o apelido do M22 aplicado; alimenta a aba Comportamento.
 - **`v_recorrencias_pendentes`** — templates recorrentes ainda não lançados no mês
   corrente (RN-08).
 

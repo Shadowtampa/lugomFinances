@@ -26,3 +26,10 @@ const PALETA = [
 export function corDaPaleta(indice: number): string {
   return PALETA[indice % PALETA.length]
 }
+
+export const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+
+/** "2026-11-05" → "05/11". */
+export function rotuloDia(iso: string): string {
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+}
