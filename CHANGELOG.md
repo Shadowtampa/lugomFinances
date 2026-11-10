@@ -2,6 +2,12 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.10.1 — 2026-11-10
+
+**Filtros do Planejamento em drop-down colorido** (ajuste sem spec)
+
+- Os filtros de Status e Duração passam de botões em pílula para drop-downs com rótulo, ponto e fundo coloridos conforme a opção (A pagar = vermelho, Pagas = verde, Recorrentes = azul, Parceladas = âmbar).
+
 ## 2.10.0 — 2026-11-10
 
 **M30: Planejamento por Duração e Forma de pagamento** (#12)

@@ -7,6 +7,7 @@ import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
 import Input from '../components/ui/Input'
 import Modal from '../components/ui/Modal'
+import SeletorFiltro, { type OpcaoSeletor } from '../components/ui/SeletorFiltro'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import ConfirmarFaturaModal from '../features/recorrencias/ConfirmarFaturaModal'
@@ -65,10 +66,10 @@ async function carregarDados(mes: string) {
   return { resumoPorForma, faturas, categorias: categorias.filter((c) => !c.arquivada), fontes }
 }
 
-const OPCOES_FILTRO: { valor: FiltroRecorrencia; rotulo: string }[] = [
-  { valor: 'todas', rotulo: 'Todas' },
-  { valor: 'a-pagar', rotulo: 'A pagar' },
-  { valor: 'pagas', rotulo: 'Pagas' },
+const OPCOES_FILTRO: OpcaoSeletor<FiltroRecorrencia>[] = [
+  { valor: 'todas', rotulo: 'Todas', tom: 'neutro' },
+  { valor: 'a-pagar', rotulo: 'A pagar', tom: 'alerta' },
+  { valor: 'pagas', rotulo: 'Pagas', tom: 'livre' },
 ]
 
 const ESTILO_STATUS: Record<StatusRecorrencia, { rotulo: string; classe: string }> = {
@@ -77,10 +78,10 @@ const ESTILO_STATUS: Record<StatusRecorrencia, { rotulo: string; classe: string 
   atrasada: { rotulo: 'Atrasada', classe: 'bg-alerta/10 text-alerta' },
 }
 
-const OPCOES_DURACAO: { valor: FiltroDuracao; rotulo: string }[] = [
-  { valor: 'todas', rotulo: 'Todas' },
-  { valor: 'recorrente', rotulo: 'Recorrentes' },
-  { valor: 'parcelado', rotulo: 'Parceladas' },
+const OPCOES_DURACAO: OpcaoSeletor<FiltroDuracao>[] = [
+  { valor: 'todas', rotulo: 'Todas', tom: 'neutro' },
+  { valor: 'recorrente', rotulo: 'Recorrentes', tom: 'restrita' },
+  { valor: 'parcelado', rotulo: 'Parceladas', tom: 'aviso' },
 ]
 
 function RecorrenciasPage() {
@@ -289,36 +290,9 @@ function RecorrenciasPage() {
           ) : (
             <section>
 
-              <div role="group" aria-label="Filtrar por status" className="mb-3 flex gap-1">
-                {OPCOES_FILTRO.map((opcao) => (
-                  <button
-                    key={opcao.valor}
-                    type="button"
-                    aria-pressed={filtro === opcao.valor}
-                    onClick={() => mudarFiltro(opcao.valor)}
-                    className={`rounded-full px-3 py-1 text-sm ${
-                      filtro === opcao.valor ? 'bg-ink text-surface' : 'text-ink-soft hover:bg-base'
-                    }`}
-                  >
-                    {opcao.rotulo}
-                  </button>
-                ))}
-              </div>
-
-              <div role="group" aria-label="Filtrar por duração" className="mb-3 flex gap-1">
-                {OPCOES_DURACAO.map((opcao) => (
-                  <button
-                    key={opcao.valor}
-                    type="button"
-                    aria-pressed={duracao === opcao.valor}
-                    onClick={() => mudarDuracao(opcao.valor)}
-                    className={`rounded-full px-3 py-1 text-sm ${
-                      duracao === opcao.valor ? 'bg-ink text-surface' : 'text-ink-soft hover:bg-base'
-                    }`}
-                  >
-                    {opcao.rotulo}
-                  </button>
-                ))}
+              <div className="mb-4 flex flex-wrap gap-3">
+                <SeletorFiltro label="Status" valor={filtro} opcoes={OPCOES_FILTRO} onChange={mudarFiltro} />
+                <SeletorFiltro label="Duração" valor={duracao} opcoes={OPCOES_DURACAO} onChange={mudarDuracao} />
               </div>
 
               {visiveis.length === 0 && !carregandoLista && (
