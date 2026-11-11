@@ -7,13 +7,15 @@ import CartoesAnalise from '../features/dashboard/CartoesAnalise'
 import CategoriasAnalise from '../features/dashboard/CategoriasAnalise'
 import { carregarDadosAnaliticos } from '../features/dashboard/dadosAnaliticos'
 import { carregarDadosCartoes } from '../features/dashboard/dadosCartoes'
+import { carregarDadosComportamento } from '../features/dashboard/dadosComportamento'
+import ComportamentoAnalise from '../features/dashboard/ComportamentoAnalise'
 import FiltroPeriodo from '../features/dashboard/FiltroPeriodo'
 import { usePeriodo } from '../features/dashboard/usePeriodo'
 import VisaoGeral from '../features/dashboard/VisaoGeral'
 import { useAsync } from '../hooks/useAsync'
 import type { Periodo, PresetPeriodo } from '../lib/indicadores'
 
-const ABAS_VALIDAS = ['visao-geral', 'categorias', 'cartoes']
+const ABAS_VALIDAS = ['visao-geral', 'categorias', 'cartoes', 'comportamento']
 
 type Contexto = { preset: PresetPeriodo; periodo: Periodo; anterior: Periodo; hoje: string }
 
@@ -62,6 +64,17 @@ function AbaCartoes({ ctx }: { ctx: Contexto }) {
   )
 }
 
+function AbaComportamento({ ctx }: { ctx: Contexto }) {
+  const { periodo, anterior } = ctx
+  const dados = useAsync(() => carregarDadosComportamento(periodo, anterior), [periodo.de, periodo.ate, anterior.de])
+  return (
+    <>
+      <Carregando erro={Boolean(dados.erro)} vazio={!dados.data} recarregar={dados.recarregar} />
+      {dados.data && <ComportamentoAnalise dados={dados.data} periodo={periodo} anterior={anterior} />}
+    </>
+  )
+}
+
 function Conteudo({ aba }: { aba: string }) {
   const { preset, periodo, anterior, hoje, definirPreset, definirCustom } = usePeriodo()
   const ctx: Contexto = { preset, periodo, anterior, hoje }
@@ -70,12 +83,14 @@ function Conteudo({ aba }: { aba: string }) {
       <PageHeader title="Painel" />
       <AbasDashboard />
       <FiltroPeriodo preset={preset} periodo={periodo} anterior={anterior} onPreset={definirPreset} onCustom={definirCustom} />
-      {aba === 'cartoes' ? <AbaCartoes ctx={ctx} /> : <AbaGeral aba={aba} ctx={ctx} />}
+      {aba === 'cartoes' && <AbaCartoes ctx={ctx} />}
+      {aba === 'comportamento' && <AbaComportamento ctx={ctx} />}
+      {(aba === 'visao-geral' || aba === 'categorias') && <AbaGeral aba={aba} ctx={ctx} />}
     </>
   )
 }
 
-/** Abas analíticas do Dashboard: /dashboard/visao-geral, /categorias (M31) e /cartoes (M32). */
+/** Abas analíticas do Dashboard: /dashboard/visao-geral, /categorias (M31) e /cartoes (M32) e /comportamento (M33). */
 function DashboardAnaliticoPage() {
   const { aba } = useParams()
   if (!aba || !ABAS_VALIDAS.includes(aba)) return <Navigate to="/" replace />

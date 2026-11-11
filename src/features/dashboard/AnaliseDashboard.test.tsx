@@ -4,6 +4,8 @@ import CartoesAnalise from './CartoesAnalise'
 import CategoriasAnalise from './CategoriasAnalise'
 import type { DadosAnaliticos } from './dadosAnaliticos'
 import type { DadosCartoes } from './dadosCartoes'
+import type { DadosComportamento } from './dadosComportamento'
+import ComportamentoAnalise from './ComportamentoAnalise'
 import VisaoGeral from './VisaoGeral'
 
 beforeAll(() => {
@@ -129,5 +131,38 @@ describe('Cartões (M32)', () => {
     expect(screen.getAllByText(/900,00/).length).toBeGreaterThan(0) // fatura média e barra do gráfico
     expect(screen.getByText('40%')).toBeInTheDocument() // 400 de 1.000 de limite
     expect(screen.getByText(/Total:/)).toHaveTextContent('200,00') // 2 parcelas de 100
+  })
+})
+
+describe('Comportamento (M33)', () => {
+  const HOJE = '2026-11-10'
+
+  it('sem Saídas: indicadores indisponíveis e estados vazios', () => {
+    const dados: DadosComportamento = { lancamentos: [], hoje: HOJE }
+    render(<ComportamentoAnalise dados={dados} periodo={PERIODO} anterior={ANTERIOR} />)
+    expect(screen.getByText('Nenhuma Saída no período')).toBeInTheDocument()
+    expect(screen.getByText('Indisponível: sem Saídas no período anterior')).toBeInTheDocument()
+    expect(screen.getAllByText('Sem lançamentos no período.').length).toBeGreaterThan(0)
+  })
+
+  it('com Saídas: ticket, média diária, dia de maior gasto e ranking', () => {
+    const dados: DadosComportamento = {
+      hoje: HOJE,
+      lancamentos: [
+        { saidaId: 's1', data: '2026-11-02', chave: 'ifood', nome: 'iFood', valorCentavos: 20000 },
+        { saidaId: 's2', data: '2026-11-02', chave: 'ifood', nome: 'iFood', valorCentavos: 10000 },
+        { saidaId: 's3', data: '2026-11-05', chave: 'uber', nome: 'Uber', valorCentavos: 30000 },
+        { saidaId: 's4', data: '2026-10-05', chave: 'uber', nome: 'Uber', valorCentavos: 30000 },
+      ],
+    }
+    render(<ComportamentoAnalise dados={dados} periodo={PERIODO} anterior={ANTERIOR} />)
+    // Período: 01 a 10/11 = 10 dias; Saídas 600 em 3 lançamentos → ticket 200, média 60/dia.
+    expect(screen.getByText('3 Saídas no período')).toBeInTheDocument()
+    expect(screen.getByText('Saídas ÷ 10 dias decorridos')).toBeInTheDocument()
+    expect(screen.getByText('02/11/2026')).toBeInTheDocument() // empate de R$ 300 com 05/11: vale o mais antigo
+    expect(screen.getAllByText('iFood').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Uber').length).toBeGreaterThan(0)
+    // Anterior: 300 → 600 = +100%.
+    expect(screen.getByText('+100,0%')).toBeInTheDocument()
   })
 })

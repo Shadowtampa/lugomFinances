@@ -21,6 +21,7 @@ import type {
   ResumoGeralRow,
   SaidaDiaCategoriaRow,
   SaidaFonteRow,
+  SaidaLancamentoRow,
   SaidaRow,
   SaldoCategoriaRow,
   SaldoFonteRow,
@@ -47,6 +48,7 @@ import type {
   ResumoGeral,
   Saida,
   SaldoCategoria,
+  SaidaLancamento,
   SaidaNaFonte,
   SaldoFonte,
   SomaEntradaDia,
@@ -452,5 +454,15 @@ export function paraParcelaCartaoRestante(row: ParcelaCartaoRestanteRow): Parcel
     restantes: row.restantes,
     valorParcelaCentavos: row.valor_parcela_centavos,
     proximoMes: row.proximo_mes.slice(0, 7),
+  }
+}
+
+export function paraSaidaLancamento(row: SaidaLancamentoRow): SaidaLancamento {
+  return {
+    saidaId: row.saida_id,
+    data: row.data,
+    chave: row.chave,
+    nome: row.nome,
+    valorCentavos: row.valor_total_centavos,
   }
 }

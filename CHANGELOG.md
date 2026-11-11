@@ -2,6 +2,17 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.13.0 — 2026-11-10
+
+**M33: Dashboard — Comportamento financeiro e calendário de calor** (#19, épico #11)
+
+- Nova aba **Comportamento** no Painel (`/dashboard/comportamento`), com o mesmo filtro de período.
+- Ticket médio, gasto médio diário, frequência de compras, dia de maior gasto e crescimento das Saídas contra o período anterior.
+- Gráficos: evolução dos gastos diários, **calendário de calor**, Saídas por mês, gasto por dia da semana (total e média por dia) e evolução do ticket médio.
+- Ranking dos 10 estabelecimentos que mais receberam, com o apelido do estabelecimento aplicado.
+- Dias decorridos contam até hoje; sem Saídas ou sem base, o indicador mostra "—". Gastos recorrentes ficam no Planejamento Financeiro.
+- Banco: migration `00023_indicadores_comportamento.sql` (view `v_saidas_lancamento`, só leitura).
+
 ## 2.12.0 — 2026-11-10
 
 **M32: Dashboard — Cartões e meios de pagamento** (#18, épico #11)

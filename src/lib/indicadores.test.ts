@@ -7,9 +7,21 @@ import {
   concentracaoTopN,
   contarExcedidas,
   crescimentoPorCategoria,
+  diaDaSemana,
+  diaMaiorGasto,
+  diasDecorridos,
   diasDoMes,
   diferencaPontos,
   faturaMedia,
+  frequenciaCompras,
+  gastoMedioDiario,
+  gastoPorDia,
+  gastoPorDiaDaSemana,
+  intensidadeNormalizada,
+  maiorGastoDiario,
+  periodoDecorrido,
+  rankingEstabelecimentos,
+  ticketMedioPorMes,
   filtrarPorPeriodo,
   diasNoPeriodo,
   faixaOrcamento,
@@ -477,6 +489,139 @@ describe('Cartões (M32)', () => {
       const r = compromissosFuturos([], [], '2026-11', 12)
       expect(r).toHaveLength(12)
       expect(totalCompromissos(r)).toBe(0)
+    })
+  })
+})
+
+describe('Comportamento (M33)', () => {
+  const periodo = { de: '2026-11-01', ate: '2026-11-07' }
+
+  describe('dias decorridos', () => {
+    it('período passado conta inteiro', () => {
+      expect(diasDecorridos({ de: '2026-10-01', ate: '2026-10-31' }, HOJE)).toBe(31)
+    })
+    it('período que inclui hoje conta até hoje', () => {
+      expect(diasDecorridos({ de: '2026-11-01', ate: '2026-11-30' }, HOJE)).toBe(10)
+      expect(periodoDecorrido({ de: '2026-11-01', ate: '2026-11-30' }, HOJE)).toEqual({ de: '2026-11-01', ate: HOJE })
+    })
+    it('período todo no futuro: zero dias', () => {
+      expect(diasDecorridos({ de: '2026-12-01', ate: '2026-12-31' }, HOJE)).toBe(0)
+      expect(periodoDecorrido({ de: '2026-12-01', ate: '2026-12-31' }, HOJE)).toBeNull()
+    })
+  })
+
+  it('gasto médio diário e frequência', () => {
+    expect(gastoMedioDiario(30000, 10)).toBe(3000)
+    expect(gastoMedioDiario(10000, 3)).toBe(3333)
+    expect(gastoMedioDiario(5000, 0)).toBeNull()
+    expect(frequenciaCompras(15, 10)).toBe(1.5)
+    expect(frequenciaCompras(0, 10)).toBe(0)
+    expect(frequenciaCompras(3, 0)).toBeNull()
+  })
+
+  describe('gasto por dia', () => {
+    const itens = [
+      { data: '2026-11-02', valorCentavos: 1000 },
+      { data: '2026-11-02', valorCentavos: 500 },
+      { data: '2026-11-05', valorCentavos: 4000 },
+      { data: '2026-10-30', valorCentavos: 9999 },
+    ]
+    const dias = gastoPorDia(itens, periodo)
+    it('uma linha por dia, zero onde não houve Saída, ignora fora do período', () => {
+      expect(dias).toHaveLength(7)
+      expect(dias[0]).toEqual({ data: '2026-11-01', totalCentavos: 0 })
+      expect(dias[1]).toEqual({ data: '2026-11-02', totalCentavos: 1500 })
+      expect(dias.reduce((a, d) => a + d.totalCentavos, 0)).toBe(5500)
+    })
+    it('dia de maior gasto; empate fica com o mais antigo; sem gasto → null', () => {
+      expect(diaMaiorGasto(dias)).toEqual({ data: '2026-11-05', totalCentavos: 4000 })
+      expect(
+        diaMaiorGasto([
+          { data: '2026-11-03', totalCentavos: 100 },
+          { data: '2026-11-04', totalCentavos: 100 },
+        ])?.data,
+      ).toBe('2026-11-03')
+      expect(diaMaiorGasto(gastoPorDia([], periodo))).toBeNull()
+    })
+    it('maior gasto diário', () => {
+      expect(maiorGastoDiario(dias)).toBe(4000)
+      expect(maiorGastoDiario([])).toBe(0)
+    })
+  })
+
+  it('dia da semana (0 = domingo)', () => {
+    expect(diaDaSemana('2026-11-08')).toBe(0) // domingo
+    expect(diaDaSemana('2026-11-10')).toBe(2) // terça
+    expect(diaDaSemana('2026-02-28')).toBe(6) // sábado
+  })
+
+  describe('gasto por dia da semana', () => {
+    // 01/11/2026 é domingo: 14 dias = 2 ocorrências de cada dia.
+    const dias = gastoPorDia(
+      [
+        { data: '2026-11-01', valorCentavos: 1000 }, // dom
+        { data: '2026-11-08', valorCentavos: 3000 }, // dom
+        { data: '2026-11-03', valorCentavos: 600 }, // ter
+      ],
+      { de: '2026-11-01', ate: '2026-11-14' },
+    )
+    const sem = gastoPorDiaDaSemana(dias)
+    it('total e média por ocorrência do dia', () => {
+      expect(sem[0]).toEqual({ dia: 0, totalCentavos: 4000, ocorrencias: 2, mediaCentavos: 2000 })
+      expect(sem[2]).toEqual({ dia: 2, totalCentavos: 600, ocorrencias: 2, mediaCentavos: 300 })
+      expect(sem[1].totalCentavos).toBe(0)
+      expect(sem[1].mediaCentavos).toBe(0)
+    })
+    it('a soma dos dias bate com o total', () => {
+      expect(sem.reduce((a, d) => a + d.totalCentavos, 0)).toBe(4600)
+    })
+    it('dia da semana que não ocorre no período fica indisponível', () => {
+      const curto = gastoPorDiaDaSemana(gastoPorDia([], { de: '2026-11-01', ate: '2026-11-02' }))
+      expect(curto[3]).toEqual({ dia: 3, totalCentavos: 0, ocorrencias: 0, mediaCentavos: null })
+    })
+  })
+
+  it('intensidade normalizada pelo maior gasto diário', () => {
+    expect(intensidadeNormalizada(4000, 4000)).toBe(100)
+    expect(intensidadeNormalizada(1000, 4000)).toBe(25)
+    expect(intensidadeNormalizada(0, 4000)).toBe(0)
+    expect(intensidadeNormalizada(0, 0)).toBeNull()
+  })
+
+  it('ticket médio por mês, com mês sem Saída indisponível', () => {
+    const r = ticketMedioPorMes(
+      [
+        { data: '2026-09-01', valorCentavos: 1000 },
+        { data: '2026-09-15', valorCentavos: 2000 },
+        { data: '2026-11-02', valorCentavos: 500 },
+        { data: '2025-01-01', valorCentavos: 7 },
+      ],
+      ['2026-09', '2026-10', '2026-11'],
+    )
+    expect(r).toEqual([
+      { mes: '2026-09', totalCentavos: 3000, quantidade: 2, ticketCentavos: 1500 },
+      { mes: '2026-10', totalCentavos: 0, quantidade: 0, ticketCentavos: null },
+      { mes: '2026-11', totalCentavos: 500, quantidade: 1, ticketCentavos: 500 },
+    ])
+  })
+
+  describe('ranking de estabelecimentos', () => {
+    const itens = [
+      { chave: 'ifood', nome: 'IFOOD *REST1', valorCentavos: 2000 },
+      { chave: 'ifood', nome: 'iFood', valorCentavos: 3000 },
+      { chave: 'uber', nome: 'Uber', valorCentavos: 4000 },
+      { chave: 'titulo:padaria', nome: 'Padaria', valorCentavos: 500 },
+    ]
+    const r = rankingEstabelecimentos(itens)
+    it('agrupa pela chave e ordena por total', () => {
+      expect(r.map((e) => e.chave)).toEqual(['ifood', 'uber', 'titulo:padaria'])
+      expect(r[0]).toEqual({ chave: 'ifood', nome: 'iFood', totalCentavos: 5000, quantidade: 2, ticketCentavos: 2500 })
+    })
+    it('o nome exibido é o da maior Saída do grupo', () => {
+      expect(r[0].nome).toBe('iFood')
+    })
+    it('sem Saídas, ranking vazio', () => {
+      expect(rankingEstabelecimentos([])).toEqual([])
     })
   })
 })
