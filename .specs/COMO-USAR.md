@@ -9,7 +9,7 @@
 # Lugom Financial Manager
 
 Antes de qualquer tarefa, leia `docs/specs/00-VISAO-GERAL.md`. Ele contém o
-glossário do domínio, as regras de negócio (RN-01 a RN-11) e as convenções de
+glossário do domínio, as regras de negócio (RN-01 a RN-12) e as convenções de
 código. Elas são obrigatórias.
 
 ## Regras que nunca podem ser quebradas
@@ -75,10 +75,12 @@ M1 setup
              │           └─ M8 saídas  (saída precisa de saldo para testar bloqueio)
              │               ├─ M9  notificações
              │               ├─ M10 dashboard
-             │               └─ M11 recorrências
+             │               ├─ M11 recorrências
+             │               └─ M12 método 50-15-35
 ```
 
-M9, M10 e M11 podem ser feitos em qualquer ordem entre si.
+M9, M10, M11 e M12 podem ser feitos em qualquer ordem entre si — todos dependem só
+de M1–M8.
 
 ## Pontos de atenção conhecidos
 

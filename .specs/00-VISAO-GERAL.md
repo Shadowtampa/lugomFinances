@@ -44,6 +44,9 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   splits sempre é igual ao valor total da Saída.
 - **Categoria** — a natureza do gasto. Ex: `Transporte`, `Alimentação`, `Moradia`.
   Tem um limite mensal opcional que acumula.
+- **Grupo orçamentário** — classificação opcional de uma Categoria num dos 3 baldes
+  do método 50-15-35: `necessidades`, `desejos` ou `investimentos`. Não é um campo em
+  `categorias`; é uma relação própria (ver M12). Puramente informativa (RN-12).
 - **Conta** — não é uma entidade separada. "Conta" (gasto fixo mensal, ex: aluguel,
   internet) é apenas uma **Saída com `recorrente = true`**. A UI pode chamar de
   "Conta fixa", mas o banco tem uma única tabela `saidas`.
@@ -101,6 +104,10 @@ Nunca `float`. A conversão para reais acontece só na borda da UI.
 
 **RN-11** — Todo dado é escopo do usuário logado. RLS obrigatório em todas as tabelas.
 
+**RN-12** — Classificar uma Categoria num grupo orçamentário do método 50-15-35
+(Necessidades/Desejos/Investimentos, ver M12) é opcional e **nunca bloqueia** nada —
+nem criação de Categoria, nem de Entrada, nem de Saída. Puramente informativa.
+
 ## 5. Stack
 
 | Camada | Escolha | Observação |
@@ -134,6 +141,9 @@ auth.users (Supabase)
    │                        │
    ├── categorias ──────────┘
    │     id, user_id, nome, limite_mensal_centavos, vigencia_inicio, cor, arquivada
+   │        │
+   │        └── categoria_grupos  (1:1 opcional — classificação 50-15-35, M12)
+   │              categoria_id, user_id, grupo
    │
    ├── entradas
    │     id, user_id, fonte_id, titulo, valor_centavos, data,
@@ -148,7 +158,7 @@ auth.users (Supabase)
 ```
 
 **Views:** `v_saldo_fontes`, `v_saldo_categorias`, `v_resumo_geral`,
-`v_recorrencias_pendentes`.
+`v_recorrencias_pendentes`, `v_adesao_50_15_35`.
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.
@@ -171,10 +181,12 @@ anterior está pronto e funcionando.
 | M9 | `09-notificacoes-saldo.md` | Feedback de saldo pós-lançamento (RN-07) |
 | M10 | `10-dashboard.md` | Tela inicial: saldo geral, por fonte, por categoria |
 | M11 | `11-recorrencias.md` | Painel de pendências do mês e confirmação manual |
+| M12 | `12-metodo-50-15-35.md` | Classificação de categorias em Necessidades/Desejos/Investimentos e tela de aderência ao método 50-15-35 |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo
-para testar o bloqueio).
+para testar o bloqueio). M12 só depende de M1–M8 (categorias, entradas, saídas já
+existirem) — pode ser feito em qualquer ordem relativo a M9, M10 e M11.
 
 ## 8. Convenções de código
 
