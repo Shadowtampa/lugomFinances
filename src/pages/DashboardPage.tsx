@@ -10,6 +10,7 @@ import EntradaFormModal from '../features/entradas/EntradaFormModal'
 import BarraCartao from '../features/fontes/BarraCartao'
 import type { FonteComSaldo } from '../features/saidas/elegibilidade'
 import SaidaFormModal from '../features/saidas/SaidaFormModal'
+import CardAdesao from '../features/orcamento/CardAdesao'
 import { useAsync } from '../hooks/useAsync'
 import { ehFuturo, formatarData, hojeISO, mesAtual, nomeDoMes } from '../lib/date'
 import { statusDaRecorrencia } from '../lib/recorrencias'
@@ -19,6 +20,7 @@ import { listarEntradas } from '../services/entradas'
 import { listarFontes, listarSaldosFontes } from '../services/fontes'
 import { obterStatusIntegracao, sincronizarAgora } from '../services/integracao'
 import { listarRecorrenciasDoMes } from '../services/recorrencias'
+import { obterAdesaoMetodo } from '../services/orcamento'
 import { obterResumoGeral } from '../services/resumo'
 import { listarSaidas } from '../services/saidas'
 import type { Entrada, Saida } from '../types/domain'
@@ -107,6 +109,7 @@ function DashboardPage() {
   const lancamentos = useAsync(carregarLancamentos, [])
   const recorrencias = useAsync(carregarRecorrenciasDoMes, [])
   const integracao = useAsync(obterStatusIntegracao, [])
+  const adesao = useAsync(obterAdesaoMetodo, [])
 
   const [formSaidaAberto, setFormSaidaAberto] = useState(false)
   const [formEntradaAberto, setFormEntradaAberto] = useState(false)
@@ -117,6 +120,7 @@ function DashboardPage() {
     fontes.recarregar()
     categorias.recarregar()
     lancamentos.recarregar()
+    adesao.recarregar()
   }
 
   function abrirSaida() {
@@ -210,6 +214,8 @@ function DashboardPage() {
           </section>
 
           {recorrencias.data && <CardRecorrencias {...recorrencias.data} />}
+
+          {adesao.data && <CardAdesao adesao={adesao.data} />}
 
           <section>
             <h2 className="mb-3 text-sm font-medium text-ink-soft">Fontes</h2>

@@ -67,6 +67,9 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
 - **Lançamento futuro** (M14) — uma Entrada ou Saída com `data` no futuro. Fica
   visível no sistema desde já, mas só passa a contar no saldo quando a data chega
   — não é um status, é um filtro de data nas views de saldo.
+- **Grupo orçamentário** (M34) — classificação opcional de uma Categoria num dos 3
+  grupos do método 50-15-35: `necessidades`, `desejos` ou `investimentos`. Não é
+  campo em `categorias`; é a relação `categoria_grupos`. Só leitura (RN-15).
 
 ### Por que "Fonte" e não "Entrada" como origem da Saída
 
@@ -159,6 +162,11 @@ futuro**: não conta em `v_saldo_fontes`, `v_saldo_categorias` nem
 sozinha, sem ação do usuário nem job agendado — é sempre a mesma consulta,
 só que a comparação de data já muda de resultado.
 
+**RN-15** (M34) — Classificar uma Categoria num grupo do método 50-15-35 é opcional e
+**nunca bloqueia** nem muda saldo. A aderência do mês compara as Saídas de cada grupo
+com as Entradas do mês (sem pagamento de fatura e sem lançamentos futuros), contra as
+metas fixas 50 / 15 / 35.
+
 ## 5. Stack
 
 | Camada | Escolha | Observação |
@@ -200,6 +208,9 @@ auth.users (local, M17)
    │                        │
    ├── categorias ──────────┘
    │     id, user_id, nome, limite_mensal_centavos, cor, arquivada
+   │        │
+   │        └── categoria_grupos  (M34 — 0..1 por Categoria, classificação 50-15-35)
+   │              categoria_id, user_id, grupo
    │
    ├── entradas
    │     id, user_id, fonte_id, titulo, valor_centavos, data, eh_pagamento_fatura
@@ -224,6 +235,7 @@ auth.users (local, M17)
 `v_conciliacao_contas` (M21). Tabelas do M20: `pluggy_itens`,
 `pluggy_contas`, `transacoes_importadas`, `sincronizacoes`. Tabela do M22:
 `apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
+M34: tabela `categoria_grupos` e view `v_adesao_50_15_35` (método 50-15-35, só leitura).
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.
@@ -258,6 +270,7 @@ anterior está pronto e funcionando.
 | M25 | `25-categoria-sem-acumulo.md` | Limite de Categoria vale só no mês corrente (fim do acúmulo) |
 | M26 | `26-sidebar-fixa.md` | Sidebar fixa no desktop, conteúdo rolável |
 | M27 | `27-meio-pagamento-recorrencia.md` | Meio de pagamento previsto (uma ou mais Fontes) na recorrência |
+| M34 | `34-metodo-50-15-35.md` | Classificação de Categorias em Necessidades/Desejos/Investimentos e aderência mensal ao método 50-15-35 |
 
 **Ordem de dependência:** Categorias antes de Fontes (fonte restrita referencia
 categorias). Fontes antes de Entradas. Entradas antes de Saídas (precisa ter saldo

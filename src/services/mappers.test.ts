@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { RecorrenciaMesRow, SaidaRow } from '../types/api'
-import { deRecorrencia, paraRecorrenciaDoMes, paraSaida } from './mappers'
+import type { AdesaoMetodoRow, RecorrenciaMesRow, SaidaRow } from '../types/api'
+import { deRecorrencia, paraAdesaoMetodo, paraRecorrenciaDoMes, paraSaida } from './mappers'
 
 describe('paraSaida', () => {
   it('desempacota os splits aninhados', () => {
@@ -122,6 +122,27 @@ describe('deRecorrencia', () => {
     expect(deRecorrencia({ mesInicio: '2026-11', categoriaId: null })).toEqual({
       mes_inicio: '2026-11-01',
       categoria_id: null,
+    })
+  })
+})
+
+describe('paraAdesaoMetodo', () => {
+  it('traduz a linha de v_adesao_50_15_35', () => {
+    const row: AdesaoMetodoRow = {
+      user_id: 'u1',
+      total_entradas_mes_centavos: 1000000,
+      gasto_necessidades_centavos: 380000,
+      gasto_desejos_centavos: 220000,
+      gasto_investimentos_centavos: 150000,
+      gasto_nao_classificado_centavos: 15000,
+    }
+
+    expect(paraAdesaoMetodo(row)).toEqual({
+      totalEntradasMesCentavos: 1000000,
+      gastoNecessidadesCentavos: 380000,
+      gastoDesejosCentavos: 220000,
+      gastoInvestimentosCentavos: 150000,
+      gastoNaoClassificadoCentavos: 15000,
     })
   })
 })
