@@ -2,6 +2,8 @@
 
 export type FonteTipo = 'livre' | 'restrita'
 
+export type GrupoOrcamentario = 'necessidades' | 'desejos' | 'investimentos'
+
 export type Fonte = {
   id: string
   nome: string
@@ -90,4 +92,17 @@ export type RecorrenciaPendente = {
   diaRecorrencia: number | null
   fonteId: string | null
   categoriaId: string | null
+}
+
+export type CategoriaGrupo = {
+  categoriaId: string
+  grupo: GrupoOrcamentario
+}
+
+export type AdesaoMetodo = {
+  totalEntradasMesCentavos: number
+  gastoNecessidadesCentavos: number
+  gastoDesejosCentavos: number
+  gastoInvestimentosCentavos: number
+  gastoNaoClassificadoCentavos: number
 }

@@ -1,4 +1,6 @@
 import type {
+  AdesaoMetodoRow,
+  CategoriaGrupoRow,
   CategoriaRow,
   EntradaRow,
   FonteRow,
@@ -10,7 +12,9 @@ import type {
   SaldoFonteRow,
 } from '../types/api'
 import type {
+  AdesaoMetodo,
   Categoria,
+  CategoriaGrupo,
   Entrada,
   Fonte,
   RecorrenciaPendente,
@@ -69,6 +73,20 @@ export function paraSaldoCategoria(row: SaldoCategoriaRow): SaldoCategoria {
     totalGastoCentavos: row.total_gasto_centavos,
     gastoMesAtualCentavos: row.gasto_mes_atual_centavos,
     saldoDisponivelCentavos: row.saldo_disponivel_centavos,
+  }
+}
+
+export function paraCategoriaGrupo(row: CategoriaGrupoRow): CategoriaGrupo {
+  return { categoriaId: row.categoria_id, grupo: row.grupo }
+}
+
+export function paraAdesaoMetodo(row: AdesaoMetodoRow): AdesaoMetodo {
+  return {
+    totalEntradasMesCentavos: row.total_entradas_mes_centavos,
+    gastoNecessidadesCentavos: row.gasto_necessidades_centavos,
+    gastoDesejosCentavos: row.gasto_desejos_centavos,
+    gastoInvestimentosCentavos: row.gasto_investimentos_centavos,
+    gastoNaoClassificadoCentavos: row.gasto_nao_classificado_centavos,
   }
 }
 

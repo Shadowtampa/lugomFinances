@@ -1,8 +1,8 @@
 import { unwrap } from '../lib/erros'
 import { supabase } from '../lib/supabase'
-import type { CategoriaRow, SaldoCategoriaRow } from '../types/api'
-import type { Categoria, SaldoCategoria } from '../types/domain'
-import { deCategoria, paraCategoria, paraSaldoCategoria } from './mappers'
+import type { CategoriaGrupoRow, CategoriaRow, SaldoCategoriaRow } from '../types/api'
+import type { Categoria, CategoriaGrupo, GrupoOrcamentario, SaldoCategoria } from '../types/domain'
+import { deCategoria, paraCategoria, paraCategoriaGrupo, paraSaldoCategoria } from './mappers'
 
 export async function listarCategorias(opts?: {
   incluirArquivadas?: boolean
@@ -50,4 +50,24 @@ export async function listarSaldosCategorias(): Promise<SaldoCategoria[]> {
     await supabase.from('v_saldo_categorias').select('*').order('nome'),
   )
   return rows.map(paraSaldoCategoria)
+}
+
+export async function listarGruposCategorias(): Promise<CategoriaGrupo[]> {
+  const rows = unwrap<CategoriaGrupoRow[]>(await supabase.from('categoria_grupos').select('*'))
+  return rows.map(paraCategoriaGrupo)
+}
+
+export async function definirGrupoCategoria(
+  categoriaId: string,
+  grupo: GrupoOrcamentario,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('categoria_grupos')
+      .upsert({ categoria_id: categoriaId, grupo }, { onConflict: 'categoria_id' }),
+  )
+}
+
+export async function removerGrupoCategoria(categoriaId: string): Promise<void> {
+  unwrap(await supabase.from('categoria_grupos').delete().eq('categoria_id', categoriaId))
 }

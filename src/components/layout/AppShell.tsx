@@ -2,13 +2,14 @@ import type { ReactNode } from 'react'
 import { NavLink } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { to: string; label: string; curto?: string; end?: boolean }[] = [
   { to: '/', label: 'Painel', end: true },
   { to: '/entradas', label: 'Entradas' },
   { to: '/saidas', label: 'Saídas' },
   { to: '/fontes', label: 'Fontes' },
   { to: '/categorias', label: 'Categorias' },
   { to: '/recorrencias', label: 'Recorrências' },
+  { to: '/orcamento', label: 'Orçamento 50-15-35', curto: '50-15-35' },
 ]
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -45,23 +46,23 @@ function AppShell({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col">
         <main className="flex-1 p-4 pb-20 md:pb-4">{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 flex items-center justify-around border-t border-line bg-surface p-2 md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 flex items-center gap-1 overflow-x-auto border-t border-line bg-surface p-2 md:hidden">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `rounded px-2 py-1 text-xs font-medium ${isActive ? 'text-livre' : 'text-ink-soft'}`
+                `shrink-0 whitespace-nowrap rounded px-2 py-1 text-xs font-medium ${isActive ? 'text-livre' : 'text-ink-soft'}`
               }
             >
-              {item.label}
+              {item.curto ?? item.label}
             </NavLink>
           ))}
           <button
             type="button"
             onClick={() => sair()}
-            className="rounded px-2 py-1 text-xs font-medium text-ink-soft"
+            className="shrink-0 whitespace-nowrap rounded px-2 py-1 text-xs font-medium text-ink-soft"
           >
             Sair
           </button>

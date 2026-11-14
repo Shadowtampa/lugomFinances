@@ -7,6 +7,7 @@ import Spinner from '../components/ui/Spinner'
 import { useToast } from '../components/ui/Toast'
 import BarraLimite from '../features/categorias/BarraLimite'
 import CategoriaFormModal from '../features/categorias/CategoriaFormModal'
+import SeletorGrupo from '../features/categorias/SeletorGrupo'
 import { CORES_CATEGORIA } from '../features/categorias/cores'
 import { mesAtual, primeiroDiaDoMes } from '../lib/date'
 import { mensagemDoErro } from '../lib/erros'
@@ -15,10 +16,13 @@ import {
   arquivarCategoria,
   atualizarCategoria,
   criarCategoria,
+  definirGrupoCategoria,
+  listarGruposCategorias,
   listarSaldosCategorias,
   obterCategoria,
+  removerGrupoCategoria,
 } from '../services/categorias'
-import type { Categoria, SaldoCategoria } from '../types/domain'
+import type { Categoria, GrupoOrcamentario, SaldoCategoria } from '../types/domain'
 
 const SUGESTOES = [
   'Alimentação',
@@ -37,7 +41,12 @@ function estourou(categoria: SaldoCategoria): boolean {
 
 function CategoriasPage() {
   const saldos = useAsync(listarSaldosCategorias, [])
+  const grupos = useAsync(listarGruposCategorias, [])
   const { showToast } = useToast()
+  const [gruposAlterados, setGruposAlterados] = useState<
+    Record<string, GrupoOrcamentario | null>
+  >({})
+  const [salvandoGrupo, setSalvandoGrupo] = useState<string | null>(null)
 
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false)
   const [formAberto, setFormAberto] = useState(false)
@@ -56,6 +65,27 @@ function CategoriasPage() {
       return a.nome.localeCompare(b.nome)
     })
   }, [saldos.data, mostrarArquivadas])
+
+  const grupoPorCategoria = useMemo(() => {
+    const mapa: Record<string, GrupoOrcamentario | null> = {}
+    for (const item of grupos.data ?? []) mapa[item.categoriaId] = item.grupo
+    return { ...mapa, ...gruposAlterados }
+  }, [grupos.data, gruposAlterados])
+
+  async function alterarGrupo(categoriaId: string, grupo: GrupoOrcamentario | null) {
+    const anterior = grupoPorCategoria[categoriaId] ?? null
+    setGruposAlterados((atual) => ({ ...atual, [categoriaId]: grupo }))
+    setSalvandoGrupo(categoriaId)
+    try {
+      if (grupo) await definirGrupoCategoria(categoriaId, grupo)
+      else await removerGrupoCategoria(categoriaId)
+    } catch (e) {
+      setGruposAlterados((atual) => ({ ...atual, [categoriaId]: anterior }))
+      showToast(mensagemDoErro(e), 'error')
+    } finally {
+      setSalvandoGrupo(null)
+    }
+  }
 
   function abrirCriar() {
     setCategoriaEditando(undefined)
@@ -129,6 +159,14 @@ function CategoriasPage() {
 
       {saldos.isLoading && <Spinner />}
       {saldos.erro && <p className="text-alerta">{saldos.erro.mensagem}</p>}
+      {grupos.erro && (
+        <p className="mb-4 text-sm text-ink-soft">
+          Não foi possível carregar os grupos do método 50-15-35.{' '}
+          <button type="button" className="text-livre underline" onClick={grupos.recarregar}>
+            Tentar de novo
+          </button>
+        </p>
+      )}
 
       {!saldos.isLoading && (saldos.data?.length ?? 0) === 0 && (
         <EmptyState
@@ -174,26 +212,36 @@ function CategoriasPage() {
                   />
                 </div>
 
-                <div className="flex shrink-0 gap-2">
-                  {categoria.arquivada ? (
-                    <Button variant="ghost" onClick={() => reativar(categoria)}>
-                      Reativar
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        loading={carregandoEdicao === categoria.id}
-                        disabled={carregandoEdicao !== null}
-                        onClick={() => abrirEditar(categoria)}
-                      >
-                        Editar
-                      </Button>
-                      <Button variant="ghost" onClick={() => setCategoriaArquivando(categoria)}>
-                        Arquivar
-                      </Button>
-                    </>
+                <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+                  {!categoria.arquivada && !grupos.erro && (
+                    <SeletorGrupo
+                      categoriaNome={categoria.nome}
+                      grupo={grupoPorCategoria[categoria.id] ?? null}
+                      disabled={grupos.isLoading || salvandoGrupo === categoria.id}
+                      onChange={(grupo) => alterarGrupo(categoria.id, grupo)}
+                    />
                   )}
+                  <div className="flex gap-2">
+                    {categoria.arquivada ? (
+                      <Button variant="ghost" onClick={() => reativar(categoria)}>
+                        Reativar
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          loading={carregandoEdicao === categoria.id}
+                          disabled={carregandoEdicao !== null}
+                          onClick={() => abrirEditar(categoria)}
+                        >
+                          Editar
+                        </Button>
+                        <Button variant="ghost" onClick={() => setCategoriaArquivando(categoria)}>
+                          Arquivar
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}

@@ -6,6 +6,7 @@ import EntradasPage from './pages/EntradasPage'
 import FontesPage from './pages/FontesPage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
+import OrcamentoPage from './pages/OrcamentoPage'
 import RecorrenciasPage from './pages/RecorrenciasPage'
 import SaidasPage from './pages/SaidasPage'
 
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: 'fontes', Component: FontesPage },
       { path: 'categorias', Component: CategoriasPage },
       { path: 'recorrencias', Component: RecorrenciasPage },
+      { path: 'orcamento', Component: OrcamentoPage },
     ],
   },
   { path: '*', Component: NotFoundPage },

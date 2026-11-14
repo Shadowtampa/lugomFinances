@@ -3,6 +3,8 @@
 
 export type FonteTipoRow = 'livre' | 'restrita'
 
+export type GrupoOrcamentarioRow = 'necessidades' | 'desejos' | 'investimentos'
+
 export interface CategoriaRow {
   id: string
   user_id: string
@@ -96,6 +98,22 @@ export interface ResumoGeralRow {
   saldo_total_centavos: number
   saldo_livre_centavos: number
   saldo_restrito_centavos: number
+}
+
+export interface CategoriaGrupoRow {
+  categoria_id: string
+  user_id: string
+  grupo: GrupoOrcamentarioRow
+  created_at: string
+}
+
+export interface AdesaoMetodoRow {
+  user_id: string
+  total_entradas_mes_centavos: number
+  gasto_necessidades_centavos: number
+  gasto_desejos_centavos: number
+  gasto_investimentos_centavos: number
+  gasto_nao_classificado_centavos: number
 }
 
 export interface RecorrenciaPendenteRow {

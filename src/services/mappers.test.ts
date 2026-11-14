@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { SaidaRow } from '../types/api'
-import { paraSaida } from './mappers'
+import type { AdesaoMetodoRow, SaidaRow } from '../types/api'
+import { paraAdesaoMetodo, paraSaida } from './mappers'
 
 describe('paraSaida', () => {
   it('desempacota os splits aninhados', () => {
@@ -55,5 +55,26 @@ describe('paraSaida', () => {
     }
 
     expect(paraSaida(row).splits).toEqual([])
+  })
+})
+
+describe('paraAdesaoMetodo', () => {
+  it('traduz a linha de v_adesao_50_15_35', () => {
+    const row: AdesaoMetodoRow = {
+      user_id: 'u1',
+      total_entradas_mes_centavos: 1000000,
+      gasto_necessidades_centavos: 380000,
+      gasto_desejos_centavos: 220000,
+      gasto_investimentos_centavos: 150000,
+      gasto_nao_classificado_centavos: 15000,
+    }
+
+    expect(paraAdesaoMetodo(row)).toEqual({
+      totalEntradasMesCentavos: 1000000,
+      gastoNecessidadesCentavos: 380000,
+      gastoDesejosCentavos: 220000,
+      gastoInvestimentosCentavos: 150000,
+      gastoNaoClassificadoCentavos: 15000,
+    })
   })
 })
