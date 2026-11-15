@@ -78,6 +78,9 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
 - **Lançamento futuro** (M14) — uma Entrada ou Saída com `data` no futuro. Fica
   visível no sistema desde já, mas só passa a contar no saldo quando a data chega
   — não é um status, é um filtro de data nas views de saldo.
+- **Grupo orçamentário** (M34) — classificação opcional de uma Categoria num dos 3
+  grupos do método 50-15-35: `necessidades`, `desejos` ou `investimentos`. Não é
+  campo em `categorias`; é a relação `categoria_grupos`. Só leitura (RN-18).
 - **Patrimônio líquido** (#11) — soma dos saldos das Fontes que não são cartão
   (restritas incluídas) menos a dívida atual dos cartões. É um retrato de hoje, não
   segue filtro de período.
@@ -184,6 +187,11 @@ futuro**: não conta em `v_saldo_fontes`, `v_saldo_categorias` nem
 sozinha, sem ação do usuário nem job agendado — é sempre a mesma consulta,
 só que a comparação de data já muda de resultado.
 
+**RN-18** (M34) — Classificar uma Categoria num grupo do método 50-15-35 é opcional e
+**nunca bloqueia** nem muda saldo. A aderência do mês compara as Saídas de cada grupo
+com as Entradas do mês (sem pagamento de fatura e sem lançamentos futuros), contra as
+metas fixas 50 / 15 / 35.
+
 ## 5. Stack
 
 | Camada | Escolha | Observação |
@@ -225,6 +233,9 @@ auth.users (local, M17)
    │                        │
    ├── categorias ──────────┘
    │     id, user_id, nome, limite_mensal_centavos, cor, arquivada
+   │        │
+   │        └── categoria_grupos  (M34 — 0..1 por Categoria, classificação 50-15-35)
+   │              categoria_id, user_id, grupo
    │
    ├── entradas
    │     id, user_id, fonte_id, titulo, valor_centavos, data, eh_pagamento_fatura
@@ -252,6 +263,7 @@ auth.users (local, M17)
 `apelidos_estabelecimento`. Tabela do M27: `recorrencias_fontes` (meio de pagamento previsto, só autocontrole).
 M31: views `v_saidas_dia_categoria` e `v_entradas_dia_fonte` (somas por dia do Dashboard analítico). M32: `v_saidas_fonte`, `v_pagamentos_fatura_mes`, `v_parcelas_cartao_restantes` (aba Cartões). M33: `v_saidas_lancamento` (aba Comportamento).
 M29/M30: view `v_planejamento_resumo` (pago / previsto / falta por competência, forma de pagamento e duração). O Tipo de Planejamento do M29 (`tipos_planejamento`) foi removido no M30.
+M34: tabela `categoria_grupos` e view `v_adesao_50_15_35` (método 50-15-35, só leitura).
 
 **RPC:** `criar_saida(...)` — grava saída + splits numa transação, aplicando RN-02,
 RN-03 e RN-07.

@@ -2,6 +2,16 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.14.0 — 2026-11-15
+
+**M34: Método 50-15-35** (#20)
+
+- Cada Categoria pode ser classificada como Necessidades, Desejos ou Investimentos, direto na lista de Categorias. É opcional e não muda nenhum saldo.
+- Nova tela **Orçamento 50-15-35** (`/orcamento`): quanto da renda do mês foi para cada grupo, contra as metas de 50%, 15% e 35%. Fica vermelho quando Necessidades ou Desejos passam da meta, ou quando Investimentos fica abaixo dela.
+- Pagamento de fatura e lançamentos futuros não entram na conta. O gasto em Categorias não classificadas aparece à parte.
+- Card compacto no Painel com os três percentuais.
+- Migration nova: `db/migrations/00024_metodo_50_15_35.sql`.
+
 ## 2.13.0 — 2026-11-10
 
 **M33: Dashboard — Comportamento financeiro e calendário de calor** (#19, épico #11)

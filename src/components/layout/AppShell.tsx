@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { to: '/fontes', label: 'Fontes' },
   { to: '/categorias', label: 'Categorias' },
   { to: '/recorrencias', label: 'Planejamento Financeiro' },
+  { to: '/orcamento', label: 'Orçamento 50-15-35' },
   { to: '/conexoes', label: 'Conexões' },
 ]
 

@@ -37,6 +37,21 @@ export type SaldoCategoria = Categoria & {
   saldoDisponivelCentavos: number | null
 }
 
+export type GrupoOrcamentario = 'necessidades' | 'desejos' | 'investimentos'
+
+export type CategoriaGrupo = {
+  categoriaId: string
+  grupo: GrupoOrcamentario
+}
+
+export type AdesaoMetodo = {
+  totalEntradasMesCentavos: number
+  gastoNecessidadesCentavos: number
+  gastoDesejosCentavos: number
+  gastoInvestimentosCentavos: number
+  gastoNaoClassificadoCentavos: number
+}
+
 export type Entrada = {
   id: string
   fonteId: string
