@@ -1,17 +1,23 @@
 import type { AdesaoMetodo, GrupoOrcamentario } from '../../types/domain'
 
-export const GRUPOS: GrupoOrcamentario[] = ['necessidades', 'desejos', 'investimentos']
+export const GRUPOS: GrupoOrcamentario[] = ['essenciais', 'prioridades', 'estilo_de_vida']
 
 export const METAS: Record<GrupoOrcamentario, number> = {
-  necessidades: 50,
-  desejos: 15,
-  investimentos: 35,
+  essenciais: 50,
+  prioridades: 15,
+  estilo_de_vida: 35,
 }
 
 export const ROTULOS_GRUPO: Record<GrupoOrcamentario, string> = {
-  necessidades: 'Necessidades',
-  desejos: 'Desejos',
-  investimentos: 'Investimentos',
+  essenciais: 'Essenciais',
+  prioridades: 'Prioridades',
+  estilo_de_vida: 'Estilo de vida',
+}
+
+export const LEGENDAS_GRUPO: Record<GrupoOrcamentario, string> = {
+  essenciais: 'moradia, contas, mercado, transporte, saúde',
+  prioridades: 'quitar dívidas e investir',
+  estilo_de_vida: 'lazer, restaurantes, compras, viagens',
 }
 
 export type AvaliacaoGrupo = {
@@ -28,7 +34,7 @@ export function percentualDaRenda(gastoCentavos: number, rendaCentavos: number):
   return Math.round((gastoCentavos / rendaCentavos) * 100)
 }
 
-// Necessidades e Desejos: o problema é passar da meta. Investimentos: o problema é
+// Essenciais e Estilo de vida: o problema é passar da meta. Prioridades: o problema é
 // ficar abaixo dela.
 export function avaliarGrupo(
   grupo: GrupoOrcamentario,
@@ -41,7 +47,7 @@ export function avaliarGrupo(
 
   let alerta: boolean
   let texto: string
-  if (grupo === 'investimentos') {
+  if (grupo === 'prioridades') {
     alerta = percentual < meta
     texto = alerta ? `${diferenca}% abaixo da meta` : 'meta atingida'
   } else {
@@ -56,9 +62,9 @@ export function avaliarGrupo(
 
 export function avaliarAdesao(adesao: AdesaoMetodo): AvaliacaoGrupo[] {
   const gastos: Record<GrupoOrcamentario, number> = {
-    necessidades: adesao.gastoNecessidadesCentavos,
-    desejos: adesao.gastoDesejosCentavos,
-    investimentos: adesao.gastoInvestimentosCentavos,
+    essenciais: adesao.gastoEssenciaisCentavos,
+    prioridades: adesao.gastoPrioridadesCentavos,
+    estilo_de_vida: adesao.gastoEstiloDeVidaCentavos,
   }
   return GRUPOS.map((grupo) =>
     avaliarGrupo(grupo, gastos[grupo], adesao.totalEntradasMesCentavos),

@@ -1,5 +1,5 @@
 import { formatBRL } from '../../lib/money'
-import { type AvaliacaoGrupo, ROTULOS_GRUPO } from './adesao'
+import { type AvaliacaoGrupo, LEGENDAS_GRUPO, ROTULOS_GRUPO } from './adesao'
 
 // Régua em % da renda do mês: vai até 100%, ou até o percentual se gastou mais que
 // a renda — assim o marcador da meta fica sempre visível na mesma escala.
@@ -9,9 +9,12 @@ function BarraMeta({ avaliacao }: { avaliacao: AvaliacaoGrupo }) {
 
   return (
     <div className="border-b border-line py-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="font-medium text-ink">{ROTULOS_GRUPO[grupo]}</p>
-        <p className="text-sm text-ink-soft">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-ink">{ROTULOS_GRUPO[grupo]}</p>
+          <p className="text-xs text-ink-soft">{LEGENDAS_GRUPO[grupo]}</p>
+        </div>
+        <p className="shrink-0 text-sm text-ink-soft">
           <span className={`font-money font-medium ${alerta ? 'text-alerta' : 'text-ink'}`}>
             {percentual}%
           </span>{' '}

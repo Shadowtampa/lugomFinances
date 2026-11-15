@@ -278,17 +278,17 @@ describe('paraAdesaoMetodo', () => {
     const row: AdesaoMetodoRow = {
       user_id: 'u1',
       total_entradas_mes_centavos: 1000000,
-      gasto_necessidades_centavos: 380000,
-      gasto_desejos_centavos: 220000,
-      gasto_investimentos_centavos: 150000,
+      gasto_essenciais_centavos: 380000,
+      gasto_prioridades_centavos: 220000,
+      gasto_estilo_de_vida_centavos: 150000,
       gasto_nao_classificado_centavos: 15000,
     }
 
     expect(paraAdesaoMetodo(row)).toEqual({
       totalEntradasMesCentavos: 1000000,
-      gastoNecessidadesCentavos: 380000,
-      gastoDesejosCentavos: 220000,
-      gastoInvestimentosCentavos: 150000,
+      gastoEssenciaisCentavos: 380000,
+      gastoPrioridadesCentavos: 220000,
+      gastoEstiloDeVidaCentavos: 150000,
       gastoNaoClassificadoCentavos: 15000,
     })
   })

@@ -105,7 +105,7 @@ export interface SaldoFonteRow {
   dia_fatura: number | null
 }
 
-export type GrupoOrcamentarioRow = 'necessidades' | 'desejos' | 'investimentos'
+export type GrupoOrcamentarioRow = 'essenciais' | 'prioridades' | 'estilo_de_vida'
 
 export interface CategoriaGrupoRow {
   categoria_id: string
@@ -117,9 +117,9 @@ export interface CategoriaGrupoRow {
 export interface AdesaoMetodoRow {
   user_id: string
   total_entradas_mes_centavos: number
-  gasto_necessidades_centavos: number
-  gasto_desejos_centavos: number
-  gasto_investimentos_centavos: number
+  gasto_essenciais_centavos: number
+  gasto_prioridades_centavos: number
+  gasto_estilo_de_vida_centavos: number
   gasto_nao_classificado_centavos: number
 }
 

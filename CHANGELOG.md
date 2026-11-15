@@ -2,6 +2,16 @@
 
 Cada milestone sobe a versão **minor** e ganha uma entrada aqui, no mesmo commit. Ajuste sem spec sobe a **patch**. A versão exibida no menu vem do `package.json`.
 
+## 2.14.1 — 2026-11-15
+
+**Método 50-15-35 com a nomenclatura do Me Poupe!** (ajuste do M34, #20)
+
+- Os grupos agora são **Essenciais (50%)**: moradia, contas, mercado, transporte, saúde; **Prioridades (15%)**: quitar dívidas e investir; e **Estilo de vida (35%)**: lazer, restaurantes, compras, viagens.
+- A legenda de cada grupo aparece na tela do método e acima da lista de Categorias.
+- Prioridades fica vermelho quando está abaixo de 15%; Essenciais e Estilo de vida, quando passam da meta.
+- Classificações já feitas são mantidas: Necessidades → Essenciais, Investimentos → Prioridades, Desejos → Estilo de vida.
+- Migration nova: `db/migrations/00025_metodo_50_15_35_nomenclatura.sql`.
+
 ## 2.14.0 — 2026-11-15
 
 **M34: Método 50-15-35** (#20)

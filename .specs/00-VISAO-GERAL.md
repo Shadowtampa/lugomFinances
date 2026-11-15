@@ -79,8 +79,10 @@ Este vocabulário é obrigatório em código, banco e UI. Não invente sinônimo
   visível no sistema desde já, mas só passa a contar no saldo quando a data chega
   — não é um status, é um filtro de data nas views de saldo.
 - **Grupo orçamentário** (M34) — classificação opcional de uma Categoria num dos 3
-  grupos do método 50-15-35: `necessidades`, `desejos` ou `investimentos`. Não é
-  campo em `categorias`; é a relação `categoria_grupos`. Só leitura (RN-18).
+  grupos do método 50-15-35 (Nathalia Arcuri): `essenciais` (50% — moradia, contas,
+  mercado, transporte, saúde), `prioridades` (15% — quitar dívidas e investir) ou
+  `estilo_de_vida` (35% — lazer, restaurantes, compras, viagens). Não é campo em
+  `categorias`; é a relação `categoria_grupos`. Só leitura (RN-18).
 - **Patrimônio líquido** (#11) — soma dos saldos das Fontes que não são cartão
   (restritas incluídas) menos a dívida atual dos cartões. É um retrato de hoje, não
   segue filtro de período.
@@ -190,7 +192,8 @@ só que a comparação de data já muda de resultado.
 **RN-18** (M34) — Classificar uma Categoria num grupo do método 50-15-35 é opcional e
 **nunca bloqueia** nem muda saldo. A aderência do mês compara as Saídas de cada grupo
 com as Entradas do mês (sem pagamento de fatura e sem lançamentos futuros), contra as
-metas fixas 50 / 15 / 35.
+metas fixas Essenciais 50 / Prioridades 15 / Estilo de vida 35. Alerta quando Essenciais
+ou Estilo de vida passam da meta e quando Prioridades fica abaixo dela.
 
 ## 5. Stack
 

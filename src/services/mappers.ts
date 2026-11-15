@@ -131,9 +131,9 @@ export function paraCategoriaGrupo(row: CategoriaGrupoRow): CategoriaGrupo {
 export function paraAdesaoMetodo(row: AdesaoMetodoRow): AdesaoMetodo {
   return {
     totalEntradasMesCentavos: row.total_entradas_mes_centavos,
-    gastoNecessidadesCentavos: row.gasto_necessidades_centavos,
-    gastoDesejosCentavos: row.gasto_desejos_centavos,
-    gastoInvestimentosCentavos: row.gasto_investimentos_centavos,
+    gastoEssenciaisCentavos: row.gasto_essenciais_centavos,
+    gastoPrioridadesCentavos: row.gasto_prioridades_centavos,
+    gastoEstiloDeVidaCentavos: row.gasto_estilo_de_vida_centavos,
     gastoNaoClassificadoCentavos: row.gasto_nao_classificado_centavos,
   }
 }

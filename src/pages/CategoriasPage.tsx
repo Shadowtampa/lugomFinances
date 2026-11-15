@@ -8,6 +8,7 @@ import { useToast } from '../components/ui/Toast'
 import BarraLimite from '../features/categorias/BarraLimite'
 import CategoriaFormModal from '../features/categorias/CategoriaFormModal'
 import SeletorGrupo from '../features/categorias/SeletorGrupo'
+import LegendaGrupos from '../features/orcamento/LegendaGrupos'
 import { CORES_CATEGORIA } from '../features/categorias/cores'
 import { mensagemDoErro } from '../lib/erros'
 import { useAsync } from '../hooks/useAsync'
@@ -191,6 +192,8 @@ function CategoriasPage() {
             />
             Mostrar arquivadas
           </label>
+
+          {!grupos.erro && <LegendaGrupos />}
 
           <ul className="flex flex-col">
             {linhas.map((categoria) => (

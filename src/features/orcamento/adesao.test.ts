@@ -17,8 +17,8 @@ describe('percentualDaRenda', () => {
 })
 
 describe('avaliarGrupo', () => {
-  it('necessidades abaixo da meta não alerta e mostra a sobra', () => {
-    expect(avaliarGrupo('necessidades', 380000, 1000000)).toMatchObject({
+  it('essenciais abaixo da meta não alerta e mostra a sobra', () => {
+    expect(avaliarGrupo('essenciais', 380000, 1000000)).toMatchObject({
       percentual: 38,
       meta: 50,
       alerta: false,
@@ -26,33 +26,34 @@ describe('avaliarGrupo', () => {
     })
   })
 
-  it('desejos acima da meta alerta', () => {
-    expect(avaliarGrupo('desejos', 220000, 1000000)).toMatchObject({
-      percentual: 22,
+  it('estilo de vida acima da meta alerta', () => {
+    expect(avaliarGrupo('estilo_de_vida', 420000, 1000000)).toMatchObject({
+      percentual: 42,
+      meta: 35,
       alerta: true,
       texto: '7% acima da meta',
     })
   })
 
   it('exatamente na meta não alerta', () => {
-    expect(avaliarGrupo('desejos', 150000, 1000000)).toMatchObject({
+    expect(avaliarGrupo('estilo_de_vida', 350000, 1000000)).toMatchObject({
       alerta: false,
       texto: 'na meta',
     })
   })
 
-  it('investimentos abaixo da meta alerta (lógica invertida)', () => {
-    expect(avaliarGrupo('investimentos', 150000, 1000000)).toMatchObject({
-      percentual: 15,
-      meta: 35,
+  it('prioridades abaixo da meta alerta (lógica invertida)', () => {
+    expect(avaliarGrupo('prioridades', 50000, 1000000)).toMatchObject({
+      percentual: 5,
+      meta: 15,
       alerta: true,
-      texto: '20% abaixo da meta',
+      texto: '10% abaixo da meta',
     })
   })
 
-  it('investimentos na meta ou acima não alerta', () => {
-    expect(avaliarGrupo('investimentos', 350000, 1000000).alerta).toBe(false)
-    expect(avaliarGrupo('investimentos', 500000, 1000000)).toMatchObject({
+  it('prioridades na meta ou acima não alerta', () => {
+    expect(avaliarGrupo('prioridades', 150000, 1000000).alerta).toBe(false)
+    expect(avaliarGrupo('prioridades', 300000, 1000000)).toMatchObject({
       alerta: false,
       texto: 'meta atingida',
     })
@@ -63,15 +64,15 @@ describe('avaliarAdesao', () => {
   it('devolve os 3 grupos na ordem 50-15-35', () => {
     const avaliacoes = avaliarAdesao({
       totalEntradasMesCentavos: 1000000,
-      gastoNecessidadesCentavos: 380000,
-      gastoDesejosCentavos: 220000,
-      gastoInvestimentosCentavos: 150000,
+      gastoEssenciaisCentavos: 380000,
+      gastoPrioridadesCentavos: 150000,
+      gastoEstiloDeVidaCentavos: 220000,
       gastoNaoClassificadoCentavos: 15000,
     })
-    expect(avaliacoes.map((a) => [a.grupo, a.percentual])).toEqual([
-      ['necessidades', 38],
-      ['desejos', 22],
-      ['investimentos', 15],
+    expect(avaliacoes.map((a) => [a.grupo, a.meta, a.percentual])).toEqual([
+      ['essenciais', 50, 38],
+      ['prioridades', 15, 15],
+      ['estilo_de_vida', 35, 22],
     ])
   })
 })
